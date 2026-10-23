@@ -4,7 +4,7 @@ import com.xcompwiz.mystcraft.world.worldgen.*;
 import java.util.Random;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.ParticleStatus;
+import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -26,9 +26,9 @@ public final class AgePrecipitationTicker {
 
         // Minecraft 1.12 EntityRenderer halved splash strength when fancy graphics was off
         // before applying the quadratic attempt count.
-        if (!Minecraft.useFancyGraphics()) strength /= 2.0F;
+        if (!(Minecraft.getInstance().options.graphicsPreset().get() != net.minecraft.client.GraphicsPreset.FAST)) strength /= 2.0F;
 
-        var p = camera.getPosition();
+        var p = camera.position();
         int cx = (int) Math.floor(p.x);
         int cy = (int) Math.floor(p.y);
         int cz = (int) Math.floor(p.z);

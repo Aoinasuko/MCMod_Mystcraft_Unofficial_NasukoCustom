@@ -9,7 +9,7 @@ import com.xcompwiz.mystcraft.symbol.LegacyBiomeSymbolRegistry;
 import com.xcompwiz.mystcraft.symbol.LegacyMaterialSymbolRegistry;
 import com.xcompwiz.mystcraft.symbol.LegacySymbolId;
 import com.xcompwiz.mystcraft.symbol.SymbolRegistry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,18 +18,18 @@ import java.util.Objects;
 /** Public-API view over the port's exact legacy symbol identity. */
 public final class ApiSymbolView implements IAgeSymbol {
     private final String legacyId;
-    private final ResourceLocation key;
+    private final Identifier key;
 
     public ApiSymbolView(String legacyId) {
         this.legacyId = LegacySymbolId.qualify(Objects.requireNonNull(legacyId, "legacyId"));
-        ResourceLocation canonical = LegacySymbolId.canonicalKey(this.legacyId);
+        Identifier canonical = LegacySymbolId.canonicalKey(this.legacyId);
         if (canonical == null) throw new IllegalArgumentException("Invalid legacy symbol id: " + legacyId);
         this.key = canonical;
     }
 
     public String legacyId() { return legacyId; }
 
-    @Override public ResourceLocation getRegistryName() { return key; }
+    @Override public Identifier getRegistryName() { return key; }
 
     /** Built-in runtime logic is driven by the port grammar/worldgen bridge, not re-registered through this view. */
     @Override public void registerLogic(AgeDirector controller, long seed) {}
@@ -51,7 +51,7 @@ public final class ApiSymbolView implements IAgeSymbol {
 
     @Override public String toString() { return "MystcraftSymbol[" + legacyId + "]"; }
 
-    public static String legacyIdFor(ResourceLocation identifier) {
+    public static String legacyIdFor(Identifier identifier) {
         if (identifier == null) return null;
         var fixed = SymbolRegistry.resolveKey(identifier);
         if (fixed.isPresent()) return fixed.get().legacyId();
@@ -64,7 +64,7 @@ public final class ApiSymbolView implements IAgeSymbol {
         return null;
     }
 
-    public static ApiSymbolView resolve(ResourceLocation identifier) {
+    public static ApiSymbolView resolve(Identifier identifier) {
         String id = legacyIdFor(identifier);
         return id == null ? null : new ApiSymbolView(id);
     }

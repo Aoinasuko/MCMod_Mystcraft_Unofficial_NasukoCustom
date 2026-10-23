@@ -3,10 +3,11 @@ package com.xcompwiz.mystcraft.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.xcompwiz.mystcraft.Mystcraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.joml.Vector3f;
 
 /**
@@ -20,16 +21,15 @@ import org.joml.Vector3f;
  * reproduced here.</p>
  */
 final class LegacyLecternBodyRenderer {
-    private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/entity/lectern.png");
+    private static final Identifier TEXTURE =
+            Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/entity/lectern.png");
     private static final float TW = 64.0F;
     private static final float TH = 32.0F;
 
     private LegacyLecternBodyRenderer() {}
 
-    static void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        VertexConsumer out = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
-        PoseStack.Pose pose = poseStack.last();
+    static void render(PoseStack poseStack, SubmitNodeCollector buffers, int packedLight) {
+        buffers.submitCustomGeometry(poseStack, RenderTypes.entityCutout(TEXTURE), (pose, out) -> {
 
         // Legacy ModelPrism(base, 0,0, -8,-0.5,-8, 16,1,7,16,0),
         // then base.setRotationPoint(0,0.5,0), rendered at 1/16 scale.
@@ -66,7 +66,8 @@ final class LegacyLecternBodyRenderer {
         quad(out, pose, packedLight, b6,b5,b1,b2, 46, 2,47,16); // bottom
         quad(out, pose, packedLight, b3,b4,b8,b7, 47,16,48, 2); // top (legacy flipped V)
         quad(out, pose, packedLight, b2,b1,b4,b3, 46,16,47,18); // z-
-        quad(out, pose, packedLight, b5,b6,b7,b8, 61,16,62,18); // z+
+        quad(out, pose, packedLight, b5,b6,b7,b8, 61,16,62,18);
+        }); // z+
     }
 
     private static void quad(VertexConsumer out, PoseStack.Pose pose, int light,

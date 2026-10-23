@@ -67,7 +67,7 @@ public final class AgeRuntimeLifecycleEvents {
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        AgeRuntimeWorldManager.armIdleUnloading(player.getServer());
+        AgeRuntimeWorldManager.armIdleUnloading(player.level().getServer());
     }
 
     @SubscribeEvent
@@ -86,7 +86,7 @@ public final class AgeRuntimeLifecycleEvents {
         // Make pending cross-chunk Legacy writes dirty before Minecraft's normal
         // per-level shutdown save starts. This is the primary durability barrier.
         for (ServerLevel level : server.getAllLevels()) {
-            if (level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) {
+            if (level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) {
                 AgeLegacyDeferredBlockWritesData.capture(level);
             }
         }
@@ -123,15 +123,16 @@ public final class AgeRuntimeLifecycleEvents {
     @SubscribeEvent
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
         AgeLegacyDeferredBlockWritesData.restore(level);
     }
 
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
-        AgeLegacyDeferredBlockWritesData.captureAndFlush(level);
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        // 26.3 posts Unload after ServerLevel.close() during shutdown. Persistence
+        // is handled by Save/ServerStopping, before SavedDataStorage closes.
         AgeRuntimeWorldBorderBridge.detach(level);
         AgeStarFissurePopulationBridge.clear(level.dimension());
     }
@@ -139,7 +140,7 @@ public final class AgeRuntimeLifecycleEvents {
     @SubscribeEvent
     public static void onLevelSave(LevelEvent.Save event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
 
         AgeLegacyDeferredBlockWritesData.captureAndFlush(level);
 

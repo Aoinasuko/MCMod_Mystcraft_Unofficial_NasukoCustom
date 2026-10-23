@@ -91,12 +91,18 @@ public final class EntityLinkbook extends Entity {
         return true;
     }
 
+    /** Like vanilla ItemEntity, keep visual physics on both sides; damage stays server-only. */
+    @Override
+    public net.minecraft.world.entity.MoveSimulationType getMoveSimulationType() {
+        return net.minecraft.world.entity.MoveSimulationType.SERVER_AND_CLIENT;
+    }
+
     @Override
     public void tick() {
         super.tick();
 
         if (getBook().isEmpty()) {
-            if (!level().isClientSide) discard();
+            if (!level().isClientSide()) discard();
             return;
         }
 
@@ -111,7 +117,7 @@ public final class EntityLinkbook extends Entity {
         if (onGround()) {
             // Preserve a little legacy item-like slide, and convert a hard landing
             // into real book damage.  This keeps "drop it from a height" dangerous.
-            if (impactY < -0.65D && !level().isClientSide && level() instanceof ServerLevel serverLevel) {
+            if (impactY < -0.65D && !level().isClientSide() && level() instanceof ServerLevel serverLevel) {
                 float damage = (float) Math.max(1.0D, Math.ceil((-impactY - 0.55D) * 6.0D));
                 damageBook(serverLevel.damageSources().fall(), damage);
             }
@@ -120,7 +126,7 @@ public final class EntityLinkbook extends Entity {
             setDeltaMovement(moved.scale(0.98D));
         }
 
-        if (level().isClientSide || !(level() instanceof ServerLevel serverLevel)) return;
+        if (level().isClientSide() || !(level() instanceof ServerLevel serverLevel)) return;
 
         ++decayTimer;
 
@@ -145,8 +151,8 @@ public final class EntityLinkbook extends Entity {
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
-        if (level().isClientSide) return false;
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        if (level().isClientSide()) return false;
         return damageBook(source, amount);
     }
 
@@ -162,14 +168,14 @@ public final class EntityLinkbook extends Entity {
     }
 
     @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
-        if (level().isClientSide) return InteractionResult.SUCCESS;
+    public InteractionResult interact(Player player, InteractionHand hand, net.minecraft.world.phys.Vec3 location) {
+        if (level().isClientSide()) return InteractionResult.SUCCESS;
 
         if (player.isShiftKeyDown() && player.getItemInHand(hand).isEmpty()) {
             ItemStack stack = getBook().copy();
             if (!stack.isEmpty()) {
                 if (player.getItemInHand(hand).isEmpty()) player.setItemInHand(hand, stack);
-                else if (!player.getInventory().add(stack)) player.drop(stack, false);
+                else if (!player.getInventory().add(stack)) player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
                 discard();
             }
             return InteractionResult.CONSUME;
@@ -183,26 +189,36 @@ public final class EntityLinkbook extends Entity {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
+    protected void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyData(tag);
+        output.store(tag);
+    }
+
+    private void writeLegacyData(CompoundTag tag) {
         tag.putInt("DecayTimer", decayTimer);
         tag.putInt("WetTicks", wetTicks);
         tag.putFloat("BookHealth", bookHealth);
         ItemStack stack = getBook();
-        if (!stack.isEmpty()) tag.put("Item", stack.saveOptional(level().registryAccess()));
+        if (!stack.isEmpty()) tag.put("Item", com.xcompwiz.mystcraft.data.LegacyNbt.writeItem(stack, level().registryAccess()));
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
-        decayTimer = tag.getInt("DecayTimer");
-        wetTicks = tag.getInt("WetTicks");
-        ItemStack stack = ItemStack.parseOptional(level().registryAccess(), tag.getCompound("Item"));
+    protected void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+        readLegacyData(input.read(com.mojang.serialization.MapCodec.assumeMapUnsafe(CompoundTag.CODEC)).orElseGet(CompoundTag::new));
+    }
+
+    private void readLegacyData(CompoundTag tag) {
+        decayTimer = tag.getInt("DecayTimer").orElse(0);
+        wetTicks = tag.getInt("WetTicks").orElse(0);
+        ItemStack stack = com.xcompwiz.mystcraft.data.LegacyNbt.readItem(level().registryAccess(), tag.getCompoundOrEmpty("Item"));
         if (stack.isEmpty() || !(stack.getItem() instanceof ItemLinking)) {
             discard();
             return;
         }
         setBook(stack);
         if (tag.contains("BookHealth")) {
-            bookHealth = Math.max(0.0F, tag.getFloat("BookHealth"));
+            bookHealth = Math.max(0.0F, tag.getFloat("BookHealth").orElse(0.0F));
             syncDamageToBook();
         }
     }

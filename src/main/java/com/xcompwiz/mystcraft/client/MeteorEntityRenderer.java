@@ -4,13 +4,14 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.xcompwiz.mystcraft.entity.EntityMeteor;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Lightmap;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.joml.Vector3f;
 
@@ -22,9 +23,9 @@ import org.joml.Vector3f;
  * {@code meteor.scale / 10} and bound vanilla's End Portal texture.  CP299 temporarily drew
  * no mesh at all; CP300 restores that visible contract without depending on obsolete ModelBase.</p>
  */
-public final class MeteorEntityRenderer extends EntityRenderer<EntityMeteor> {
-    private static final ResourceLocation END_PORTAL_TEXTURE =
-            ResourceLocation.withDefaultNamespace("textures/entity/end_portal.png");
+public final class MeteorEntityRenderer extends EntityRenderer<EntityMeteor, MystEntityRenderState> {
+    private static final Identifier END_PORTAL_TEXTURE =
+            Identifier.withDefaultNamespace("textures/entity/end_portal/end_portal.png");
     private static final int LAYERS = 15;
     private static final int MID = LAYERS / 2;
 
@@ -34,20 +35,31 @@ public final class MeteorEntityRenderer extends EntityRenderer<EntityMeteor> {
     }
 
     @Override
-    public void render(EntityMeteor entity, float yaw, float partialTick, PoseStack poseStack,
-                       MultiBufferSource buffers, int packedLight) {
+    public MystEntityRenderState createRenderState() { return new MystEntityRenderState(); }
+
+    @Override
+    public void extractRenderState(EntityMeteor entity, MystEntityRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.yaw = net.minecraft.util.Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+        state.pitch = net.minecraft.util.Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+        state.scale = entity.getScale();
+    }
+
+    @Override
+    public void submit(MystEntityRenderState state, PoseStack poseStack, SubmitNodeCollector buffers,
+                       net.minecraft.client.renderer.state.level.CameraRenderState camera) {
+        int packedLight = state.lightCoords;
         poseStack.pushPose();
 
         // Legacy RenderMeteor: scale(scale/10), rotate yaw around -Y, then pitch around +Z.
-        float modelScale = entity.getScale() / 10.0F;
+        float modelScale = state.scale / 10.0F;
         poseStack.scale(modelScale, modelScale, modelScale);
-        float renderYaw = Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
-        float renderPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
-        poseStack.mulPose(Axis.YN.rotationDegrees(renderYaw));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(renderPitch));
+        float renderYaw = state.yaw;
+        float renderPitch = state.pitch;
+        poseStack.rotate(Axis.YN.rotationDegrees(renderYaw));
+        poseStack.rotate(Axis.ZP.rotationDegrees(renderPitch));
 
-        VertexConsumer out = buffers.getBuffer(RenderType.entityCutoutNoCull(END_PORTAL_TEXTURE));
-        PoseStack.Pose pose = poseStack.last();
+        buffers.submitCustomGeometry(poseStack, RenderTypes.entityCutout(END_PORTAL_TEXTURE), (pose, out) -> {
         for (int i = 0; i < LAYERS; i++) {
             int width = LAYERS - Math.abs(MID - i); // 8,9,...15,...9,8
             int min = -width / 2;                  // preserves legacy integer division
@@ -60,8 +72,9 @@ public final class MeteorEntityRenderer extends EntityRenderer<EntityMeteor> {
             cube(out, pose, x0, y0, z0, x1, y1, z1);
         }
 
+        });
         poseStack.popPose();
-        super.render(entity, yaw, partialTick, poseStack, buffers, packedLight);
+        super.submit(state, poseStack, buffers, camera);
     }
 
     private static void cube(VertexConsumer out, PoseStack.Pose pose,
@@ -90,14 +103,10 @@ public final class MeteorEntityRenderer extends EntityRenderer<EntityMeteor> {
                 .setColor(255, 255, 255, 255)
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(LightTexture.FULL_BRIGHT)
+                .setLight(net.minecraft.util.LightCoordsUtil.FULL_BRIGHT)
                 .setNormal(pose, n.x, n.y, n.z);
     }
 
-    @Override
-    public ResourceLocation getTextureLocation(EntityMeteor entity) {
-        return END_PORTAL_TEXTURE;
-    }
 
     private record V(float x, float y, float z) {}
 }

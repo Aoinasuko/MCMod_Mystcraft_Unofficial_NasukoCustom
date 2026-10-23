@@ -8,7 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -32,8 +32,8 @@ public final class Page {
     public static void setQuality(ItemStack page, String trait, int quality) {
         if (page.isEmpty()) return;
         LegacyItemData.update(page, data -> {
-            CompoundTag qualities = data.contains(KEY_QUALITY, Tag.TAG_COMPOUND)
-                    ? data.getCompound(KEY_QUALITY)
+            CompoundTag qualities = com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_QUALITY, Tag.TAG_COMPOUND)
+                    ? data.getCompoundOrEmpty(KEY_QUALITY)
                     : new CompoundTag();
             qualities.putInt(trait, quality);
             data.put(KEY_QUALITY, qualities);
@@ -42,37 +42,37 @@ public final class Page {
 
     public static int getTotalQuality(ItemStack page) {
         CompoundTag data = LegacyItemData.copy(page);
-        if (!data.contains(KEY_QUALITY, Tag.TAG_COMPOUND)) return 0;
-        CompoundTag qualities = data.getCompound(KEY_QUALITY);
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_QUALITY, Tag.TAG_COMPOUND)) return 0;
+        CompoundTag qualities = data.getCompoundOrEmpty(KEY_QUALITY);
         int total = 0;
-        for (String key : qualities.getAllKeys()) {
-            total += qualities.getInt(key);
+        for (String key : qualities.keySet()) {
+            total += qualities.getInt(key).orElse(0);
         }
         return total;
     }
 
     public static Integer getQuality(ItemStack page, String trait) {
         CompoundTag data = LegacyItemData.copy(page);
-        if (!data.contains(KEY_QUALITY, Tag.TAG_COMPOUND)) return null;
-        CompoundTag qualities = data.getCompound(KEY_QUALITY);
-        return qualities.contains(trait, Tag.TAG_INT) ? qualities.getInt(trait) : null;
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_QUALITY, Tag.TAG_COMPOUND)) return null;
+        CompoundTag qualities = data.getCompoundOrEmpty(KEY_QUALITY);
+        return com.xcompwiz.mystcraft.data.LegacyNbt.contains(qualities, trait, Tag.TAG_INT) ? qualities.getInt(trait).orElse(0) : null;
     }
 
     public static boolean isBlank(ItemStack page) {
         if (page.isEmpty()) return true;
         CompoundTag data = LegacyItemData.copy(page);
-        return !data.contains(KEY_LINK_PANEL, Tag.TAG_COMPOUND) && !data.contains(KEY_SYMBOL, Tag.TAG_STRING);
+        return !com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_LINK_PANEL, Tag.TAG_COMPOUND) && !com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_SYMBOL, Tag.TAG_STRING);
     }
 
     public static boolean isLinkPanel(ItemStack page) {
         if (page.isEmpty()) return false;
-        return LegacyItemData.copy(page).contains(KEY_LINK_PANEL, Tag.TAG_COMPOUND);
+        return com.xcompwiz.mystcraft.data.LegacyNbt.contains(LegacyItemData.copy(page), KEY_LINK_PANEL, Tag.TAG_COMPOUND);
     }
 
     public static void makeLinkPanel(ItemStack page) {
         if (page.isEmpty()) return;
         LegacyItemData.update(page, data -> {
-            if (!data.contains(KEY_LINK_PANEL, Tag.TAG_COMPOUND)) {
+            if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_LINK_PANEL, Tag.TAG_COMPOUND)) {
                 data.put(KEY_LINK_PANEL, new CompoundTag());
             }
         });
@@ -81,10 +81,10 @@ public final class Page {
     public static void addLinkProperty(ItemStack page, String linkProperty) {
         if (page.isEmpty()) return;
         LegacyItemData.update(page, data -> {
-            CompoundTag panel = data.contains(KEY_LINK_PANEL, Tag.TAG_COMPOUND)
-                    ? data.getCompound(KEY_LINK_PANEL)
+            CompoundTag panel = com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_LINK_PANEL, Tag.TAG_COMPOUND)
+                    ? data.getCompoundOrEmpty(KEY_LINK_PANEL)
                     : new CompoundTag();
-            ListTag properties = panel.getList(KEY_PROPERTIES, Tag.TAG_STRING);
+            ListTag properties = panel.getListOrEmpty(KEY_PROPERTIES);
             properties.add(StringTag.valueOf(linkProperty));
             panel.put(KEY_PROPERTIES, properties);
             data.put(KEY_LINK_PANEL, panel);
@@ -94,13 +94,13 @@ public final class Page {
     public static Collection<String> getLinkProperties(ItemStack page) {
         if (page.isEmpty()) return null;
         CompoundTag data = LegacyItemData.copy(page);
-        if (!data.contains(KEY_LINK_PANEL, Tag.TAG_COMPOUND)) return null;
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_LINK_PANEL, Tag.TAG_COMPOUND)) return null;
 
-        CompoundTag panel = data.getCompound(KEY_LINK_PANEL);
-        ListTag properties = panel.getList(KEY_PROPERTIES, Tag.TAG_STRING);
+        CompoundTag panel = data.getCompoundOrEmpty(KEY_LINK_PANEL);
+        ListTag properties = panel.getListOrEmpty(KEY_PROPERTIES);
         List<String> result = new ArrayList<>(properties.size());
         for (int i = 0; i < properties.size(); i++) {
-            result.add(properties.getString(i));
+            result.add(properties.getString(i).orElse(""));
         }
         return result;
     }
@@ -113,7 +113,7 @@ public final class Page {
         }
     }
 
-    public static void setSymbol(ItemStack page, ResourceLocation symbol) {
+    public static void setSymbol(ItemStack page, Identifier symbol) {
         setSymbolId(page, symbol == null ? null : symbol.toString());
     }
 
@@ -133,16 +133,16 @@ public final class Page {
     public static String getSymbolId(ItemStack page) {
         if (page.isEmpty()) return null;
         CompoundTag data = LegacyItemData.copy(page);
-        if (!data.contains(KEY_SYMBOL, Tag.TAG_STRING)) return null;
-        String id = data.getString(KEY_SYMBOL);
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_SYMBOL, Tag.TAG_STRING)) return null;
+        String id = data.getString(KEY_SYMBOL).orElse("");
         return id.isBlank() ? null : LegacySymbolId.qualify(id);
     }
 
     /**
      * Returns the port-side canonical key for code that requires a modern
-     * ResourceLocation. Do not write this key back into legacy NBT.
+     * Identifier. Do not write this key back into legacy NBT.
      */
-    public static ResourceLocation getSymbol(ItemStack page) {
+    public static Identifier getSymbol(ItemStack page) {
         return LegacySymbolId.canonicalKey(getSymbolId(page));
     }
 
@@ -164,7 +164,7 @@ public final class Page {
         return page;
     }
 
-    public static ItemStack createSymbolPage(ResourceLocation symbol) {
+    public static ItemStack createSymbolPage(Identifier symbol) {
         ItemStack page = createPage();
         setSymbol(page, symbol);
         return page;

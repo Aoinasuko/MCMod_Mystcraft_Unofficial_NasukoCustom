@@ -10,16 +10,11 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class BlockCrystal extends Block {
-    public static final MapCodec<BlockCrystal> CODEC = simpleCodec(BlockCrystal::new);
 
     public BlockCrystal(BlockBehaviour.Properties properties) {
         super(properties);
     }
 
-    @Override
-    protected MapCodec<BlockCrystal> codec() {
-        return CODEC;
-    }
 
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
@@ -30,8 +25,8 @@ public final class BlockCrystal extends Block {
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, net.minecraft.world.level.redstone.Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
         if (level instanceof ServerLevel serverLevel) {
             CrystalPortalRuntime.refreshCrystalNetwork(serverLevel, pos);
         }

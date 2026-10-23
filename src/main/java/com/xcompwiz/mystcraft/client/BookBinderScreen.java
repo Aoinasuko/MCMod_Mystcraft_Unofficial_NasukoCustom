@@ -5,11 +5,11 @@ import com.xcompwiz.mystcraft.blockentity.BookBinderBlockEntity;
 import com.xcompwiz.mystcraft.inventory.BookBinderMenu;
 import com.xcompwiz.mystcraft.network.BinderPageActionPayload;
 import com.xcompwiz.mystcraft.network.BinderTitlePayload;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -17,7 +17,7 @@ import java.util.List;
 
 /** 0.13.7.06-style Book Binder UI with a variable-length horizontal page slider. */
 public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMenu> {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "gui/pagebinder.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "gui/pagebinder.png");
     private static final int SLIDER_X = 7;
     private static final int SLIDER_Y = 45;
     private static final int SLIDER_W = 162;
@@ -32,9 +32,7 @@ public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMe
     private int hoveredPage = -1;
 
     public BookBinderScreen(BookBinderMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        imageWidth = 176;
-        imageHeight = 181;
+        super(menu, inventory, title, 176, 181);
         titleLabelX = -1000;
         inventoryLabelX = -1000;
         inventoryLabelY = -1000;
@@ -49,30 +47,30 @@ public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMe
         titleBox.setBordered(true);
         titleBox.setResponder(text -> {
             menu.setClientPendingTitle(text);
-            PacketDistributor.sendToServer(new BinderTitlePayload(menu.containerId, text));
+            net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(new BinderTitlePayload(menu.containerId, text));
         });
         addRenderableWidget(titleBox);
     }
 
     @Override
-    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        LegacyGuiDrawing.blit(graphics, TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
         renderPageSlider(graphics, mouseX, mouseY);
 
         // Legacy binder marks an empty title as an error and overlays a warning icon
         // whenever the first page is not a Link Panel.
         if (titleBox != null && titleBox.getValue().isEmpty()) {
-            graphics.renderOutline(leftPos + 6, topPos + 8, 118, 16, 0xFFFF0000);
+            graphics.outline(leftPos + 6, topPos + 8, 118, 16, 0xFFFF0000);
         }
         if (missingLinkPanel()) {
             float pulse = 0.3F + 0.7F * (0.5F + 0.5F * (float)Math.sin(System.currentTimeMillis() / 636.62));
-            graphics.setColor(1F, 0.5F, 0.5F, pulse);
-            graphics.blit(TEXTURE, leftPos + 27, topPos + 26, 18, 18, 176F, 0F, 30, 40, 256, 256);
-            graphics.setColor(1F, 1F, 1F, 1F);
+            LegacyGuiDrawing.setColor(graphics, 1F, 0.5F, 0.5F, pulse);
+            LegacyGuiDrawing.blit(graphics, TEXTURE, leftPos + 27, topPos + 26, 18, 18, 176F, 0F, 30, 40, 256, 256);
+            LegacyGuiDrawing.setColor(graphics, 1F, 1F, 1F, 1F);
         }
     }
 
-    private void renderPageSlider(GuiGraphics graphics, int mouseX, int mouseY) {
+    private void renderPageSlider(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int x0 = leftPos + SLIDER_X;
         int y0 = topPos + SLIDER_Y;
         graphics.fill(x0, y0, x0 + SLIDER_W, y0 + SLIDER_H, 0xAA000000);
@@ -109,14 +107,14 @@ public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMe
         return pages.isEmpty() || !"$LINK_PANEL$".equals(pages.getFirst());
     }
 
-    private void drawPageCard(GuiGraphics graphics, String descriptor, int x, int y, boolean first) {
+    private void drawPageCard(GuiGraphicsExtractor graphics, String descriptor, int x, int y, boolean first) {
         LegacySymbolRenderer.drawPage(graphics, descriptor, x, y, PAGE_W, PAGE_H, false);
         if (first && !"$LINK_PANEL$".equals(descriptor)) {
             drawBorder(graphics, x - 1, y - 1, PAGE_W + 2, PAGE_H + 2, 0xFFFF4040);
         }
     }
 
-    private static void drawBorder(GuiGraphics graphics, int x, int y, int width, int height, int color) {
+    private static void drawBorder(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
         graphics.fill(x, y, x + width, y + 1, color);
         graphics.fill(x, y + height - 1, x + width, y + height, color);
         graphics.fill(x, y, x + 1, y + height, color);
@@ -124,12 +122,14 @@ public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMe
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, Component.translatable("container.inventory"), 8, imageHeight - 96 + 2, 0x404040, false);
+    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        graphics.text(font, Component.translatable("container.inventory"), 8, imageHeight - 96 + 2, 0xFF404040, false);
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
         double x = mouseX - leftPos;
         double y = mouseY - topPos;
         if (x >= SLIDER_X && x < SLIDER_X + SLIDER_W && y >= SLIDER_Y && y < SLIDER_Y + SLIDER_H) {
@@ -144,17 +144,17 @@ public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMe
 
             if (!menu.getCarried().isEmpty()) {
                 int index = hoveredPage >= 0 ? hoveredPage : menu.getClientPageDescriptors().size();
-                PacketDistributor.sendToServer(new BinderPageActionPayload(menu.containerId,
-                        BinderPageActionPayload.INSERT, index, button == 1));
+                net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(new BinderPageActionPayload(menu.containerId,
+                        BinderPageActionPayload.INSERT, index, button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT));
                 return true;
             }
             if (hoveredPage >= 0) {
-                PacketDistributor.sendToServer(new BinderPageActionPayload(menu.containerId,
+                net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(new BinderPageActionPayload(menu.containerId,
                         BinderPageActionPayload.REMOVE, hoveredPage, false));
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
@@ -176,12 +176,12 @@ public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMe
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
-        super.render(graphics, mouseX, mouseY, partialTick);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        extractBackground(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         if (missingLinkPanel() && mouseX >= leftPos + 27 && mouseX < leftPos + 45
                 && mouseY >= topPos + 26 && mouseY < topPos + 44) {
-            graphics.renderComponentTooltip(font, List.of(
+            graphics.setComponentTooltipForNextFrame(font, List.of(
                     Component.translatable("gui.mystcraft.book_binder.missing_panel"),
                     Component.translatable("gui.mystcraft.book_binder.missing_panel_hint")), mouseX, mouseY);
         } else if (hoveredPage >= 0 && hoveredPage < menu.getClientPageDescriptors().size()) {
@@ -191,9 +191,9 @@ public final class BookBinderScreen extends AbstractContainerScreen<BookBinderMe
             else if ("$BLANK$".equals(descriptor)) tooltip = Component.translatable("item.mystcraft.page.blank");
             else tooltip = LegacySymbolName.component(descriptor);
             tooltip = Component.literal((hoveredPage + 1) + ". ").append(tooltip);
-            graphics.renderTooltip(font, tooltip, mouseX, mouseY);
+            graphics.setTooltipForNextFrame(font, tooltip, mouseX, mouseY);
         } else {
-            renderTooltip(graphics, mouseX, mouseY);
+            extractTooltip(graphics, mouseX, mouseY);
         }
     }
 }

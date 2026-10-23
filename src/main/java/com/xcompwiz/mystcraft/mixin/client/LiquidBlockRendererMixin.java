@@ -1,42 +1,29 @@
 package com.xcompwiz.mystcraft.mixin.client;
 
 import com.xcompwiz.mystcraft.client.AgeBlockColorHandlers;
-import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.fluid.FluidTintSource;
+import net.neoforged.neoforge.client.fluid.FluidTintSources;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Result-fidelity hook for legacy ColorWater.
- *
- * <p>NeoForge owns the client extension for its built-in WATER_TYPE and rejects duplicate
- * registrations. CP233 attempted to replace that extension and therefore crashed during client
- * initialization. CP234 leaves NeoForge's extension untouched and intercepts only the tint value
- * consumed by LiquidBlockRenderer. Non-water fluids are delegated verbatim; water outside a
- * synchronized Mystcraft Age is also returned verbatim by AgeBlockColorHandlers.</p>
- */
-@Mixin(LiquidBlockRenderer.class)
+/** Decorates the water tint without replacing other mods' fluid models. */
+@Mixin(FluidTintSources.class)
 public abstract class LiquidBlockRendererMixin {
-    @Redirect(
-            method = "tesselate",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/neoforged/neoforge/client/extensions/common/IClientFluidTypeExtensions;getTintColor(Lnet/minecraft/world/level/material/FluidState;Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;)I",
-                    remap = false
-            )
-    )
-    private int mystcraft$ageWaterTint(
-            IClientFluidTypeExtensions extension,
-            FluidState state,
-            BlockAndTintGetter level,
-            BlockPos pos) {
-        int original = extension.getTintColor(state, level, pos);
-        if (!state.is(FluidTags.WATER)) return original;
-        return AgeBlockColorHandlers.waterFluidTint(original, level, pos);
+    @Inject(method = "water", at = @At("RETURN"), cancellable = true, remap = false)
+    private static void mystcraft$waterTint(CallbackInfoReturnable<FluidTintSource> callback) {
+        FluidTintSource original = callback.getReturnValue();
+        callback.setReturnValue(new FluidTintSource() {
+            public int color(FluidState state) { return original.color(state); }
+            public int color(BlockState state) { return original.color(state); }
+            public int colorInWorld(FluidState fluid, BlockState block, BlockAndTintGetter level, BlockPos pos) {
+                return AgeBlockColorHandlers.waterFluidTint(original.colorInWorld(fluid, block, level, pos), level, pos);
+            }
+        });
     }
 }

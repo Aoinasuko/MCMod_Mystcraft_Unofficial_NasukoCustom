@@ -1,3 +1,33 @@
+# NasukoCustom 0.1.0 Release Notice
+
+**2026-10-24 — Mystcraft Unofficial NasukoCustom 0.1.0**
+
+The first NasukoCustom release combines the Minecraft 26.3 / NeoForge / Java 25 migration and subsequent book interaction, entity simulation and structure persistence fixes. Local migration and validation notes are kept separately in ignored `Docs/`; public attribution and license/provenance notices remain in the repository and binary. Earlier identifiers below are retained as development history.
+
+---
+
+# NasukoCustom 26.3.2 Bug Fix Notice
+
+**2026-10-24 — 0.13.7.06-nasuko.26.3.2**
+
+Correct 26.3 mouse-button mappings, physical book/meteor movement simulation authority, and structure processor codec registration. Extend client/server regressions to exercise book-menu network activation, selected-item dropping and structure processor persistence.
+
+---
+
+# NasukoCustom 26.3 Modification Notice
+
+**2026-10-23 — 0.13.7.06-nasuko.26.3.1**
+
+Display name: **Mystcraft Unofficial NasukoCustom**. Minecraft 26.3, NeoForge 26.3.0.95, Java 25, ModDevGradle 2.0.148.
+Derived from ueno96941-Clown/Mystcraft-Legacy-Unofficial-NeoForge-Port at `7e83df32feb5c68e1faee558daab2338ccadbb5d`.
+Internal identifiers remain `mystcraft`; this name does not claim authorship of the original Mystcraft or the 1.21.1 port.
+
+Changes include 26.3 registry/data formats, ValueInput/ValueOutput serialization, transactional resource handlers, villager trades, worldgen interfaces, independent Age clocks/weather, dynamic world installation, modern render extraction/submission and RenderPearl sky pipelines, item model definitions, GUI input/extraction, and opt-in runtime integration tests.
+Original PNG/OGG assets, license texts and provenance are preserved. See README.md and KNOWN_ISSUES.md for verification and compatibility limits.
+The following is the upstream 1.21.1 modification notice, retained as historical attribution.
+
+---
+
 # Modification Notice
 
 **Release baseline:** `0.13.7.06-port.1.0.0-Ueno` / 2026-09-26

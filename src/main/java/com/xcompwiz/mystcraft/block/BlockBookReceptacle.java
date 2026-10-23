@@ -6,7 +6,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -19,13 +18,13 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.phys.BlockHitResult;
 
 public final class BlockBookReceptacle extends BaseEntityBlock {
-    public static final MapCodec<BlockBookReceptacle> CODEC = simpleCodec(BlockBookReceptacle::new);
-    public static final DirectionProperty ROTATION = BlockStateProperties.FACING;
+    public static final EnumProperty<Direction> ROTATION = BlockStateProperties.FACING;
 
     public BlockBookReceptacle(BlockBehaviour.Properties properties) {
         super(properties);
@@ -52,10 +51,6 @@ public final class BlockBookReceptacle extends BaseEntityBlock {
         return state.rotate(mirror.getRotation(state.getValue(ROTATION)));
     }
 
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
@@ -68,15 +63,15 @@ public final class BlockBookReceptacle extends BaseEntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                                Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (!(level.getBlockEntity(pos) instanceof BookReceptacleBlockEntity receptacle)) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
         if (!BookReceptacleBlockEntity.isPortalBook(stack) || receptacle.hasBook()) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             // CP273: Linking Books are position-bound lazily.  Descriptive Books
             // produced by the Binder already carry LegacyItemData, which hid this
             // bug for a long time; a freshly linked Linking Book could reach the
@@ -92,10 +87,10 @@ public final class BlockBookReceptacle extends BaseEntityBlock {
                 String key = receptacle.getPortalBlocks().isEmpty()
                         ? "message.mystcraft.portal_frame_missing"
                         : "message.mystcraft.portal_active";
-                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(key), true);
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, net.minecraft.network.chat.Component.translatable(key), true);
             }
         }
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -103,40 +98,26 @@ public final class BlockBookReceptacle extends BaseEntityBlock {
         if (!(level.getBlockEntity(pos) instanceof BookReceptacleBlockEntity receptacle) || !receptacle.hasBook()) {
             return InteractionResult.PASS;
         }
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             ItemStack book = receptacle.removeBook();
             if (player.getMainHandItem().isEmpty()) {
                 player.setItemInHand(InteractionHand.MAIN_HAND, book);
             } else {
-                player.getInventory().placeItemBackInInventory(book);
+                player.getInventory().placeItemBackInInventory(book, net.minecraft.util.Prediction.SERVER_ONLY);
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos,
                                    net.minecraft.world.level.block.Block neighborBlock,
-                                   BlockPos neighborPos, boolean movedByPiston) {
+                                   net.minecraft.world.level.redstone.Orientation orientation, boolean movedByPiston) {
         if (level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof BookReceptacleBlockEntity receptacle) {
             receptacle.refreshPortal(serverLevel);
         }
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
     }
 
-    @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof BookReceptacleBlockEntity receptacle) {
-            if (level instanceof ServerLevel serverLevel) {
-                receptacle.deactivatePortal(serverLevel);
-            }
-            ItemStack book = receptacle.getBook().copy();
-            if (!book.isEmpty() && !level.isClientSide) {
-                net.minecraft.world.Containers.dropItemStack(level,
-                        pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, book);
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
 }

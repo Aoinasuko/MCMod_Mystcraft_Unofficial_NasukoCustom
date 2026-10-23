@@ -8,7 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -48,12 +48,15 @@ public final class MystVillagers {
     private static VillagerProfession createProfession(Holder<PoiType> poi) {
         ResourceKey<PoiType> key = poi.unwrapKey().orElseThrow();
         return new VillagerProfession(
-                Mystcraft.MOD_ID + ":archivist",
+                net.minecraft.network.chat.Component.translatable("entity.minecraft.villager.mystcraft.archivist"),
                 holder -> holder.is(key),
                 holder -> holder.is(key),
                 ImmutableSet.of(),
                 ImmutableSet.of(),
-                SoundEvents.VILLAGER_WORK_LIBRARIAN);
+                SoundEvents.VILLAGER_WORK_LIBRARIAN,
+                new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>(java.util.Map.of(1,
+                        ResourceKey.create(net.minecraft.core.registries.Registries.TRADE_SET,
+                                net.minecraft.resources.Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "archivist/novice")))));
     }
 
     public static void register(IEventBus bus) {

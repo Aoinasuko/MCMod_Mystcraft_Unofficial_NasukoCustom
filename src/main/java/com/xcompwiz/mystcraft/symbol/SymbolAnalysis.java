@@ -1,6 +1,6 @@
 package com.xcompwiz.mystcraft.symbol;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +43,7 @@ public record SymbolAnalysis(List<SymbolSequenceEntry> ordered) {
         return ordered.stream().filter(SymbolSequenceEntry::duplicate).toList();
     }
 
-    public List<ResourceLocation> resolvedKeysInOrder() {
+    public List<Identifier> resolvedKeysInOrder() {
         return ordered.stream()
                 .filter(SymbolSequenceEntry::known)
                 .map(SymbolSequenceEntry::key)

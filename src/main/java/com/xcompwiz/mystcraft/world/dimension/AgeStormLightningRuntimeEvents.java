@@ -27,14 +27,14 @@ public final class AgeStormLightningRuntimeEvents {
     @SubscribeEvent
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
         var age = AgeManager.resolveByLevel(level.getServer(), level.dimension());
         if (age.isEmpty()) return;
         var prepared = AgeRuntimeDimensionLoader.getPrepared(age.get().ageUid()).orElse(null);
         if (prepared == null || prepared.worldgenPlan().weatherPlan().mode() != AgeWeatherMode.STORM) return;
         if (!level.isRaining() || !level.isThundering()) return;
 
-        String key = level.dimension().location().toString();
+        String key = level.dimension().identifier().toString();
         int lcg = UPDATE_LCG.computeIfAbsent(key, ignored -> level.getRandom().nextInt());
         HashSet<Long> visited = new HashSet<>();
         int simulationDistance = level.getServer().getPlayerList().getSimulationDistance();
@@ -42,18 +42,18 @@ public final class AgeStormLightningRuntimeEvents {
             ChunkPos center = player.chunkPosition();
             for (int dz = -simulationDistance; dz <= simulationDistance; dz++) {
                 for (int dx = -simulationDistance; dx <= simulationDistance; dx++) {
-                    int cx = center.x + dx, cz = center.z + dz;
-                    long packed = ChunkPos.asLong(cx, cz);
+                    int cx = center.x() + dx, cz = center.z() + dz;
+                    long packed = ChunkPos.pack(cx, cz);
                     if (!visited.add(packed)) continue;
                     if (!level.getChunkSource().chunkMap.getDistanceManager().inBlockTickingRange(packed)) continue;
                     lcg = tryStrike(level, cx, cz, lcg);
                 }
             }
         }
-        for (long packed : level.getForcedChunks()) {
+        for (long packed : level.getForceLoadedChunks()) {
             if (!visited.add(packed)) continue;
-            ChunkPos p = new ChunkPos(packed);
-            lcg = tryStrike(level, p.x, p.z, lcg);
+            ChunkPos p = ChunkPos.unpack(packed);
+            lcg = tryStrike(level, p.x(), p.z(), lcg);
         }
         UPDATE_LCG.put(key, lcg);
     }
@@ -68,9 +68,9 @@ public final class AgeStormLightningRuntimeEvents {
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         BlockPos pos = new BlockPos(x, y, z);
         if (!level.canSeeSky(pos)) return updateLCG;
-        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+        LightningBolt bolt = net.minecraft.world.entity.EntityTypes.LIGHTNING_BOLT.create(level, net.minecraft.world.entity.EntitySpawnReason.EVENT);
         if (bolt != null) {
-            bolt.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+            bolt.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
             level.addFreshEntity(bolt);
         }
         return updateLCG;
@@ -79,7 +79,7 @@ public final class AgeStormLightningRuntimeEvents {
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (event.getLevel() instanceof ServerLevel level) {
-            UPDATE_LCG.remove(level.dimension().location().toString());
+            UPDATE_LCG.remove(level.dimension().identifier().toString());
         }
     }
 

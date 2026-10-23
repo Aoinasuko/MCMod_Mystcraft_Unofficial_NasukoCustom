@@ -55,8 +55,8 @@ final class AgeLegacyDeferredBlockWrites {
         ChunkPos center = region.getCenter();
         int targetX = Math.floorDiv(pos.getX(), 16);
         int targetZ = Math.floorDiv(pos.getZ(), 16);
-        if (Math.abs(center.x - targetX) <= FEATURES_WRITE_RADIUS
-                && Math.abs(center.z - targetZ) <= FEATURES_WRITE_RADIUS) {
+        if (Math.abs(center.x() - targetX) <= FEATURES_WRITE_RADIUS
+                && Math.abs(center.z() - targetZ) <= FEATURES_WRITE_RADIUS) {
             return region.setBlock(pos, state, flags);
         }
 
@@ -129,7 +129,7 @@ final class AgeLegacyDeferredBlockWrites {
             int chunkX = Math.floorDiv(persisted.pos().getX(), 16);
             int chunkZ = Math.floorDiv(persisted.pos().getZ(), 16);
             ArrayDeque<Write> queue = byChunk.computeIfAbsent(
-                    ChunkPos.asLong(chunkX, chunkZ), ignored -> new ArrayDeque<>());
+                    ChunkPos.pack(chunkX, chunkZ), ignored -> new ArrayDeque<>());
             synchronized (queue) {
                 queue.addLast(new Write(persisted.pos().immutable(), persisted.state(), persisted.flags()));
             }
@@ -160,7 +160,7 @@ final class AgeLegacyDeferredBlockWrites {
     private static void stage(ServerLevel level, int chunkX, int chunkZ, Write write) {
         ConcurrentMap<Long, ArrayDeque<Write>> byChunk =
                 PENDING.computeIfAbsent(level.dimension(), ignored -> new ConcurrentHashMap<>());
-        long key = ChunkPos.asLong(chunkX, chunkZ);
+        long key = ChunkPos.pack(chunkX, chunkZ);
         // CP314: mutate the per-chunk queue under ConcurrentHashMap#compute. Merely synchronizing
         // the ArrayDeque is insufficient: a drain could remove the mapping after a worker had
         // obtained the old queue reference but before that worker acquired the queue monitor,
@@ -177,7 +177,7 @@ final class AgeLegacyDeferredBlockWrites {
     private static int drainIntoWorldgen(WorldGenRegion region, int chunkX, int chunkZ) {
         ConcurrentMap<Long, ArrayDeque<Write>> byChunk = PENDING.get(region.getLevel().dimension());
         if (byChunk == null) return 0;
-        long key = ChunkPos.asLong(chunkX, chunkZ);
+        long key = ChunkPos.pack(chunkX, chunkZ);
         ArrayList<Write> drained = new ArrayList<>();
         // CP314: detach and snapshot atomically for this chunk key. Concurrent stage() calls for
         // the same key are serialized by ConcurrentHashMap and will either join this drain or

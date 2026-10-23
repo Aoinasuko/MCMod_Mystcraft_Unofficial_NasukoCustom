@@ -30,35 +30,35 @@ public final class MystBlocks {
     public static final DeferredBlock<BlockInkMixer> INK_MIXER = BLOCKS.registerBlock(
             "blockinkmixer",
             BlockInkMixer::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F).sound(SoundType.WOOD).noOcclusion());
+            () -> BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F).sound(SoundType.WOOD).noOcclusion());
     public static final DeferredBlock<BlockBookBinder> BOOK_BINDER = BLOCKS.registerBlock(
             "blockbookbinder",
             BlockBookBinder::new,
-            BlockBehaviour.Properties.of()
+            () -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.WOOD)
                     .strength(2.0F)
                     .noOcclusion());
     public static final DeferredBlock<BlockBookReceptacle> BOOK_RECEPTACLE = BLOCKS.registerBlock(
             "blockbookreceptacle",
             BlockBookReceptacle::new,
-            BlockBehaviour.Properties.of()
+            () -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_PURPLE)
                     .strength(1.0F)
                     .noOcclusion());
     public static final DeferredBlock<BlockBookDisplay> BOOK_STAND = BLOCKS.registerBlock(
             "blockbookstand", BlockBookDisplay::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.5F).noOcclusion());
+            () -> BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(1.5F).noOcclusion());
     public static final DeferredBlock<BlockBookDisplay> LECTERN = BLOCKS.registerBlock(
             "blocklectern", BlockBookDisplay::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F).noOcclusion());
+            () -> BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F).noOcclusion());
     public static final DeferredBlock<BlockLinkModifier> LINK_MODIFIER = BLOCKS.registerBlock(
             "blocklinkmodifier", BlockLinkModifier::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(2.5F).noOcclusion());
-    public static final DeferredBlock<BlockDecay> DECAY = BLOCKS.register("blockdecay", () -> new BlockDecay());
+            () -> BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(2.5F).noOcclusion());
+    public static final DeferredBlock<BlockDecay> DECAY = BLOCKS.registerBlock("blockdecay", BlockDecay::new, () -> BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).strength(0.5F, 2.5F).sound(SoundType.SAND).noLootTable());
     public static final DeferredBlock<BlockCrystal> CRYSTAL = BLOCKS.registerBlock(
             "blockcrystal",
             BlockCrystal::new,
-            BlockBehaviour.Properties.of()
+            () -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.ICE)
                     .strength(1.0F)
                     // Legacy Crystal uses the same brittle/glassy break character as Glowstone.
@@ -69,38 +69,38 @@ public final class MystBlocks {
     public static final DeferredBlock<BlockLinkPortal> LINK_PORTAL = BLOCKS.registerBlock(
             "linkportal",
             BlockLinkPortal::new,
-            BlockBehaviour.Properties.of()
+            () -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_BLUE)
-                    .noCollission()
+                    .noCollision()
                     .noOcclusion()
                     .strength(-1.0F, 3600000.0F)
                     .lightLevel(state -> 12));
     public static final DeferredBlock<BlockWritingDesk> WRITING_DESK = BLOCKS.registerBlock(
             "writingdesk",
             BlockWritingDesk::new,
-            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F).sound(SoundType.WOOD).noOcclusion());
+            () -> BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0F).sound(SoundType.WOOD).noOcclusion());
     public static final DeferredBlock<BlockStarFissure> STAR_FISSURE = BLOCKS.registerBlock(
             "blockstarfissure",
             BlockStarFissure::new,
-            BlockBehaviour.Properties.of()
+            () -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_BLACK)
-                    .noCollission()
+                    .noCollision()
                     .noOcclusion()
                     .strength(-1.0F, 3600000.0F)
                     .lightLevel(state -> 6)
                     .noLootTable());
-    public static final DeferredBlock<LiquidBlock> BLACK_INK = BLOCKS.register(
+    public static final DeferredBlock<LiquidBlock> BLACK_INK = BLOCKS.registerBlock(
             "fluidblockblackink",
-            () -> new LiquidBlock(MystFluids.BLACK_INK.get(), BlockBehaviour.Properties.of()
+            properties -> new LiquidBlock(MystFluids.BLACK_INK.get(), properties), () -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_BLACK)
-                    .noCollission()
+                    .noCollision()
                     .strength(100.0F)
-                    .noLootTable()));
+                    .noLootTable());
 
     private MystBlocks() {}
 
     private static DeferredBlock<Block> simple(String id, MapColor color) {
-        return BLOCKS.registerSimpleBlock(id, BlockBehaviour.Properties.of()
+        return BLOCKS.registerSimpleBlock(id, () -> BlockBehaviour.Properties.of()
                 .mapColor(color)
                 .strength(2.0F));
     }

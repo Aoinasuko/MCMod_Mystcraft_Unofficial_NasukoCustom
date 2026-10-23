@@ -28,13 +28,13 @@ public final class ModernAgeHeight {
      */
     public static int legacyCellStart(LevelHeightAccessor level, int legacyY) {
         int clamped = Math.max(0, Math.min(255, legacyY));
-        return level.getMinBuildHeight()
+        return level.getMinY()
                 + Math.floorDiv(clamped * level.getHeight(), 256);
     }
 
     public static int legacyCellEndInclusive(LevelHeightAccessor level, int legacyY) {
         int clamped = Math.max(0, Math.min(255, legacyY));
-        int next = level.getMinBuildHeight()
+        int next = level.getMinY()
                 + Math.floorDiv((clamped + 1) * level.getHeight(), 256);
         return Math.max(legacyCellStart(level, clamped), next - 1);
     }

@@ -14,3 +14,8 @@ crash-reports/
 !gradle/wrapper/gradle-wrapper.jar
 # Development checkpoints may embed Gradle locally; public repositories should not track it.
 tools/gradle-*/
+
+# Short local socket directory used by tools/run_gradle.ps1.
+.jt/
+
+Docs/

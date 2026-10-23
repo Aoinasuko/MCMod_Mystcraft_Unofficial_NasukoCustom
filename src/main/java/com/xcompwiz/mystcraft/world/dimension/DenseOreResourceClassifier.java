@@ -2,7 +2,7 @@ package com.xcompwiz.mystcraft.world.dimension;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -10,8 +10,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /** Shared Dense Ores resource classifier, including mod ores. */
 public final class DenseOreResourceClassifier {
-    private static final TagKey<Block> COMMON_ORES = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("c", "ores"));
-    private static final TagKey<Block> FORGE_ORES = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("forge", "ores"));
+    private static final TagKey<Block> COMMON_ORES = TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("c", "ores"));
+    private static final TagKey<Block> FORGE_ORES = TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath("forge", "ores"));
 
     private DenseOreResourceClassifier() {}
 
@@ -20,7 +20,7 @@ public final class DenseOreResourceClassifier {
         if (state.is(COMMON_ORES) || state.is(FORGE_ORES)) return true;
         Block block = state.getBlock();
         if (isVanillaOre(block)) return true;
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+        Identifier id = BuiltInRegistries.BLOCK.getKey(block);
         if (id == null || "minecraft".equals(id.getNamespace())) return false;
         String path = id.getPath();
         return path.endsWith("_ore") || path.contains("_ore_") || path.startsWith("ore_");

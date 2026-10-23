@@ -22,7 +22,7 @@ public final class MystEntities {
                     .sized(0.25F, 0.20F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build(Mystcraft.MOD_ID + ":myst.book"));
+                    .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, net.minecraft.resources.Identifier.parse(Mystcraft.MOD_ID + ":myst.book"))));
 
     public static final Supplier<EntityType<EntityMeteor>> METEOR = ENTITY_TYPES.register(
             "myst.meteor",
@@ -30,7 +30,7 @@ public final class MystEntities {
                     .sized(1.0F, 1.0F)
                     .clientTrackingRange(192)
                     .updateInterval(2)
-                    .build(Mystcraft.MOD_ID + ":myst.meteor"));
+                    .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, net.minecraft.resources.Identifier.parse(Mystcraft.MOD_ID + ":myst.meteor"))));
 
     private MystEntities() {}
 

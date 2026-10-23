@@ -1,34 +1,40 @@
 package com.xcompwiz.mystcraft.mixin.client;
 
 import com.xcompwiz.mystcraft.client.AgeBlockColorHandlers;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Final-result hook for legacy ColorGrass / ColorFoliage.
- *
- * Registration order and model tint-source internals changed substantially after 1.12. Rather
- * than competing with vanilla registrations, alter only the colour that BlockColors has already
- * resolved. Non-target blocks and non-Mystcraft dimensions are returned untouched.
- */
+/** Wrap final vanilla/mod tint sources while retaining their layer and property contracts. */
 @Mixin(BlockColors.class)
 public abstract class BlockColorsMixin {
-    @Inject(
-            method = "getColor(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;I)I",
-            at = @At("RETURN"),
-            cancellable = true
-    )
-    private void mystcraft$finalAgeBlockTint(
-            BlockState state, BlockAndTintGetter level, BlockPos pos, int tintIndex,
-            CallbackInfoReturnable<Integer> cir) {
-        int original = cir.getReturnValue();
-        int resolved = AgeBlockColorHandlers.finalModelTint(state, level, pos, tintIndex, original);
-        if (resolved != original) cir.setReturnValue(resolved);
+    @Unique private static final Map<List<BlockTintSource>, List<BlockTintSource>> mystcraft$wrapped = new WeakHashMap<>();
+
+    @Inject(method = "getTintSources", at = @At("RETURN"), cancellable = true)
+    private void mystcraft$ageTints(BlockState state, CallbackInfoReturnable<List<BlockTintSource>> callback) {
+        if (!AgeBlockColorHandlers.isGrassTintBlock(state) && !AgeBlockColorHandlers.isFoliageTintBlock(state)) return;
+        synchronized (mystcraft$wrapped) {
+            callback.setReturnValue(mystcraft$wrapped.computeIfAbsent(callback.getReturnValue(), sources ->
+                    sources.stream().map(source -> (BlockTintSource) new BlockTintSource() {
+                        public int color(BlockState blockState) { return source.color(blockState); }
+                        public int colorInWorld(BlockState blockState, BlockAndTintGetter level, BlockPos pos) {
+                            int original = source.colorInWorld(blockState, level, pos);
+                            return 0xFF000000 | AgeBlockColorHandlers.finalModelTint(blockState, level, pos, 0, original);
+                        }
+                        public java.util.Set<net.minecraft.world.level.block.state.properties.Property<?>> relevantProperties() {
+                            return source.relevantProperties();
+                        }
+                    }).toList()));
+        }
     }
 }

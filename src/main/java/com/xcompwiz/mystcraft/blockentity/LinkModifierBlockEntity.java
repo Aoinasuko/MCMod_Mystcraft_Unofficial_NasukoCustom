@@ -99,8 +99,8 @@ public final class LinkModifierBlockEntity extends BlockEntity implements Contai
         try { seed = Long.parseLong(seedText); }
         catch (NumberFormatException ignored) { return; }
 
-        if (player instanceof ServerPlayer serverPlayer && serverPlayer.getServer() != null) {
-            var server = serverPlayer.getServer();
+        if (player instanceof ServerPlayer serverPlayer && serverPlayer.level().getServer() != null) {
+            var server = serverPlayer.level().getServer();
             var age = AgeManager.resolveReservation(server, getBook());
             if (age.isPresent()) {
                 age.get().setSeed(seed);
@@ -117,13 +117,13 @@ public final class LinkModifierBlockEntity extends BlockEntity implements Contai
     }
 
     public boolean isLinkDimensionDead(Player player) {
-        if (!hasBook() || !(player instanceof ServerPlayer serverPlayer) || serverPlayer.getServer() == null) return false;
-        return AgeManager.resolveExisting(serverPlayer.getServer(), getBook()).map(a -> a.dead()).orElse(false);
+        if (!hasBook() || !(player instanceof ServerPlayer serverPlayer) || serverPlayer.level().getServer() == null) return false;
+        return AgeManager.resolveExisting(serverPlayer.level().getServer(), getBook()).map(a -> a.dead()).orElse(false);
     }
 
     public void recycleDimension(Player player) {
-        if (!hasBook() || !(player instanceof ServerPlayer serverPlayer) || serverPlayer.getServer() == null) return;
-        var server = serverPlayer.getServer();
+        if (!hasBook() || !(player instanceof ServerPlayer serverPlayer) || serverPlayer.level().getServer() == null) return;
+        var server = serverPlayer.level().getServer();
         AgeManager.resolveExisting(server, getBook()).ifPresent(age -> {
             age.setDead(true);
             AgeRegistryData.get(server).changed();
@@ -163,14 +163,22 @@ public final class LinkModifierBlockEntity extends BlockEntity implements Contai
     @Override public boolean canPlaceItem(int slot, ItemStack stack) { return slot == 0 && isModifiableBook(stack); }
     @Override public void clearContent() { items.set(0, ItemStack.EMPTY); changedAndSync(); }
 
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        items.set(0, ItemStack.parseOptional(registries, tag.getCompound("Book")));
+    @Override protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
+        loadAdditional(input.read(com.mojang.serialization.MapCodec.assumeMapUnsafe(CompoundTag.CODEC)).orElseGet(CompoundTag::new), input.lookup());
+    }
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        items.set(0, com.xcompwiz.mystcraft.data.LegacyNbt.readItem(registries, tag.getCompoundOrEmpty("Book")));
         if (!isModifiableBook(items.getFirst())) items.set(0, ItemStack.EMPTY);
     }
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (!items.getFirst().isEmpty()) tag.put("Book", items.getFirst().saveOptional(registries));
+    @Override protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, level.registryAccess());
+        output.store(tag);
+    }
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        if (!items.getFirst().isEmpty()) tag.put("Book", com.xcompwiz.mystcraft.data.LegacyNbt.writeItem(items.getFirst(), registries));
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return saveWithoutMetadata(registries); }
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }

@@ -1,6 +1,6 @@
 package com.xcompwiz.mystcraft.symbol;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.Objects;
 
 /**
@@ -13,7 +13,7 @@ import java.util.Objects;
 public record SymbolSequenceEntry(
         int index,
         String legacyId,
-        ResourceLocation key,
+        Identifier key,
         SymbolCategory category,
         int occurrence) {
 

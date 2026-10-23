@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class BlockLinkPortal extends Block {
-    public static final MapCodec<BlockLinkPortal> CODEC = simpleCodec(BlockLinkPortal::new);
     /** Normal axis of the single rendered portal plane. */
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
     /** Legacy HAS_ROTATION=false equivalent: render as the full portal cube. */
@@ -44,10 +43,6 @@ public final class BlockLinkPortal extends Block {
         builder.add(AXIS, FULL);
     }
 
-    @Override
-    protected MapCodec<BlockLinkPortal> codec() {
-        return CODEC;
-    }
 
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
@@ -66,7 +61,7 @@ public final class BlockLinkPortal extends Block {
     }
 
     @Override
-    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, net.minecraft.world.entity.InsideBlockEffectApplier effectApplier, boolean precise) {
         if (level instanceof ServerLevel serverLevel && entity != null) {
             tryPortalCollision(serverLevel, pos, entity);
         }
@@ -225,13 +220,13 @@ public final class BlockLinkPortal extends Block {
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, net.minecraft.world.level.redstone.Orientation orientation, boolean movedByPiston) {
         if (level instanceof ServerLevel serverLevel) {
             BlockState renderState = deriveRenderState(level, pos, state);
             if (renderState != state) level.setBlock(pos, renderState, 2);
             CrystalPortalRuntime.validatePortalAt(serverLevel, pos);
         }
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
     }
 
     /** Reimplements legacy getActualState(HAS_ROTATION/RENDER_ROTATION). */

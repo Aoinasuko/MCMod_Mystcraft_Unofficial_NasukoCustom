@@ -5,7 +5,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -33,10 +33,10 @@ public final class AgeFloatingIslandBiomeFinalizer {
             throw new IllegalArgumentException("floating island mask must be 256 columns");
         }
 
-        var biomeRegistry = registries.registryOrThrow(Registries.BIOME);
+        var biomeRegistry = registries.lookupOrThrow(Registries.BIOME);
         String modernId = LegacyModernBiomeIdResolver.resolve(legacyBiomeSymbol);
-        Holder.Reference<Biome> targetBiome = biomeRegistry.getHolderOrThrow(
-                ResourceKey.create(Registries.BIOME, ResourceLocation.parse(modernId)));
+        Holder.Reference<Biome> targetBiome = biomeRegistry.getOrThrow(
+                ResourceKey.create(Registries.BIOME, Identifier.parse(modernId)));
 
         boolean[][] quartXZ = new boolean[4][4];
         for (int z = 0; z < 16; z++) {
@@ -58,9 +58,8 @@ public final class AgeFloatingIslandBiomeFinalizer {
                 mutable = cast;
             } else {
                 mutable = new PalettedContainer<>(
-                        biomeRegistry.asHolderIdMap(),
                         existing.get(0, 0, 0),
-                        PalettedContainer.Strategy.SECTION_BIOMES);
+                        net.minecraft.world.level.chunk.Strategy.createForBiomes(biomeRegistry.asHolderIdMap()));
                 for (int qy = 0; qy < 4; qy++) {
                     for (int qz = 0; qz < 4; qz++) {
                         for (int qx = 0; qx < 4; qx++) {

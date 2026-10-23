@@ -41,7 +41,7 @@ public final class ChunkAccessLegacyBigTreeBuffer implements LegacyBigTreeBuffer
 
     private void fill(int x, int y, int z, BlockState state) {
         for (int worldY = startY(y); worldY <= endY(y); ++worldY) {
-            chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), state, false);
+            chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), state, 0);
         }
     }
 

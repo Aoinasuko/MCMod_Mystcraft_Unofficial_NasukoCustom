@@ -9,14 +9,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
-import net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise;
+import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
 /** Client-side replay of the legacy BiomeWrapperMyst precipitation classification. */
 final class AgeLegacyPrecipitationClimateResolver {
     // Minecraft 1.12 Biome.TEMPERATURE_NOISE = new NoiseGeneratorPerlin(new Random(1234L), 1).
-    // 1.21.1's one-octave PerlinSimplexNoise with LegacyRandomSource preserves that old stream.
-    private static final PerlinSimplexNoise LEGACY_TEMPERATURE_NOISE =
-            new PerlinSimplexNoise(new WorldgenRandom(new LegacyRandomSource(1234L)), List.of(0));
+    // 1.21.1's one-octave SimplexNoise with LegacyRandomSource preserves that old stream.
+    private static final SimplexNoise LEGACY_TEMPERATURE_NOISE =
+            new SimplexNoise(new WorldgenRandom(new LegacyRandomSource(1234L)));
 
     private AgeLegacyPrecipitationClimateResolver() {}
 
@@ -24,7 +24,7 @@ final class AgeLegacyPrecipitationClimateResolver {
         BlockPos pos = new BlockPos(x, y, z);
         Biome biome = level.getBiome(pos).value();
         float controlledBase = plan.temperature(biome.getBaseTemperature());
-        double noise = LEGACY_TEMPERATURE_NOISE.getValue(x / 8.0D, z / 8.0D, false);
+        double noise = LEGACY_TEMPERATURE_NOISE.get(x / 8.0D, z / 8.0D);
         return AgeLegacyBiomeTemperatureMath.adjusted(controlledBase, y, noise);
     }
 
@@ -37,7 +37,7 @@ final class AgeLegacyPrecipitationClimateResolver {
         // longer stores a separate snow flag, so use its base climate at legacy sea-level height
         // only as the default input; forced Rain/Snow/Storm Symbols override both flags anyway.
         BlockPos climateBase = new BlockPos(x, AgeLegacyBiomeTemperatureMath.LEGACY_HEIGHT_THRESHOLD, z);
-        Biome.Precipitation base = biome.getPrecipitationAt(climateBase);
+        Biome.Precipitation base = biome.getPrecipitationAt(climateBase, level.getSeaLevel());
         boolean baseRain = base == Biome.Precipitation.RAIN;
         boolean baseSnow = base == Biome.Precipitation.SNOW;
 

@@ -4,22 +4,20 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.xcompwiz.mystcraft.registry.MystItems;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 /** BEWLR for the legacy Book Stand and Lectern inventory/hand models. */
-public final class DisplayFurnitureItemRenderer extends BlockEntityWithoutLevelRenderer {
+public final class DisplayFurnitureItemRenderer implements SpecialModelRenderer<ItemStack> {
     private final LegacyBookStandBodyRenderer stand = new LegacyBookStandBodyRenderer();
 
     public DisplayFurnitureItemRenderer() {
-        super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
     }
 
-    @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack poseStack,
-                             MultiBufferSource buffers, int packedLight, int packedOverlay) {
+                             SubmitNodeCollector buffers, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         if (stack.is(MystItems.LECTERN_BLOCK.get())) {
             // Same model-space origin as the world TESR, centered into a normal item cube.
@@ -31,7 +29,7 @@ public final class DisplayFurnitureItemRenderer extends BlockEntityWithoutLevelR
         } else {
             // Exact RenderBookstand body basis: center, vertical flip, then yaw.
             poseStack.translate(0.5D, 0.70D, 0.5D);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+            poseStack.rotate(Axis.ZP.rotationDegrees(180.0F));
             // CP274: same as the original OBJ inventory model: GUI rotation is
             // supplied by the item model, while this renderer only supplies the
             // legacy TESR body basis.  The old extra 45 degrees made the arms read
@@ -39,5 +37,29 @@ public final class DisplayFurnitureItemRenderer extends BlockEntityWithoutLevelR
             stand.render(poseStack, buffers, packedLight);
         }
         poseStack.popPose();
+    }
+
+    @Override
+    public ItemStack extractArgument(ItemStack stack) { return stack.copy(); }
+
+    @Override
+    public void submit(ItemStack stack, PoseStack poseStack, SubmitNodeCollector collector,
+                       int lightCoords, int overlayCoords, boolean foil, int outlineColor) {
+        renderByItem(stack, ItemDisplayContext.FIXED, poseStack, collector, lightCoords, overlayCoords);
+    }
+
+    @Override
+    public void getExtents(java.util.function.Consumer<org.joml.Vector3fc> output) {
+        output.accept(new org.joml.Vector3f(0, 0, 0));
+        output.accept(new org.joml.Vector3f(1, 1, 1));
+    }
+
+    public record Unbaked() implements SpecialModelRenderer.Unbaked<ItemStack> {
+        public static final com.mojang.serialization.MapCodec<Unbaked> CODEC =
+                com.mojang.serialization.MapCodec.unit(new Unbaked());
+        @Override public com.mojang.serialization.MapCodec<Unbaked> type() { return CODEC; }
+        @Override public SpecialModelRenderer<ItemStack> bake(SpecialModelRenderer.BakingContext context) {
+            return new DisplayFurnitureItemRenderer();
+        }
     }
 }

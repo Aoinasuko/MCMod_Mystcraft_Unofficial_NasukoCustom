@@ -17,7 +17,7 @@ public final class AgePvPRuntimeEvents {
     public static void onIncomingDamage(LivingIncomingDamageEvent event) {
         if (!(event.getEntity() instanceof Player victim)) return;
         if (!(victim.level() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
 
         // DamageSource#getEntity resolves the responsible owner for indirect attacks
         // (for example an arrow's shooter), matching legacy PvP intent better than only

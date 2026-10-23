@@ -23,7 +23,7 @@ public final class LegacyInstabilityEnvironmentalRuntimeEvents {
     @SubscribeEvent
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!Mystcraft.MOD_ID.equals(level.dimension().location().getNamespace())) return;
+        if (!Mystcraft.MOD_ID.equals(level.dimension().identifier().getNamespace())) return;
 
         var runtimeOptional = LegacyInstabilityRuntimeSnapshot.resolve(level);
         if (runtimeOptional.isEmpty()) return;
@@ -54,7 +54,7 @@ public final class LegacyInstabilityEnvironmentalRuntimeEvents {
     private static void refreshEffectStateIfPlanChanged(
             ServerLevel level,
             Map<String, Integer> providerLevels) {
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         String signature = environmentalSignature(providerLevels);
         String previous = PLAN_SIGNATURES.put(dimension, signature);
         if (previous != null && !previous.equals(signature)) {
@@ -83,7 +83,7 @@ public final class LegacyInstabilityEnvironmentalRuntimeEvents {
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
         LegacyInstabilityRuntimeSnapshot.clear(level);
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         LegacyInstabilityEnvironmentalRuntimeState.clearDimension(level);
         LegacyInstabilityRuntimeRandom.clearDimension(level);
         LegacyInstabilityActiveChunkCache.clear(level);

@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /** Client -> server action for the legacy Book Binder page slider. */
 public record BinderPageActionPayload(int containerId, int action, int index, boolean single)
@@ -14,7 +14,7 @@ public record BinderPageActionPayload(int containerId, int action, int index, bo
     public static final int REMOVE = 1;
 
     public static final Type<BinderPageActionPayload> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "binder_page_action"));
+            Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "binder_page_action"));
 
     public static final StreamCodec<ByteBuf, BinderPageActionPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, BinderPageActionPayload::containerId,

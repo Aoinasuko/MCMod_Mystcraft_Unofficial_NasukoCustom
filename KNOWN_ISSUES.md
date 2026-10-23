@@ -1,3 +1,15 @@
+# NasukoCustom 26.3 Compatibility Notes
+
+This build targets Minecraft 26.3 and NeoForge 26.3.0.95. Old 1.21.1 worlds are not a validated upgrade path; use a separate 26.3 world.
+The modern terrain pipeline differs from Minecraft 1.12.2: terrain-altering symbols run before decoration using the 26.3 feature stage, and terrain and structure layouts are not bit-for-bit Legacy reproductions.
+Bright/Dark lighting uses the 26.3 lightmap's factors/ambient contribution. Its torch-color response can differ from Legacy's brightness table.
+JEI is optional and compiles against 31.16.0.89; an installed full JEI runtime and interactions with large modpacks have not been validated.
+Runtime tests cover representative Age lifecycle, six terrain modes, ink transactions, persistence, book travel and several client screens; they do not exhaust every Symbol, Instability effect, portal vehicle combination or third-party interaction.
+
+The following known issues were inherited from the upstream 1.21.1 port and remain reference material unless superseded above.
+
+---
+
 # Known Issues and Compatibility Limitations
 
 Applies to **Mystcraft Legacy — Unofficial Minecraft 1.21.1 / NeoForge Port** release `0.13.7.06-port.1.0.0-Ueno`.

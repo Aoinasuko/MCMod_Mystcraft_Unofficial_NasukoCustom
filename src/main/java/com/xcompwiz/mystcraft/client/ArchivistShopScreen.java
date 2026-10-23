@@ -4,7 +4,7 @@ import com.xcompwiz.mystcraft.inventory.ArchivistShopMenu;
 import com.xcompwiz.mystcraft.item.ItemPage;
 import com.xcompwiz.mystcraft.page.Page;
 import com.xcompwiz.mystcraft.registry.MystItems;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -44,9 +44,7 @@ public final class ArchivistShopScreen extends AbstractContainerScreen<Archivist
     private final Button[] buyButtons = new Button[4];
 
     public ArchivistShopScreen(ArchivistShopMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        imageWidth = 236;
-        imageHeight = 214;
+        super(menu, inventory, title, 236, 214);
         inventoryLabelX = 37;
         inventoryLabelY = 116;
         titleLabelY = -1000; // title is rendered explicitly in the modern header
@@ -88,7 +86,7 @@ public final class ArchivistShopScreen extends AbstractContainerScreen<Archivist
     }
 
     @Override
-    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int x0 = leftPos;
         int y0 = topPos;
 
@@ -119,18 +117,18 @@ public final class ArchivistShopScreen extends AbstractContainerScreen<Archivist
         }
     }
 
-    private static void drawSlotFrame(GuiGraphics graphics, int x, int y) {
+    private static void drawSlotFrame(GuiGraphicsExtractor graphics, int x, int y) {
         graphics.fill(x - 1, y - 1, x + 17, y + 17, SLOT_DARK);
         graphics.fill(x, y, x + 16, y + 16, SLOT_LIGHT);
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         // Header. The shop's emerald-block-as-change behavior is unchanged; this is the
         // synchronized emerald-equivalent value used by the original custom shop.
-        graphics.drawString(font, title, 9, 8, TEXT, false);
+        graphics.text(font, title, 9, 8, TEXT, false);
         Component emeralds = Component.translatable("gui.mystcraft.archivist.emeralds", menu.getEmeraldValue());
-        graphics.drawString(font, emeralds, imageWidth - 9 - font.width(emeralds), 8, EMERALD_TEXT, false);
+        graphics.text(font, emeralds, imageWidth - 9 - font.width(emeralds), 8, EMERALD_TEXT, false);
 
         for (int column = 0; column < OFFER_ORDER.length; ++column) {
             int index = OFFER_ORDER[column];
@@ -138,14 +136,14 @@ public final class ArchivistShopScreen extends AbstractContainerScreen<Archivist
             ItemStack stack = menu.getDisplayItem(index);
             String name = getOfferName(index, stack);
             name = trim(name, CARD_W - 6);
-            graphics.drawString(font, name, cx + (CARD_W - font.width(name)) / 2, 58, TEXT, false);
+            graphics.text(font, name, cx + (CARD_W - font.width(name)) / 2, 58, TEXT, false);
 
             // Match the original visual language: emerald icon immediately beside the price.
-            graphics.renderItem(new ItemStack(Items.EMERALD), cx + 6, 68);
-            graphics.drawString(font, Integer.toString(menu.getPrice(index)), cx + 24, 72, EMERALD_TEXT, false);
+            graphics.item(new ItemStack(Items.EMERALD), cx + 6, 68);
+            graphics.text(font, Integer.toString(menu.getPrice(index)), cx + 24, 72, EMERALD_TEXT, false);
         }
 
-        graphics.drawString(font, Component.translatable("container.inventory"), inventoryLabelX, inventoryLabelY, TEXT, false);
+        graphics.text(font, Component.translatable("container.inventory"), inventoryLabelX, inventoryLabelY, TEXT, false);
     }
 
     private String getOfferName(int index, ItemStack stack) {
@@ -167,16 +165,16 @@ public final class ArchivistShopScreen extends AbstractContainerScreen<Archivist
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
-        super.render(graphics, mouseX, mouseY, partialTick);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        extractBackground(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         Component buy = Component.translatable("gui.mystcraft.archivist.buy");
         for (Button button : buyButtons) {
             if (button == null || !button.visible) continue;
             int x = button.getX() + (button.getWidth() - font.width(buy)) / 2;
             int y = button.getY() + (button.getHeight() - 8) / 2;
-            graphics.drawString(font, buy, x, y, button.active ? TEXT : 0x707070, false);
+            graphics.text(font, buy, x, y, button.active ? TEXT : 0xFF707070, false);
         }
-        renderTooltip(graphics, mouseX, mouseY);
+        extractTooltip(graphics, mouseX, mouseY);
     }
 }

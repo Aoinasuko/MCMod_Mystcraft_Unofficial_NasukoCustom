@@ -122,7 +122,7 @@ final class AgeLegacyStrongholdRingInstaller {
                 BIOME_SEARCH_RADIUS,
                 preferred::contains,
                 random,
-                state.randomState().sampler());
+                state.randomState());
         if (pair == null) return null;
         BlockPos pos = pair.getFirst();
         return new ChunkPos(

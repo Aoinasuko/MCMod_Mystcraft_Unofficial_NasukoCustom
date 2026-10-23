@@ -2,11 +2,11 @@ package com.xcompwiz.mystcraft.world.dimension;
 
 import com.xcompwiz.mystcraft.world.agedata.AgeRecord;
 import com.xcompwiz.mystcraft.world.worldgen.AgeWorldgenPlanner;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.progress.ChunkProgressListener;
+
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -88,7 +88,7 @@ public final class AgeRuntimeServerLevelInstaller {
 
         ServerLevel overworld = server.overworld();
         ServerLevelData overworldData = server.getWorldData().overworldData();
-        BlockPos fallbackSpawn = overworld.getSharedSpawnPos();
+        BlockPos fallbackSpawn = overworld.getRespawnData().pos();
         MystcraftAgeLevelData levelData = new MystcraftAgeLevelData(
                 server.getWorldData(), overworldData, age, fallbackSpawn);
 
@@ -113,12 +113,10 @@ public final class AgeRuntimeServerLevelInstaller {
                 levelData,
                 definition.levelKey(),
                 prepared.levelStem(),
-                NoOpChunkProgressListener.INSTANCE,
                 server.getWorldData().isDebugWorld(),
                 biomeZoomSeed,
                 List.of(),
                 true,
-                overworld.getRandomSequences(),
                 age.seed());
 
         // ServerLevel/ChunkMap normally derive noise/structure seeds from the server-wide
@@ -137,7 +135,7 @@ public final class AgeRuntimeServerLevelInstaller {
         AgeLegacyStructurePlacementRuntime.install(level, age.seed());
 
         Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>, ServerLevel> levels =
-                server.forgeGetWorldMap();
+                server.levels;
         synchronized (server) {
             ServerLevel raced = levels.get(definition.levelKey());
             if (raced != null) {
@@ -150,7 +148,7 @@ public final class AgeRuntimeServerLevelInstaller {
                 return new InstallResult(Status.ALREADY_LOADED, definition, raced);
             }
             levels.put(definition.levelKey(), level);
-            server.markWorldsDirty();
+
         }
 
         // Legacy Mystcraft resolves and persists an Age spawn the first time the
@@ -184,7 +182,7 @@ public final class AgeRuntimeServerLevelInstaller {
             synchronized (server) {
                 if (levels.get(definition.levelKey()) == level) {
                     levels.remove(definition.levelKey());
-                    server.markWorldsDirty();
+
                 }
             }
             if (loadPosted) {
@@ -215,20 +213,4 @@ public final class AgeRuntimeServerLevelInstaller {
                 && a.seed() == b.seed();
     }
 
-    /** Minimal progress listener for dimensions created after startup. */
-    private enum NoOpChunkProgressListener implements ChunkProgressListener {
-        INSTANCE;
-
-        @Override
-        public void updateSpawnPos(ChunkPos center) {}
-
-        @Override
-        public void onStatusChange(ChunkPos pos, ChunkStatus status) {}
-
-        @Override
-        public void start() {}
-
-        @Override
-        public void stop() {}
-    }
 }

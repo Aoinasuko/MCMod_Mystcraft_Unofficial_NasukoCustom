@@ -26,8 +26,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
+import com.xcompwiz.mystcraft.fluid.FluidContainerAccess;
+
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -62,7 +62,7 @@ public final class InkMixerBlockEntity extends BlockEntity implements Container,
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, InkMixerBlockEntity mixer) {
-        if (!level.isClientSide) mixer.tryFillBasinFromInput();
+        if (!level.isClientSide()) mixer.tryFillBasinFromInput();
     }
 
     public boolean hasInk() { return hasInk; }
@@ -145,7 +145,7 @@ public final class InkMixerBlockEntity extends BlockEntity implements Container,
         if (input.isEmpty()) return;
 
         ItemStack single = input.copyWithCount(1);
-        IFluidHandlerItem handler = single.getCapability(Capabilities.FluidHandler.ITEM);
+        FluidContainerAccess handler = FluidContainerAccess.of(single);
         if (handler == null) return;
 
         FluidStack selected = FluidStack.EMPTY;
@@ -153,7 +153,7 @@ public final class InkMixerBlockEntity extends BlockEntity implements Container,
             FluidStack contained = handler.getFluidInTank(tank);
             if (contained.isEmpty() || contained.getAmount() != BASIN_VOLUME) continue;
             if (!isValidInk(contained)) continue;
-            FluidStack simulated = handler.drain(contained.copy(), IFluidHandler.FluidAction.SIMULATE);
+            FluidStack simulated = handler.drain(contained.copy(), FluidContainerAccess.FluidAction.SIMULATE);
             if (!simulated.isEmpty() && simulated.getAmount() == BASIN_VOLUME) {
                 selected = contained.copy();
                 break;
@@ -161,7 +161,7 @@ public final class InkMixerBlockEntity extends BlockEntity implements Container,
         }
         if (selected.isEmpty()) return;
 
-        FluidStack drained = handler.drain(selected, IFluidHandler.FluidAction.EXECUTE);
+        FluidStack drained = handler.drain(selected, FluidContainerAccess.FluidAction.EXECUTE);
         if (drained.isEmpty() || drained.getAmount() != BASIN_VOLUME) return;
         ItemStack emptyContainer = handler.getContainer().copy();
         if (!canMergeOutput(emptyContainer)) return;
@@ -230,7 +230,7 @@ public final class InkMixerBlockEntity extends BlockEntity implements Container,
         if (slot == SLOT_CONTAINER_OUTPUT) return false;
         if (slot != SLOT_INK_INPUT || stack.isEmpty()) return false;
         ItemStack single = stack.copyWithCount(1);
-        IFluidHandlerItem handler = single.getCapability(Capabilities.FluidHandler.ITEM);
+        FluidContainerAccess handler = FluidContainerAccess.of(single);
         if (handler == null) return false;
         for (int tank = 0; tank < handler.getTanks(); tank++) {
             FluidStack fluid = handler.getFluidInTank(tank);
@@ -251,26 +251,37 @@ public final class InkMixerBlockEntity extends BlockEntity implements Container,
     @Override public void clearContent() { items.clear(); setChanged(); }
 
     @Override
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
+        loadAdditional(input.read(com.mojang.serialization.MapCodec.assumeMapUnsafe(CompoundTag.CODEC))
+                .orElseGet(CompoundTag::new), input.lookup());
+    }
+
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
         items.clear();
-        ContainerHelper.loadAllItems(tag, items, registries);
-        hasInk = tag.getBoolean("ink");
+        ContainerHelper.loadAllItems(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, registries, tag), items);
+        hasInk = tag.getBoolean("ink").orElse(false);
         inkProbabilities.clear();
-        if (tag.contains("probabilities", Tag.TAG_COMPOUND)) {
-            CompoundTag probabilities = tag.getCompound("probabilities");
-            for (String key : probabilities.getAllKeys()) {
-                if (probabilities.contains(key, Tag.TAG_FLOAT)) inkProbabilities.put(key, probabilities.getFloat(key));
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "probabilities", Tag.TAG_COMPOUND)) {
+            CompoundTag probabilities = tag.getCompoundOrEmpty("probabilities");
+            for (String key : probabilities.keySet()) {
+                if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(probabilities, key, Tag.TAG_FLOAT)) inkProbabilities.put(key, probabilities.getFloat(key).orElse(0.0F));
             }
         }
         // Legacy did not persist next_seed. Preserve that quirk for existing worlds.
-        if (tag.contains("next_seed", Tag.TAG_LONG)) nextSeed = tag.getLong("next_seed");
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "next_seed", Tag.TAG_LONG)) nextSeed = tag.getLong("next_seed").orElse(0L);
     }
 
     @Override
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, level.registryAccess());
+        output.store(tag);
+    }
+
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, items, registries);
+        com.xcompwiz.mystcraft.data.LegacyInventoryNbt.save(tag, items, registries);
         tag.putBoolean("ink", hasInk);
         CompoundTag probabilities = new CompoundTag();
         inkProbabilities.forEach(probabilities::putFloat);

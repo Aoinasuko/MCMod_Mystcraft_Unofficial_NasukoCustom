@@ -76,7 +76,7 @@ final class AgeStarFissurePopulationBridge {
     }
 
     private static boolean isSpawnChunk(ServerLevel level, int chunkBlockX, int chunkBlockZ) {
-        BlockPos spawn = level.getSharedSpawnPos();
+        BlockPos spawn = level.getRespawnData().pos();
         return Math.floorDiv(spawn.getX(), 16) * 16 == chunkBlockX
                 && Math.floorDiv(spawn.getZ(), 16) * 16 == chunkBlockZ;
     }

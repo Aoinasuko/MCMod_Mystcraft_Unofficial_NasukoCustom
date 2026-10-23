@@ -30,8 +30,8 @@ public final class AgeRespawnEvents {
         if (!(event.getEntity() instanceof ServerPlayer replacement)) return;
 
         ResourceKey<Level> dimension = original.level().dimension();
-        if (!Mystcraft.MOD_ID.equals(dimension.location().getNamespace())) return;
-        MinecraftServer server = original.getServer();
+        if (!Mystcraft.MOD_ID.equals(dimension.identifier().getNamespace())) return;
+        MinecraftServer server = original.level().getServer();
         if (server == null) return;
 
         // Only retain dimensions backed by a live persisted Age record. This avoids
@@ -46,7 +46,7 @@ public final class AgeRespawnEvents {
         ResourceKey<Level> dimension = PENDING_AGE_RESPAWNS.remove(player.getUUID());
         if (dimension == null) return;
 
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         if (server == null) return;
         ServerLevel target = server.getLevel(dimension);
         if (target == null) {
@@ -63,12 +63,12 @@ public final class AgeRespawnEvents {
                 target = installed.level();
             } catch (RuntimeException failure) {
                 Mystcraft.LOGGER.error("Failed to prepare/install Age respawn target {}",
-                        dimension.location(), failure);
+                        dimension.identifier(), failure);
                 return;
             }
         }
 
-        var spawn = target.getSharedSpawnPos();
+        var spawn = target.getRespawnData().pos();
         player.teleportTo(
                 target,
                 spawn.getX() + 0.5D,
@@ -76,7 +76,7 @@ public final class AgeRespawnEvents {
                 spawn.getZ() + 0.5D,
                 java.util.Collections.emptySet(),
                 player.getYRot(),
-                player.getXRot());
+                player.getXRot(), true);
     }
 
     @SubscribeEvent

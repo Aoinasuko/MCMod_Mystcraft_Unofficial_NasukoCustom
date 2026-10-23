@@ -1,6 +1,6 @@
 package com.xcompwiz.mystcraft.symbol;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +30,7 @@ public final class SymbolAnalyzer {
                             : null;
 
             String identity;
-            ResourceLocation key = null;
+            Identifier key = null;
             SymbolCategory category = null;
             if (definition != null) {
                 key = definition.key();

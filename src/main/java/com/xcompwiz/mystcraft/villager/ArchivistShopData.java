@@ -9,7 +9,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -139,7 +139,7 @@ public final class ArchivistShopData {
 
     public static int countEmeraldValue(ServerPlayer player) {
         int total = 0;
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : java.util.stream.IntStream.range(0, 36).mapToObj(player.getInventory()::getItem).toList()) {
             if (stack.is(Items.EMERALD)) total += stack.getCount();
             else if (stack.is(Items.EMERALD_BLOCK)) total += 9 * stack.getCount();
         }
@@ -162,18 +162,18 @@ public final class ArchivistShopData {
         int blocks = (remaining + 8) / 9;
         if (countItem(player, Items.EMERALD_BLOCK) < blocks) {
             // Restore the loose emeralds already taken.
-            if (useLoose > 0) player.getInventory().placeItemBackInInventory(new ItemStack(Items.EMERALD, useLoose));
+            if (useLoose > 0) player.getInventory().placeItemBackInInventory(new ItemStack(Items.EMERALD, useLoose), net.minecraft.util.Prediction.SERVER_ONLY);
             return false;
         }
         removeItem(player, Items.EMERALD_BLOCK, blocks);
         int change = blocks * 9 - remaining;
-        if (change > 0) player.getInventory().placeItemBackInInventory(new ItemStack(Items.EMERALD, change));
+        if (change > 0) player.getInventory().placeItemBackInInventory(new ItemStack(Items.EMERALD, change), net.minecraft.util.Prediction.SERVER_ONLY);
         return true;
     }
 
     private static int countItem(ServerPlayer player, net.minecraft.world.item.Item item) {
         int total = 0;
-        for (ItemStack stack : player.getInventory().items) if (stack.is(item)) total += stack.getCount();
+        for (ItemStack stack : java.util.stream.IntStream.range(0, 36).mapToObj(player.getInventory()::getItem).toList()) if (stack.is(item)) total += stack.getCount();
         return total;
     }
 
@@ -201,26 +201,26 @@ public final class ArchivistShopData {
 
     private void load() {
         CompoundTag persistent = villager.getPersistentData();
-        CompoundTag root = persistent.contains(ROOT, Tag.TAG_COMPOUND) ? persistent.getCompound(ROOT) : new CompoundTag();
-        CompoundTag trade = root.contains(TRADE, Tag.TAG_COMPOUND) ? root.getCompound(TRADE) : new CompoundTag();
+        CompoundTag root = com.xcompwiz.mystcraft.data.LegacyNbt.contains(persistent, ROOT, Tag.TAG_COMPOUND) ? persistent.getCompoundOrEmpty(ROOT) : new CompoundTag();
+        CompoundTag trade = com.xcompwiz.mystcraft.data.LegacyNbt.contains(root, TRADE, Tag.TAG_COMPOUND) ? root.getCompoundOrEmpty(TRADE) : new CompoundTag();
         HolderLookup.Provider registries = villager.registryAccess();
 
-        ListTag items = trade.getList(INVENTORY, Tag.TAG_COMPOUND);
+        ListTag items = trade.getListOrEmpty(INVENTORY);
         for (int i = 0; i < pageItems.length && i < items.size(); ++i) {
-            pageItems[i] = ItemStack.parseOptional(registries, items.getCompound(i));
+            pageItems[i] = com.xcompwiz.mystcraft.data.LegacyNbt.readItem(registries, items.getCompoundOrEmpty(i));
         }
-        if (trade.contains(BOOSTER_COUNT, Tag.TAG_INT)) boosterCount = trade.getInt(BOOSTER_COUNT);
-        if (trade.contains(LAST_RESTOCK, Tag.TAG_LONG)) lastRestock = trade.getLong(LAST_RESTOCK);
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(trade, BOOSTER_COUNT, Tag.TAG_INT)) boosterCount = trade.getInt(BOOSTER_COUNT).orElse(0);
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(trade, LAST_RESTOCK, Tag.TAG_LONG)) lastRestock = trade.getLong(LAST_RESTOCK).orElse(0L);
     }
 
     public void saveIfDirty() {
         if (!dirty || villager.level().isClientSide()) return;
         CompoundTag persistent = villager.getPersistentData();
-        CompoundTag root = persistent.contains(ROOT, Tag.TAG_COMPOUND) ? persistent.getCompound(ROOT) : new CompoundTag();
+        CompoundTag root = com.xcompwiz.mystcraft.data.LegacyNbt.contains(persistent, ROOT, Tag.TAG_COMPOUND) ? persistent.getCompoundOrEmpty(ROOT) : new CompoundTag();
         CompoundTag trade = new CompoundTag();
         ListTag items = new ListTag();
         HolderLookup.Provider registries = villager.registryAccess();
-        for (ItemStack page : pageItems) items.add(page.saveOptional(registries));
+        for (ItemStack page : pageItems) items.add(com.xcompwiz.mystcraft.data.LegacyNbt.writeItem(page, registries));
         trade.put(INVENTORY, items);
         trade.putInt(BOOSTER_COUNT, boosterCount);
         trade.putLong(LAST_RESTOCK, lastRestock);

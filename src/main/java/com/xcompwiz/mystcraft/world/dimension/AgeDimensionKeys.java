@@ -3,7 +3,7 @@ package com.xcompwiz.mystcraft.world.dimension;
 import com.xcompwiz.mystcraft.Mystcraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
@@ -19,14 +19,14 @@ import net.minecraft.world.level.dimension.LevelStem;
 public final class AgeDimensionKeys {
     private AgeDimensionKeys() {}
 
-    public static final ResourceLocation AGE_DIMENSION_TYPE_ID =
-            ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "age");
+    public static final Identifier AGE_DIMENSION_TYPE_ID =
+            Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "age");
     public static final ResourceKey<DimensionType> AGE_DIMENSION_TYPE =
             ResourceKey.create(Registries.DIMENSION_TYPE, AGE_DIMENSION_TYPE_ID);
 
-    public static ResourceLocation levelLocation(int ageUid) {
+    public static Identifier levelLocation(int ageUid) {
         requireValidUid(ageUid);
-        return ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "age_" + ageUid);
+        return Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "age_" + ageUid);
     }
 
     public static ResourceKey<Level> levelKey(int ageUid) {

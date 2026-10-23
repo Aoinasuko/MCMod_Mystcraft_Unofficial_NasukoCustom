@@ -2,54 +2,54 @@ package com.xcompwiz.mystcraft.fluid;
 
 import com.xcompwiz.mystcraft.blockentity.WritingDeskBlockEntity;
 import com.xcompwiz.mystcraft.registry.MystFluids;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.TransferPreconditions;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
-/** External NeoForge fluid capability view for the Writing Desk inkwell. */
-public final class WritingDeskInkHandler implements IFluidHandler {
+/** Transactional external view of the Writing Desk inkwell. */
+public final class WritingDeskInkHandler extends SnapshotJournal<Integer> implements ResourceHandler<FluidResource> {
     private final WritingDeskBlockEntity desk;
-
-    public WritingDeskInkHandler(WritingDeskBlockEntity desk) {
-        this.desk = desk;
+    public WritingDeskInkHandler(WritingDeskBlockEntity desk) { this.desk = desk; }
+    private static void checkIndex(int index) { java.util.Objects.checkIndex(index, 1); }
+    @Override public int size() { return 1; }
+    @Override public FluidResource getResource(int index) {
+        checkIndex(index);
+        return desk.inkAmount() == 0 ? FluidResource.EMPTY : FluidResource.of(MystFluids.BLACK_INK.get());
     }
-
-    @Override
-    public int getTanks() {
-        return 1;
+    @Override public long getAmountAsLong(int index) { checkIndex(index); return desk.inkAmount(); }
+    @Override public boolean isValid(int index, FluidResource resource) {
+        checkIndex(index);
+        return resource.is(MystFluids.BLACK_INK.get());
     }
-
-    @Override
-    public FluidStack getFluidInTank(int tank) {
-        if (tank != 0 || desk.inkAmount() <= 0) return FluidStack.EMPTY;
-        return new FluidStack(MystFluids.BLACK_INK.get(), desk.inkAmount());
+    @Override public long getCapacityAsLong(int index, FluidResource resource) {
+        checkIndex(index);
+        return resource.isEmpty() || isValid(index, resource) ? WritingDeskBlockEntity.CAPACITY : 0;
     }
-
-    @Override
-    public int getTankCapacity(int tank) {
-        return tank == 0 ? WritingDeskBlockEntity.CAPACITY : 0;
+    @Override public int insert(int index, FluidResource resource, int amount, TransactionContext transaction) {
+        checkIndex(index);
+        TransferPreconditions.checkNonEmptyNonNegative(resource, amount);
+        if (!isValid(index, resource)) return 0;
+        int accepted = Math.min(amount, WritingDeskBlockEntity.CAPACITY - desk.inkAmount());
+        if (accepted > 0) {
+            updateSnapshots(transaction);
+            desk.setInkAmountInTransaction(desk.inkAmount() + accepted);
+        }
+        return accepted;
     }
-
-    @Override
-    public boolean isFluidValid(int tank, FluidStack stack) {
-        return tank == 0 && !stack.isEmpty() && stack.is(MystFluids.BLACK_INK.get());
+    @Override public int extract(int index, FluidResource resource, int amount, TransactionContext transaction) {
+        checkIndex(index);
+        TransferPreconditions.checkNonEmptyNonNegative(resource, amount);
+        if (!isValid(index, resource)) return 0;
+        int extracted = Math.min(amount, desk.inkAmount());
+        if (extracted > 0) {
+            updateSnapshots(transaction);
+            desk.setInkAmountInTransaction(desk.inkAmount() - extracted);
+        }
+        return extracted;
     }
-
-    @Override
-    public int fill(FluidStack resource, FluidAction action) {
-        if (!isFluidValid(0, resource)) return 0;
-        return desk.fillInk(resource.getAmount(), action.execute());
-    }
-
-    @Override
-    public FluidStack drain(FluidStack resource, FluidAction action) {
-        if (resource.isEmpty() || !resource.is(MystFluids.BLACK_INK.get())) return FluidStack.EMPTY;
-        int drained = desk.drainInk(resource.getAmount(), action.execute());
-        return drained <= 0 ? FluidStack.EMPTY : new FluidStack(MystFluids.BLACK_INK.get(), drained);
-    }
-
-    @Override
-    public FluidStack drain(int maxDrain, FluidAction action) {
-        int drained = desk.drainInk(maxDrain, action.execute());
-        return drained <= 0 ? FluidStack.EMPTY : new FluidStack(MystFluids.BLACK_INK.get(), drained);
-    }
+    @Override protected Integer createSnapshot() { return desk.inkAmount(); }
+    @Override protected void revertToSnapshot(Integer amount) { desk.setInkAmountInTransaction(amount); }
+    @Override protected void onRootCommit(Integer previous) { desk.setChanged(); }
 }

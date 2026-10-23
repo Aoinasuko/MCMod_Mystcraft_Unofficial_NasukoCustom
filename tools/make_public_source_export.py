@@ -4,9 +4,9 @@ from pathlib import Path
 import re, sys, zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT.parent / "Mystcraft_Legacy_public_source.zip"
-EXCLUDE_DIRS = {".gradle", "build", "run", "runs", "logs", "crash-reports", ".idea", ".vscode", "__pycache__"}
-EXCLUDE_PATH_PREFIXES = {("docs",), ("tools", "harness")}
+OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT.parent / "Mystcraft_NasukoCustom_0.1.0_source.zip"
+EXCLUDE_DIRS = {".git", ".jt", ".gradle", "build", "run", "runs", "logs", "crash-reports", ".idea", ".vscode", "__pycache__"}
+EXCLUDE_PATH_PREFIXES = {("Docs",), ("docs",), ("tools", "harness")}
 EXCLUDE_ROOT_DOC_PREFIXES = (
     "CHECKPOINT_", "PRE_AUDIT_", "STAGE1", "MYSTCRAFT_HANDOFF_",
     "I83_", "I89_", "I90_", "I92_", "I95_", "I96_", "I98_", "I99_", "I100_", "I104_", "I108_",
@@ -48,5 +48,5 @@ files = [p for p in ROOT.rglob("*") if p.is_file() and allowed(p.relative_to(ROO
 OUT.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(OUT, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for p in sorted(files):
-        z.write(p, Path("Mystcraft-Legacy-1.21.1") / p.relative_to(ROOT))
+        z.write(p, Path("Mystcraft-NasukoCustom-26.3") / p.relative_to(ROOT))
 print(f"wrote {OUT} ({len(files)} files)")

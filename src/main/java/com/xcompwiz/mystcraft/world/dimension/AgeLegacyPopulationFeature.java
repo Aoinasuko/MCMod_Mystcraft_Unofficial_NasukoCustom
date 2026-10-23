@@ -5,7 +5,7 @@ import com.xcompwiz.mystcraft.api.event.DenseOresEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.RandomizableContainer;
 import net.minecraft.world.entity.EntityType;
@@ -20,29 +20,28 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+
+
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.material.FluidState;
 
 /** Runtime-only legacy Mystcraft population feature with per-Age material binding. */
-public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfiguration> {
+public final class AgeLegacyPopulationFeature implements Feature {
     private final AgeFeatureKind kind;
     private final BlockState material;
     private final int densePages;
     private static final EntityType<?>[] LEGACY_DUNGEON_MOBS = {
-            EntityType.SKELETON, EntityType.ZOMBIE, EntityType.ZOMBIE, EntityType.SPIDER
+            net.minecraft.world.entity.EntityTypes.SKELETON, net.minecraft.world.entity.EntityTypes.ZOMBIE, net.minecraft.world.entity.EntityTypes.ZOMBIE, net.minecraft.world.entity.EntityTypes.SPIDER
     };
 
     public AgeLegacyPopulationFeature(AgeFeatureKind kind, String blockId) { this(kind, blockId, 1); }
 
     public AgeLegacyPopulationFeature(AgeFeatureKind kind, String blockId, int densePages) {
-        super(NoneFeatureConfiguration.CODEC);
         this.kind = kind;
         this.densePages = kind == AgeFeatureKind.DENSE_ORES ? Math.max(0, densePages) : 0;
-        ResourceLocation id = ResourceLocation.parse(blockId);
-        var block = BuiltInRegistries.BLOCK.get(id);
+        Identifier id = Identifier.parse(blockId);
+        var block = BuiltInRegistries.BLOCK.getValue(id);
         this.material = (block == null ? Blocks.AIR : block).defaultBlockState();
     }
 
@@ -51,7 +50,18 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+    public com.mojang.serialization.MapCodec<? extends Feature> codec() {
+        return com.mojang.serialization.MapCodec.unit(this);
+    }
+
+    @Override
+    public boolean place(net.minecraft.world.level.WorldGenLevel level,
+                         net.minecraft.world.level.chunk.ChunkGenerator generator,
+                         net.minecraft.util.RandomSource random, net.minecraft.core.BlockPos origin) {
+        return place(new AgeFeatureContext(level, generator, random, origin));
+    }
+
+    public boolean place(AgeFeatureContext context) {
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
@@ -74,13 +84,13 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
      * Direct Mystcraft 0.13.7.06 / Minecraft 1.12 WorldGenDungeons population port.
      * SymbolDungeons performs exactly eight room-generation attempts per populated chunk.
      */
-    private boolean placeDungeons(FeaturePlaceContext<NoneFeatureConfiguration> parent, int chunkX, int chunkZ) {
+    private boolean placeDungeons(AgeFeatureContext parent, int chunkX, int chunkZ) {
         RandomSource random = parent.random();
         boolean placed = false;
         for (int attempt = 0; attempt < 8; ++attempt) {
             int x = chunkX + random.nextInt(16) + 8;
-            int minY = parent.level().getMinBuildHeight() + 1;
-            int maxY = parent.level().getMaxBuildHeight() - 5;
+            int minY = parent.level().getMinY() + 1;
+            int maxY = parent.level().getMaxY() + 1 - 5;
             int y = minY + random.nextInt(Math.max(1, maxY - minY));
             int z = chunkZ + random.nextInt(16) + 8;
             placed |= generateLegacyDungeon(parent.level(), random, new BlockPos(x, y, z));
@@ -190,7 +200,7 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
             }
         }
 
-        int maxY = level.getMaxBuildHeight();
+        int maxY = level.getMaxY() + 1;
         for (int px = x - width; px <= x + width; ++px) {
             for (int pz = z - width; pz <= z + width; ++pz) {
                 int localMax = y + random.nextInt(random.nextInt(height) + 1) + 1;
@@ -258,8 +268,8 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
     }
 
     private BlockPos findCrystalBase(WorldGenLevel level, int x, int z) {
-        int max = level.getMaxBuildHeight() - 1;
-        int y = level.getMinBuildHeight();
+        int max = level.getMaxY() + 1 - 1;
+        int y = level.getMinY();
         BlockPos pos = new BlockPos(x, y, z);
         BlockState state = level.getBlockState(pos);
         while (!level.isEmptyBlock(pos)) {
@@ -349,8 +359,8 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
     private boolean placeSurfaceLake(WorldGenLevel level, RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(4) != 0) return false;
         int x = chunkX + random.nextInt(16) + 8;
-        int minY = level.getMinBuildHeight() + 8;
-        int maxY = level.getMaxBuildHeight() - 8;
+        int minY = level.getMinY() + 8;
+        int maxY = level.getMaxY() + 1 - 8;
         int y = minY + random.nextInt(Math.max(1, maxY - minY));
         int z = chunkZ + random.nextInt(16) + 8;
         return generateLegacyLake(level, random, new BlockPos(x, y, z));
@@ -367,8 +377,8 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
         // modern build height instead; the actual Age sea level still decides the deep/1-in-10 gate.
         if (random.nextInt(8) != 0) return false;
         int x = chunkX + random.nextInt(16) + 8;
-        int minY = level.getMinBuildHeight();
-        int height = Math.max(9, level.getMaxBuildHeight() - minY);
+        int minY = level.getMinY();
+        int height = Math.max(9, level.getMaxY() + 1 - minY);
         int inner = random.nextInt(Math.max(1, height - 8)) + 8;
         int y = minY + random.nextInt(inner);
         int z = chunkZ + random.nextInt(16) + 8;
@@ -381,7 +391,7 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
     /** Direct port of Mystcraft 0.13.7.06 WorldGenLakesAdv. */
     private boolean generateLegacyLake(WorldGenLevel level, RandomSource random, BlockPos start) {
         BlockPos pos = start.below(8).offset(0, 0, -8);
-        int bottomGuard = level.getMinBuildHeight() + 5;
+        int bottomGuard = level.getMinY() + 5;
         while (pos.getY() > bottomGuard && level.isEmptyBlock(pos)) pos = pos.below();
         if (pos.getY() <= bottomGuard - 1) return false;
         pos = pos.below(4);
@@ -497,7 +507,7 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
 
     private static boolean worldgenReadable(WorldGenLevel level, BlockPos pos) {
         if (!(level instanceof WorldGenRegion region)) return true;
-        return region.hasChunk(Math.floorDiv(pos.getX(), 16), Math.floorDiv(pos.getZ(), 16));
+        return region.isWithinWriteZone(pos);
     }
 
     private static boolean worldgenReadableBox(WorldGenLevel level, BlockPos min, int sizeX, int sizeZ) {
@@ -508,7 +518,7 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
         int maxChunkZ = Math.floorDiv(min.getZ() + sizeZ, 16);
         for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
             for (int cz = minChunkZ; cz <= maxChunkZ; ++cz) {
-                if (!region.hasChunk(cx, cz)) return false;
+                if (!region.isWithinWriteZone(new BlockPos(cx * 16, min.getY(), cz * 16))) return false;
             }
         }
         return true;
@@ -522,7 +532,7 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
             java.util.Map<Integer, java.util.ArrayList<BlockPos>> hostsByY) {
         for (int x = chunkX; x < chunkX + 16; ++x) {
             for (int z = chunkZ; z < chunkZ + 16; ++z) {
-                for (int y = level.getMinBuildHeight(); y < level.getMaxBuildHeight(); ++y) {
+                for (int y = level.getMinY(); y < level.getMaxY() + 1; ++y) {
                     BlockPos at = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(at);
                     if (DenseOreResourceClassifier.isOre(state)) {
@@ -597,7 +607,7 @@ public final class AgeLegacyPopulationFeature extends Feature<NoneFeatureConfigu
                 double nx = (x + 0.5D - cx) / (rx / 2.0D);
                 if (nx * nx >= 1.0D) continue;
                 for (int y = minY; y <= maxY; ++y) {
-                    if (y < level.getMinBuildHeight() || y >= level.getMaxBuildHeight()) continue;
+                    if (y < level.getMinY() || y >= level.getMaxY() + 1) continue;
                     double ny = (y + 0.5D - cy) / (ry / 2.0D);
                     if (nx * nx + ny * ny >= 1.0D) continue;
                     for (int z = minZ; z <= maxZ; ++z) {

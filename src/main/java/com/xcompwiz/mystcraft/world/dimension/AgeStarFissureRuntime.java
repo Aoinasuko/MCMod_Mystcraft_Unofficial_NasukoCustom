@@ -46,7 +46,7 @@ public final class AgeStarFissureRuntime {
     public static Outcome ensureProcessed(ServerLevel level, AgeRecord age) {
         if (age.starFissureProcessed() || !age.symbols().contains(SYMBOL)) return Outcome.NONE;
 
-        BlockPos spawn = level.getSharedSpawnPos();
+        BlockPos spawn = level.getRespawnData().pos();
         int spawnChunkX = Math.floorDiv(spawn.getX(), 16);
         int spawnChunkZ = Math.floorDiv(spawn.getZ(), 16);
 
@@ -81,15 +81,15 @@ public final class AgeStarFissureRuntime {
         int[][] noise = plan.noise();
         for (int row = 0; row < noise.length; ++row) {
             for (int x = noise[row][0]; x <= noise[row][1]; ++x) {
-                setColumn(level, fissure, new BlockPos(plan.originX() + x, level.getMinBuildHeight(), plan.originZ() + row * 2));
-                setColumn(level, fissure, new BlockPos(plan.originX() + x, level.getMinBuildHeight(), plan.originZ() + row * 2 + 1));
+                setColumn(level, fissure, new BlockPos(plan.originX() + x, level.getMinY(), plan.originZ() + row * 2));
+                setColumn(level, fissure, new BlockPos(plan.originX() + x, level.getMinY(), plan.originZ() + row * 2 + 1));
             }
         }
     }
 
     private static void setColumn(ServerLevel level, BlockState fissure, BlockPos base) {
         level.setBlock(base, fissure, 2);
-        int top = level.getMaxBuildHeight();
+        int top = level.getMaxY() + 1;
         for (int y = base.getY() + 1; y < top; ++y) {
             level.setBlock(new BlockPos(base.getX(), y, base.getZ()), Blocks.AIR.defaultBlockState(), 2);
         }

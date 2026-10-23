@@ -15,8 +15,8 @@ public final class ItemInkVial extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        tooltipComponents.add(Component.translatable("tooltip.mystcraft.ink_vial_charge").withStyle(ChatFormatting.GRAY));
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        tooltipComponents.accept(Component.translatable("tooltip.mystcraft.ink_vial_charge").withStyle(ChatFormatting.GRAY));
+        super.appendHoverText(stack, context, display, tooltipComponents, tooltipFlag);
     }
 }

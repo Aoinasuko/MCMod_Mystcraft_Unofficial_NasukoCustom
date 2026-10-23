@@ -58,13 +58,15 @@ public final class AgeChunkGeneratorGenerationSettingsInstaller {
 
         final Holder<PlacedFeature> legacyFlatSurfaceFeature;
         if (terrainMode == AgeTerrainMode.FLAT && "minecraft:stone".equals(terrainBlockId)) {
-            var configured = new net.minecraft.world.level.levelgen.feature.ConfiguredFeature<>(
-                    new AgeLegacyFlatBiomeSurfaceFeature(),
-                    net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.INSTANCE);
+            var configured = new AgeLegacyFlatBiomeSurfaceFeature();
             legacyFlatSurfaceFeature = Holder.direct(new PlacedFeature(Holder.direct(configured), List.of()));
         } else {
             legacyFlatSurfaceFeature = null;
         }
+
+        var alterations = AgeLegacyConfiguredCarvers.alterations(featurePlan, ageSeed);
+        Holder<PlacedFeature> terrainAlterationFeature = alterations.isEmpty() ? null
+                : Holder.direct(new PlacedFeature(Holder.direct(new AgeTerrainAlterationFeature(alterations)), List.of()));
 
         Map<Holder<Biome>, BiomeGenerationSettings> cache = new IdentityHashMap<>();
 
@@ -79,7 +81,7 @@ public final class AgeChunkGeneratorGenerationSettingsInstaller {
                                 ageSeed,
                                 terrainMode,
                                 legacyPopulationFeatures,
-                                legacyFlatSurfaceFeature));
+                                legacyFlatSurfaceFeature, terrainAlterationFeature));
 
         // ChunkGenerator's vanilla featuresPerStep Lazy captures the generation-settings
         // function passed to the constructor. Merely replacing generationSettingsGetter and

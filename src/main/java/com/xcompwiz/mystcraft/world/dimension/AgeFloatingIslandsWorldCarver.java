@@ -9,10 +9,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Aquifer;
-import net.minecraft.world.level.levelgen.carver.CarverConfiguration;
-import net.minecraft.world.level.levelgen.carver.CarvingContext;
 import net.minecraft.world.level.chunk.CarvingMask;
-import net.minecraft.world.level.levelgen.carver.WorldCarver;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -24,7 +21,7 @@ import java.util.function.Function;
  * contributions for the target chunk. 13H-10 consumes that mask for legacy surface/filler
  * and quart-biome replacement.</p>
  */
-public final class AgeFloatingIslandsWorldCarver extends WorldCarver<CarverConfiguration> {
+public final class AgeFloatingIslandsWorldCarver implements AgeTerrainAlteration {
     private final LegacyMapGenFloatingIslandsKernel kernel;
     private final BlockState replacement;
     private final BlockState top;
@@ -37,38 +34,25 @@ public final class AgeFloatingIslandsWorldCarver extends WorldCarver<CarverConfi
             LegacyMapGenFloatingIslandsKernel kernel,
             BlockState replacement,
             String biomeLegacySymbol) {
-        super(CarverConfiguration.CODEC.codec());
         this.kernel = Objects.requireNonNull(kernel, "kernel");
         this.replacement = Objects.requireNonNull(replacement, "replacement");
         this.biomeLegacySymbol = biomeLegacySymbol;
 
         var surface = com.xcompwiz.mystcraft.world.worldgen.LegacyBiomeSurfaceRegistry.resolve(
                 biomeLegacySymbol);
-        this.top = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-                net.minecraft.resources.ResourceLocation.parse(surface.topBlockId()))
+        this.top = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(
+                net.minecraft.resources.Identifier.parse(surface.topBlockId()))
                 .defaultBlockState();
-        this.filler = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-                net.minecraft.resources.ResourceLocation.parse(surface.fillerBlockId()))
+        this.filler = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(
+                net.minecraft.resources.Identifier.parse(surface.fillerBlockId()))
                 .defaultBlockState();
         this.sandstone = net.minecraft.world.level.block.Blocks.SANDSTONE.defaultBlockState();
     }
 
-    @Override
-    public boolean isStartChunk(CarverConfiguration config, RandomSource random) {
-        // Exact 1/192 activation remains inside the legacy kernel.
-        return true;
-    }
 
     @Override
-    public boolean carve(
-            CarvingContext context,
-            CarverConfiguration config,
-            ChunkAccess targetChunk,
-            Function<BlockPos, Holder<Biome>> biomeAccessor,
-            RandomSource random,
-            Aquifer aquifer,
-            ChunkPos sourceChunkPos,
-            CarvingMask carvingMask) {
+    public boolean apply(net.minecraft.core.RegistryAccess registries,
+                         ChunkAccess targetChunk, ChunkPos sourceChunkPos) {
 
         ChunkPos target = targetChunk.getPos();
         var buffer = new ChunkAccessFloatingIslandBuffer(
@@ -78,10 +62,10 @@ public final class AgeFloatingIslandsWorldCarver extends WorldCarver<CarverConfi
         // Synchronizing preserves that execution model under modern parallel chunk generation.
         synchronized (kernel) {
             kernel.generateFromSource(
-                    sourceChunkPos.x,
-                    sourceChunkPos.z,
-                    target.x,
-                    target.z,
+                    sourceChunkPos.x(),
+                    sourceChunkPos.z(),
+                    target.x(),
+                    target.z(),
                     buffer);
         }
 
@@ -90,7 +74,7 @@ public final class AgeFloatingIslandsWorldCarver extends WorldCarver<CarverConfi
                 buffer.copyModifiedColumns(),
                 biomeLegacySymbol)
                 .ifPresent(entry -> AgeFloatingIslandBiomeFinalizer.apply(
-                        context.registryAccess(),
+                        registries,
                         targetChunk,
                         entry.columns(),
                         entry.biomeLegacySymbol()));

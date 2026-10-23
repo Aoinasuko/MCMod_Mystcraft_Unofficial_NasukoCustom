@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in the unofficial Minecraft 1.21.1 Mystcraft Legacy port.
+description: Report a reproducible problem in the Mystcraft Unofficial NasukoCustom Minecraft 26.3 port.
 title: "[Bug]: "
 labels:
   - bug
@@ -13,8 +13,8 @@ body:
     id: mystcraft_version
     attributes:
       label: Mystcraft version
-      description: "Example: 0.13.7.06-port.1.0.0-Ueno"
-      placeholder: 0.13.7.06-port.1.0.0-Ueno
+      description: "Example: 0.1.0"
+      placeholder: 0.1.0
     validations:
       required: true
 
@@ -22,7 +22,7 @@ body:
     id: minecraft_version
     attributes:
       label: Minecraft version
-      placeholder: 1.21.1
+      placeholder: 26.3
     validations:
       required: true
 
@@ -30,7 +30,7 @@ body:
     id: neoforge_version
     attributes:
       label: NeoForge version
-      placeholder: 21.1.251
+      placeholder: 26.3.0.95
     validations:
       required: true
 
@@ -38,7 +38,7 @@ body:
     id: java_version
     attributes:
       label: Java version
-      placeholder: Java 21
+      placeholder: Java 25
     validations:
       required: true
 
@@ -128,5 +128,5 @@ body:
       options:
         - label: I checked KNOWN_ISSUES.md before filing this report.
           required: true
-        - label: I am reporting a problem with the unofficial 1.21.1 port rather than an unrelated mod's error.
+        - label: I am reporting a problem with Mystcraft Unofficial NasukoCustom for Minecraft 26.3 rather than an unrelated mod's error.
           required: true

@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -37,7 +36,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -55,8 +54,7 @@ import java.util.List;
  * all four parts resolve interactions back to that block entity.</p>
  */
 public final class BlockWritingDesk extends BaseEntityBlock {
-    public static final MapCodec<BlockWritingDesk> CODEC = simpleCodec(BlockWritingDesk::new);
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty IS_TOP = BooleanProperty.create("istop");
     public static final BooleanProperty IS_FOOT = BooleanProperty.create("isfoot");
 
@@ -73,10 +71,6 @@ public final class BlockWritingDesk extends BaseEntityBlock {
                 .setValue(IS_FOOT, false));
     }
 
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -121,8 +115,9 @@ public final class BlockWritingDesk extends BaseEntityBlock {
     }
 
     @Override
-    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
-                                     LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+    protected BlockState updateShape(BlockState state, net.minecraft.world.level.LevelReader level,
+                                     net.minecraft.world.level.ScheduledTickAccess ticks, BlockPos pos, Direction direction,
+                                     BlockPos neighborPos, BlockState neighborState, net.minecraft.util.RandomSource random) {
         Direction facing = state.getValue(FACING);
         BlockPos paired = state.getValue(IS_FOOT) ? pos.relative(facing.getOpposite()) : pos.relative(facing);
         if (neighborPos.equals(paired)) {
@@ -135,7 +130,7 @@ public final class BlockWritingDesk extends BaseEntityBlock {
                 return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
             }
         }
-        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
+        return super.updateShape(state, level, ticks, pos, direction, neighborPos, neighborState, random);
     }
 
     private static boolean isMatchingPair(BlockState state, BlockState other) {
@@ -163,7 +158,7 @@ public final class BlockWritingDesk extends BaseEntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || state.getValue(IS_TOP) || state.getValue(IS_FOOT)) return null;
+        if (level.isClientSide() || state.getValue(IS_TOP) || state.getValue(IS_FOOT)) return null;
         return createTickerHelper(type, MystBlockEntities.WRITING_DESK.get(), WritingDeskBlockEntity::serverTick);
     }
 
@@ -210,12 +205,12 @@ public final class BlockWritingDesk extends BaseEntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                                Player player, InteractionHand hand, BlockHitResult hitResult) {
         // 0.13.7.06 always routed desk interaction through its GUI.  Returning
         // PASS_TO_DEFAULT_BLOCK_INTERACTION lets the normal block interaction
         // continue to useWithoutItem even when the player is holding a page or vial.
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     @Override
@@ -224,29 +219,19 @@ public final class BlockWritingDesk extends BaseEntityBlock {
         if (!com.xcompwiz.mystcraft.util.MystMenuOpenPolicy.canOpen(player)) return InteractionResult.PASS;
         WritingDeskBlockEntity desk = getDesk(level, pos);
         if (desk == null) return InteractionResult.PASS;
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
             BlockPos main = getMainPos(level, pos);
             if (main != null) {
                 serverPlayer.openMenu(desk, buffer -> buffer.writeBlockPos(main));
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
-    @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && !state.getValue(IS_TOP) && !state.getValue(IS_FOOT)) {
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof WritingDeskBlockEntity desk) {
-                Containers.dropContents(level, pos, desk);
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide && !state.getValue(IS_TOP)) {
+        if (!level.isClientSide() && !state.getValue(IS_TOP)) {
             BlockPos main = state.getValue(IS_FOOT)
                     ? pos.relative(state.getValue(FACING).getOpposite())
                     : pos;

@@ -42,7 +42,7 @@ final class AgeModernFixStrongholdCacheBridge {
             method.invoke(state, dimensionPath, server);
             Mystcraft.LOGGER.debug(
                     "Attached ModernFix stronghold cache context for Age {} at {}",
-                    level.dimension().location(), dimensionPath);
+                    level.dimension().identifier(), dimensionPath);
         } catch (IllegalAccessException | InvocationTargetException failure) {
             Throwable cause = failure instanceof InvocationTargetException invocation
                     && invocation.getCause() != null
@@ -50,7 +50,7 @@ final class AgeModernFixStrongholdCacheBridge {
                     : failure;
             throw new IllegalStateException(
                     "Failed to attach ModernFix stronghold cache context for "
-                            + level.dimension().location(),
+                            + level.dimension().identifier(),
                     cause);
         }
     }

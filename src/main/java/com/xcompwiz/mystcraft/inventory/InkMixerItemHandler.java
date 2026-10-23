@@ -1,55 +1,34 @@
 package com.xcompwiz.mystcraft.inventory;
 
 import com.xcompwiz.mystcraft.blockentity.InkMixerBlockEntity;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
-/** Automation view matching legacy IOInventory: slots 0/1 insert, slot 2 extract. */
-public final class InkMixerItemHandler implements IItemHandler {
+/** Transactional automation view preserving the legacy input and output slot policy. */
+public final class InkMixerItemHandler implements ResourceHandler<ItemResource> {
     private final InkMixerBlockEntity mixer;
+    private final ResourceHandler<ItemResource> storage;
 
-    public InkMixerItemHandler(InkMixerBlockEntity mixer) { this.mixer = mixer; }
-
-    @Override public int getSlots() { return InkMixerBlockEntity.SLOT_COUNT; }
-    @Override public ItemStack getStackInSlot(int slot) { return valid(slot) ? mixer.getItem(slot) : ItemStack.EMPTY; }
-    @Override public int getSlotLimit(int slot) { return valid(slot) ? 64 : 0; }
-    @Override public boolean isItemValid(int slot, ItemStack stack) { return (slot == 0 || slot == 1) && mixer.canPlaceItem(slot, stack); }
-
-    @Override
-    public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-        if (!isItemValid(slot, stack) || stack.isEmpty()) return stack;
-        ItemStack existing = mixer.getItem(slot);
-        int max = Math.min(64, stack.getMaxStackSize());
-        if (!existing.isEmpty()) {
-            if (!ItemStack.isSameItemSameComponents(existing, stack)) return stack;
-            max = Math.min(max, existing.getMaxStackSize());
-        }
-        int room = max - existing.getCount();
-        if (room <= 0) return stack;
-        int move = Math.min(room, stack.getCount());
-        if (!simulate) {
-            if (existing.isEmpty()) mixer.setItem(slot, stack.copyWithCount(move));
-            else {
-                existing.grow(move);
-                mixer.setChanged();
-            }
-        }
-        if (move >= stack.getCount()) return ItemStack.EMPTY;
-        ItemStack remainder = stack.copy();
-        remainder.shrink(move);
-        return remainder;
+    public InkMixerItemHandler(InkMixerBlockEntity mixer) {
+        this.mixer = mixer;
+        this.storage = VanillaContainerWrapper.of(mixer);
     }
 
-    @Override
-    public ItemStack extractItem(int slot, int amount, boolean simulate) {
-        if (slot != InkMixerBlockEntity.SLOT_CONTAINER_OUTPUT || amount <= 0) return ItemStack.EMPTY;
-        ItemStack existing = mixer.getItem(slot);
-        if (existing.isEmpty()) return ItemStack.EMPTY;
-        int take = Math.min(amount, existing.getCount());
-        ItemStack result = existing.copyWithCount(take);
-        if (!simulate) mixer.removeItem(slot, take);
-        return result;
+    @Override public int size() { return InkMixerBlockEntity.SLOT_COUNT; }
+    @Override public ItemResource getResource(int index) { return storage.getResource(index); }
+    @Override public long getAmountAsLong(int index) { return storage.getAmountAsLong(index); }
+    @Override public long getCapacityAsLong(int index, ItemResource resource) {
+        return isValid(index, resource) || resource.isEmpty() ? storage.getCapacityAsLong(index, resource) : 0;
     }
-
-    private static boolean valid(int slot) { return slot >= 0 && slot < InkMixerBlockEntity.SLOT_COUNT; }
+    @Override public boolean isValid(int index, ItemResource resource) {
+        return (index == 0 || index == 1) && mixer.canPlaceItem(index, resource.toStack());
+    }
+    @Override public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
+        return isValid(index, resource) ? storage.insert(index, resource, amount, transaction) : 0;
+    }
+    @Override public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
+        return index == InkMixerBlockEntity.SLOT_CONTAINER_OUTPUT ? storage.extract(index, resource, amount, transaction) : 0;
+    }
 }

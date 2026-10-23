@@ -135,7 +135,7 @@ public final class LinkBookMenu extends AbstractContainerMenu {
                     entity.setBook(stack);
                 }
             } catch (IllegalStateException ex) {
-                player.displayClientMessage(Component.literal(ex.getMessage()), true);
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.literal(ex.getMessage()), true);
                 return false;
             }
         }

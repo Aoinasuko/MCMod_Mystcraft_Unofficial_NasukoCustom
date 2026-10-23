@@ -1,29 +1,22 @@
 package com.xcompwiz.mystcraft.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.xcompwiz.mystcraft.blockentity.StarFissureBlockEntity;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.AbstractEndPortalRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.blockentity.TheEndPortalRenderer;
+import net.minecraft.client.renderer.blockentity.state.EndPortalRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 
-/**
- * Modern equivalent of the 0.13.7.06 eight-pass Star Fissure TESR.
- *
- * <p>The legacy effect used vanilla End sky/portal textures.  The modern
- * TheEndPortalRenderer preserves that projected depth effect while avoiding
- * removed OpenGL texgen APIs.  The offsets collapse the effect to the original
- * 0.1-block-high fissure surface.</p>
- */
-public final class StarFissureRenderer extends TheEndPortalRenderer<StarFissureBlockEntity> {
-    public StarFissureRenderer(BlockEntityRendererProvider.Context context) {
-        super(context);
-    }
-
-    @Override
-    protected float getOffsetDown() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getOffsetUp() {
-        return 0.1F;
+/** Native projected End portal effect, compressed to the legacy fissure surface. */
+public final class StarFissureRenderer extends AbstractEndPortalRenderer<StarFissureBlockEntity, EndPortalRenderState> {
+    public StarFissureRenderer(BlockEntityRendererProvider.Context context) {}
+    @Override public EndPortalRenderState createRenderState() { return new EndPortalRenderState(); }
+    @Override public void submit(EndPortalRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+        pose.pushPose();
+        pose.scale(1, 0.1F, 1);
+        submitCube(state.facesToShow, RenderTypes.endPortal(), pose, collector);
+        pose.popPose();
     }
 }

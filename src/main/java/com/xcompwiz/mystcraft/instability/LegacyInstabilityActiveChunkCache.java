@@ -28,7 +28,7 @@ public final class LegacyInstabilityActiveChunkCache {
 
     public static List<LevelChunk> activeChunks(ServerLevel level) {
         if (level == null) return List.of();
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         long gameTime = level.getGameTime();
         Snapshot existing = CACHE.get(dimension);
         if (existing != null && existing.gameTime == gameTime) return existing.chunks;
@@ -42,9 +42,9 @@ public final class LegacyInstabilityActiveChunkCache {
             ChunkPos center = player.chunkPosition();
             for (int dz = -simulationDistance; dz <= simulationDistance; dz++) {
                 for (int dx = -simulationDistance; dx <= simulationDistance; dx++) {
-                    int cx = center.x + dx;
-                    int cz = center.z + dz;
-                    long packed = ChunkPos.asLong(cx, cz);
+                    int cx = center.x() + dx;
+                    int cz = center.z() + dz;
+                    long packed = ChunkPos.pack(cx, cz);
                     if (!visited.add(packed)) continue;
                     if (!level.getChunkSource().chunkMap.getDistanceManager().inBlockTickingRange(packed)) continue;
                     LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
@@ -53,10 +53,10 @@ public final class LegacyInstabilityActiveChunkCache {
             }
         }
 
-        for (long packed : level.getForcedChunks()) {
+        for (long packed : level.getForceLoadedChunks()) {
             if (!visited.add(packed)) continue;
-            ChunkPos pos = new ChunkPos(packed);
-            LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x, pos.z);
+            ChunkPos pos = ChunkPos.unpack(packed);
+            LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x(), pos.z());
             if (chunk != null) chunks.add(chunk);
         }
 
@@ -66,7 +66,7 @@ public final class LegacyInstabilityActiveChunkCache {
     }
 
     public static void clear(ServerLevel level) {
-        if (level != null) CACHE.remove(level.dimension().location().toString());
+        if (level != null) CACHE.remove(level.dimension().identifier().toString());
     }
 
     private record Snapshot(long gameTime, List<LevelChunk> chunks) {}

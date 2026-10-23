@@ -5,7 +5,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -22,7 +22,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
  */
 final class AgeLegacyStructureGenerationBridge {
     private static final ResourceKey<Structure> FORTRESS = ResourceKey.create(
-            Registries.STRUCTURE, ResourceLocation.withDefaultNamespace("fortress"));
+            Registries.STRUCTURE, Identifier.withDefaultNamespace("fortress"));
 
     private AgeLegacyStructureGenerationBridge() {}
 
@@ -38,28 +38,30 @@ final class AgeLegacyStructureGenerationBridge {
             ChunkGeneratorStructureState structureState,
             StructureManager structureManager,
             ChunkAccess chunk,
-            StructureTemplateManager structureTemplateManager) {
+            StructureTemplateManager structureTemplateManager,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
         ChunkPos chunkPos = chunk.getPos();
         SectionPos sectionPos = SectionPos.bottomOf(chunk);
 
         for (var holderSet : structureState.possibleStructureSets()) {
             StructureSet set = holderSet.value();
             if (!(set.placement() instanceof AgeLegacyNetherFortressPlacement placement)) continue;
-            if (!placement.isStructureChunk(structureState, chunkPos.x, chunkPos.z)) continue;
+            if (!placement.isStructureChunk(structureState, chunkPos.x(), chunkPos.z())) continue;
 
             for (StructureSet.StructureSelectionEntry entry : set.structures()) {
                 var holder = entry.structure();
                 if (!holder.is(FORTRESS)) continue;
 
                 Structure fortress = holder.value();
-                StructureStart existing = structureManager.getStartForStructure(sectionPos, fortress, chunk);
+                StructureStart existing = structureManager.getStartForStructure(fortress, chunk);
                 if (existing != null && existing.isValid()) return;
                 int references = existing == null ? 0 : existing.getReferences();
 
                 StructureStart generated = fortress.generate(
-                        registryAccess,
+                        holder, dimension, registryAccess,
                         generator,
                         generator.getBiomeSource(),
+                        structureState.randomState().createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.EMPTY_UNCACHED),
                         structureState.randomState(),
                         structureTemplateManager,
                         structureState.getLevelSeed(),
@@ -68,7 +70,7 @@ final class AgeLegacyStructureGenerationBridge {
                         chunk,
                         biome -> true);
                 if (generated.isValid()) {
-                    structureManager.setStartForStructure(sectionPos, fortress, generated, chunk);
+                    structureManager.setStartForStructure(fortress, generated, chunk);
                     Mystcraft.LOGGER.debug(
                             "Legacy Nether Fortress start: chunk={}, seed={}",
                             chunkPos, structureState.getLevelSeed());

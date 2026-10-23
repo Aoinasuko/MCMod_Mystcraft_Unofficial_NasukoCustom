@@ -2,10 +2,12 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.xcompwiz.mystcraft.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "client": [
     "client.LiquidBlockRendererMixin",
-    "client.BlockColorsMixin"
+    "client.BlockColorsMixin",
+    "client.AgeLightmapMixin",
+    "client.AgeWeatherTickMixin"
   ],
   "injectors": {
     "defaultRequire": 1

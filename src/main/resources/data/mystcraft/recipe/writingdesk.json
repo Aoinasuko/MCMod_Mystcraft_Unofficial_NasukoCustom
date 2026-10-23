@@ -7,9 +7,9 @@
     "P P"
   ],
   "key": {
-    "V": { "item": "minecraft:glass_bottle" },
-    "F": { "item": "minecraft:feather" },
-    "P": { "tag": "minecraft:planks" }
+    "V": "minecraft:glass_bottle",
+    "F": "minecraft:feather",
+    "P": "#minecraft:planks"
   },
   "result": {
     "id": "mystcraft:writingdesk",

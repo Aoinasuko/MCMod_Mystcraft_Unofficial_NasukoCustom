@@ -6,7 +6,7 @@ import com.xcompwiz.mystcraft.util.LegacyItemData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -28,24 +28,24 @@ public final class ItemLinkbookUnlinked extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltipComponents, TooltipFlag tooltipFlag) {
         Collection<String> properties = Page.getLinkProperties(stack);
         if (properties != null) {
             for (String property : properties) {
-                tooltipComponents.add(Component.translatable("tooltip.mystcraft.link_property", property)
+                tooltipComponents.accept(Component.translatable("tooltip.mystcraft.link_property", property)
                         .withStyle(ChatFormatting.GRAY));
             }
         }
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        super.appendHoverText(stack, context, display, tooltipComponents, tooltipFlag);
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack inHand = player.getItemInHand(hand);
 
         // Legacy behavior: stacked unlinked books cannot be linked in-place.
-        if (level.isClientSide || inHand.getCount() > 1) {
-            return InteractionResultHolder.pass(inHand);
+        if (level.isClientSide() || inHand.getCount() > 1) {
+            return InteractionResult.PASS;
         }
 
         ItemStack linked = new ItemStack(MystItems.LINKBOOK.get());
@@ -56,6 +56,6 @@ public final class ItemLinkbookUnlinked extends Item {
         inHand.setCount(0);
 
         // 0.13.7.06 returned PASS after replacing the held stack.
-        return InteractionResultHolder.pass(linked);
+        return InteractionResult.PASS;
     }
 }

@@ -11,12 +11,12 @@ import com.xcompwiz.mystcraft.symbol.LegacyMaterialSymbolRegistry;
 import com.xcompwiz.mystcraft.symbol.SymbolRegistry;
 import com.xcompwiz.mystcraft.symbol.SymbolAvailability;
 import com.xcompwiz.mystcraft.symbol.LegacySymbolCatalogOrder;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -29,7 +29,7 @@ import java.util.Map;
 
 /** Legacy Writing Desk screen bridge with I89 target/book controls restored. */
 public final class WritingDeskScreen extends AbstractContainerScreen<WritingDeskMenu> {
-    private static final ResourceLocation DESK_TEXTURE = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier DESK_TEXTURE = Identifier.fromNamespaceAndPath(
             Mystcraft.MOD_ID, "gui/writingdesk.png");
     private static final int LEFT_SURFACE_WIDTH = 228;
     private static final int RIGHT_PANEL_X = 233;
@@ -62,9 +62,7 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
     private record SurfaceEntry(ItemStack page, int sourceIndex, int count, boolean ghost) {}
 
     public WritingDeskScreen(WritingDeskMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        this.imageWidth = LEFT_SURFACE_WIDTH + RIGHT_PANEL_WIDTH + 5;
-        this.imageHeight = 185;
+        super(menu, inventory, title, LEFT_SURFACE_WIDTH + RIGHT_PANEL_WIDTH + 5, 185);
         // Legacy GuiWritingDesk did not draw vanilla container title/inventory labels.
         // Leaving AbstractContainerScreen defaults here causes the exact overlaps
         // seen during I103 runtime testing.
@@ -128,7 +126,7 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
         titleBox.setValue(menu.getTargetTitle());
         syncingTitle = false;
         titleBox.setResponder(text -> {
-            if (!syncingTitle) PacketDistributor.sendToServer(new WritingDeskTitlePayload(menu.containerId, text));
+            if (!syncingTitle) net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(new WritingDeskTitlePayload(menu.containerId, text));
         });
         addRenderableWidget(titleBox);
         syncTargetWidgets();
@@ -178,13 +176,13 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
     }
 
     @Override
-    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(leftPos + SURFACE_X, topPos + SURFACE_Y, leftPos + LEFT_SURFACE_WIDTH,
                 topPos + SURFACE_Y + SURFACE_H, 0xFF3B3026);
         graphics.fill(leftPos + SURFACE_X + 2, topPos + SURFACE_Y + 2, leftPos + LEFT_SURFACE_WIDTH - 2,
                 topPos + SURFACE_Y + SURFACE_H - 2, 0xFF5C4936);
 
-        graphics.blit(DESK_TEXTURE, leftPos + RIGHT_PANEL_X, topPos + MAIN_TOP,
+        LegacyGuiDrawing.blit(graphics, DESK_TEXTURE, leftPos + RIGHT_PANEL_X, topPos + MAIN_TOP,
                 0, 0, RIGHT_PANEL_WIDTH, RIGHT_PANEL_HEIGHT, 256, 256);
 
         renderTabRail(graphics);
@@ -193,47 +191,47 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
         renderSurface(graphics, mouseX, mouseY);
     }
 
-    private void renderTabRail(GuiGraphics graphics) {
+    private void renderTabRail(GuiGraphicsExtractor graphics) {
         int top = topPos + MAIN_TOP;
         int first = menu.getFirstTab();
         int active = menu.getActiveTab();
 
         // Exact 0.13.7.06 writingdesk.png slices used by GuiElementSurfaceTabs.
-        graphics.setColor(first == 0 ? 0.4F : (active < first ? 0.5F : 1.0F),
+        LegacyGuiDrawing.setColor(graphics, first == 0 ? 0.4F : (active < first ? 0.5F : 1.0F),
                 first == 0 ? 0.4F : (active < first ? 0.5F : 1.0F),
                 first == 0 ? 0.4F : 1.0F, 1.0F);
-        graphics.blit(DESK_TEXTURE, leftPos, top, 0, 203, 58, 9, 256, 256);
-        graphics.setColor(1F, 1F, 1F, 1F);
+        LegacyGuiDrawing.blit(graphics, DESK_TEXTURE, leftPos, top, 0, 203, 58, 9, 256, 256);
+        LegacyGuiDrawing.setColor(graphics, 1F, 1F, 1F, 1F);
 
         int tabY = top + 9;
         for (int view = 0; view < WritingDeskMenu.VISIBLE_TAB_SLOTS; view++) {
             int tab = first + view;
-            if (tab == active) graphics.setColor(0.5F, 0.5F, 1.0F, 1.0F);
-            graphics.blit(DESK_TEXTURE, leftPos, tabY, 0, 166, 58, 37, 256, 256);
-            graphics.setColor(1F, 1F, 1F, 1F);
+            if (tab == active) LegacyGuiDrawing.setColor(graphics, 0.5F, 0.5F, 1.0F, 1.0F);
+            LegacyGuiDrawing.blit(graphics, DESK_TEXTURE, leftPos, tabY, 0, 166, 58, 37, 256, 256);
+            LegacyGuiDrawing.setColor(graphics, 1F, 1F, 1F, 1F);
 
             ItemStack stack = menu.getTabStack(tab);
-            graphics.drawString(font, Integer.toString(tab), leftPos + 8, tabY + 5, 0x404040, false);
+            graphics.text(font, Integer.toString(tab), leftPos + 8, tabY + 5, 0xFF404040, false);
             if (!stack.isEmpty()) {
-                graphics.renderItem(stack, leftPos + 37, tabY + 3);
+                graphics.item(stack, leftPos + 37, tabY + 3);
                 String name = stack.getHoverName().getString();
                 int maxWidth = 50;
                 if (font.width(name) > maxWidth) name = font.plainSubstrByWidth(name, maxWidth);
-                graphics.drawString(font, name, leftPos + 4, tabY + 25, 0x404040, false);
+                graphics.text(font, name, leftPos + 4, tabY + 25, 0xFF404040, false);
             }
             tabY += 37;
         }
 
         boolean bottomDisabled = first + WritingDeskMenu.VISIBLE_TAB_SLOTS >= WritingDeskBlockEntity.TAB_SLOT_COUNT;
         boolean activeBelow = active >= first + WritingDeskMenu.VISIBLE_TAB_SLOTS;
-        graphics.setColor(bottomDisabled ? 0.4F : (activeBelow ? 0.5F : 1.0F),
+        LegacyGuiDrawing.setColor(graphics, bottomDisabled ? 0.4F : (activeBelow ? 0.5F : 1.0F),
                 bottomDisabled ? 0.4F : (activeBelow ? 0.5F : 1.0F),
                 bottomDisabled ? 0.4F : 1.0F, 1.0F);
-        graphics.blit(DESK_TEXTURE, leftPos, tabY, 0, 212, 58, 9, 256, 256);
-        graphics.setColor(1F, 1F, 1F, 1F);
+        LegacyGuiDrawing.blit(graphics, DESK_TEXTURE, leftPos, tabY, 0, 212, 58, 9, 256, 256);
+        LegacyGuiDrawing.setColor(graphics, 1F, 1F, 1F, 1F);
     }
 
-    private void renderInkGauge(GuiGraphics graphics) {
+    private void renderInkGauge(GuiGraphicsExtractor graphics) {
         int amount = menu.getInkAmount();
         int height = Math.round((amount / (float) WritingDeskBlockEntity.CAPACITY) * 70.0F);
         int x = leftPos + RIGHT_PANEL_X + RIGHT_PANEL_WIDTH - 44;
@@ -243,7 +241,7 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
         if (height > 0) graphics.fill(x + 1, y + 69 - height, x + 15, y + 69, 0xFF191919);
     }
 
-    private void renderTargetPreview(GuiGraphics graphics) {
+    private void renderTargetPreview(GuiGraphicsExtractor graphics) {
         int x = leftPos + RIGHT_PANEL_X + 48;
         int y = topPos + MAIN_TOP + 7;
         int w = 64;
@@ -259,25 +257,25 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
             if (descriptor != null) {
                 LegacySymbolRenderer.drawPage(graphics, descriptor, x + 20, y + 3, 25, 34, false);
             } else {
-                graphics.renderItem(page, x + 24, y + 5);
+                graphics.item(page, x + 24, y + 5);
             }
         } else if (!menu.getTarget().isEmpty()) {
-            graphics.renderItem(menu.getTarget(), x + 24, y + 5);
+            graphics.item(menu.getTarget(), x + 24, y + 5);
         }
-        graphics.drawCenteredString(font, Component.literal((Math.min(index, count) + 1) + " / " + Math.max(1, count)),
-                x + w / 2, y + 36, 0x6B5841);
+        graphics.centeredText(font, Component.literal((Math.min(index, count) + 1) + " / " + Math.max(1, count)),
+                x + w / 2, y + 36, 0xFF6B5841);
 
         if (menu.isLinkTarget()) {
             String dimension = LinkOptions.getDimensionKey(menu.getTarget());
             if (dimension != null && !dimension.isBlank()) {
                 String shortDim = dimension.length() > 20 ? dimension.substring(0, 20) : dimension;
-                graphics.drawString(font, shortDim, leftPos + RIGHT_PANEL_X + 28,
-                        topPos + MAIN_TOP + 78, 0x5B4933, false);
+                graphics.text(font, shortDim, leftPos + RIGHT_PANEL_X + 28,
+                        topPos + MAIN_TOP + 78, 0xFF5B4933, false);
             }
         }
     }
 
-    private void renderSurface(GuiGraphics graphics, int mouseX, int mouseY) {
+    private void renderSurface(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         boolean collection = menu.surfaceIsCollection();
         azButton.active = collection;
         allButton.active = collection;
@@ -310,12 +308,12 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
                 if (descriptor != null) {
                     LegacySymbolRenderer.drawPage(graphics, descriptor, sx + 2, sy + 2, CARD_W - 4, CARD_H - 4, entry.ghost);
                     if (entry.count > 1) {
-                        graphics.drawString(font, Integer.toString(entry.count), sx + CARD_W - 9, sy + CARD_H - 10, 0xFFFFFFFF, true);
+                        graphics.text(font, Integer.toString(entry.count), sx + CARD_W - 9, sy + CARD_H - 10, 0xFFFFFFFF, true);
                     }
                 } else {
-                    graphics.renderItem(entry.page, sx + 7, sy + 5);
+                    graphics.item(entry.page, sx + 7, sy + 5);
                     String label = entry.count > 1 ? Integer.toString(entry.count) : "";
-                    graphics.renderItemDecorations(font, entry.page, sx + 7, sy + 5, label);
+                    graphics.itemDecorations(font, entry.page, sx + 7, sy + 5, label);
                 }
             }
         }
@@ -377,7 +375,7 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
     private static String pageKey(ItemStack page) {
         String symbol = Page.getSymbolId(page);
         if (symbol != null) return symbol;
-        return page.getDescriptionId() + ":" + page.getComponentsPatch();
+        return page.getItem().getDescriptionId() + ":" + page.getComponentsPatch();
     }
 
 
@@ -394,7 +392,9 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
         if (mouseX >= leftPos && mouseX < leftPos + 58) {
             int y = topPos + MAIN_TOP;
             if (mouseY >= y && mouseY < y + 9) {
@@ -420,21 +420,21 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
         SurfaceEntry hit = hitSurface(mouseX, mouseY);
         if (minecraft != null && minecraft.player != null && minecraft.gameMode != null) {
             if (!menu.getCarried().isEmpty() && isInsideSurfacePageArea(mouseX, mouseY)) {
-                int action = button == 1 ? WritingDeskMenu.ACTION_SURFACE_INSERT_ONE : WritingDeskMenu.ACTION_SURFACE_INSERT_ALL;
+                int action = button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT ? WritingDeskMenu.ACTION_SURFACE_INSERT_ONE : WritingDeskMenu.ACTION_SURFACE_INSERT_ALL;
                 int index = hit != null && hit.sourceIndex >= 0 ? hit.sourceIndex : menu.getSurfacePages().size();
                 clickMenuButton(action + Math.min(index, WritingDeskMenu.ACTION_RANGE - 1));
                 return true;
             }
             if (hit != null && !hit.ghost && hit.sourceIndex >= 0) {
                 int action;
-                if (button == 1) action = WritingDeskMenu.ACTION_SURFACE_COPY_SYMBOL;
-                else if (hasShiftDown() && menu.surfaceIsCollection()) action = WritingDeskMenu.ACTION_SURFACE_REMOVE_STACK;
+                if (button == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) action = WritingDeskMenu.ACTION_SURFACE_COPY_SYMBOL;
+                else if (event.hasShiftDown() && menu.surfaceIsCollection()) action = WritingDeskMenu.ACTION_SURFACE_REMOVE_STACK;
                 else action = WritingDeskMenu.ACTION_SURFACE_REMOVE_ONE;
                 clickMenuButton(action + Math.min(hit.sourceIndex, WritingDeskMenu.ACTION_RANGE - 1));
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     private boolean isInsideSurfacePageArea(double mouseX, double mouseY) {
@@ -481,16 +481,16 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         // 0.13.7.06 GuiWritingDesk draws neither vanilla container labels nor a
         // permanent textual mB counter.  Keeping this empty prevents the modern
         // labels from overlapping the legacy page/book controls.
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
-        super.render(graphics, mouseX, mouseY, partialTick);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        extractBackground(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 
         // The legacy desk used compact AZ/ALL toggle labels.  Keep the controls
         // tiny, readable and shadow-free; the normal Button renderer is left
@@ -502,18 +502,18 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
         drawCenteredNoShadow(graphics, sortLabel, azButton);
         drawCenteredNoShadow(graphics, allLabel, allButton);
         if (azButton != null && azButton.isMouseOver(mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.translatable(
+            graphics.setTooltipForNextFrame(font, Component.translatable(
                     alphabetical ? "gui.mystcraft.writing_desk.sort_on" : "gui.mystcraft.writing_desk.sort_off"), mouseX, mouseY);
         } else if (allButton != null && allButton.isMouseOver(mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.translatable(
+            graphics.setTooltipForNextFrame(font, Component.translatable(
                     showAll ? "gui.mystcraft.writing_desk.all_on" : "gui.mystcraft.writing_desk.all_off"), mouseX, mouseY);
         }
 
         SurfaceEntry hit = hitSurface(mouseX, mouseY);
-        if (hit != null && !hit.page.isEmpty()) graphics.renderTooltip(font, hit.page, mouseX, mouseY);
-        else renderTooltip(graphics, mouseX, mouseY);
+        if (hit != null && !hit.page.isEmpty()) graphics.setTooltipForNextFrame(font, hit.page, mouseX, mouseY);
+        else extractTooltip(graphics, mouseX, mouseY);
     }
-    private void drawToggleState(GuiGraphics graphics, Button button, boolean selected) {
+    private void drawToggleState(GuiGraphicsExtractor graphics, Button button, boolean selected) {
         if (button == null || !button.visible || !selected) return;
         int x0 = button.getX() + 1;
         int y0 = button.getY() + 1;
@@ -527,11 +527,11 @@ public final class WritingDeskScreen extends AbstractContainerScreen<WritingDesk
         graphics.fill(x1 - 1, y0, x1, y1, 0xFFFFFFFF);
     }
 
-    private void drawCenteredNoShadow(GuiGraphics graphics, Component text, Button button) {
+    private void drawCenteredNoShadow(GuiGraphicsExtractor graphics, Component text, Button button) {
         if (button == null || !button.visible) return;
         int x = button.getX() + (button.getWidth() - font.width(text)) / 2;
         int y = button.getY() + (button.getHeight() - 8) / 2;
-        graphics.drawString(font, text, x, y, button.active ? 0xFFFFFF : 0xA0A0A0, false);
+        graphics.text(font, text, x, y, button.active ? 0xFFFFFFFF : 0xFFA0A0A0, false);
     }
 
 }

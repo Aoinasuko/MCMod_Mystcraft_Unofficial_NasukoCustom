@@ -12,7 +12,7 @@ public final class LegacyInstabilityDecayRuntimeState {
     private LegacyInstabilityDecayRuntimeState() {}
 
     public static int advance(ServerLevel level, String providerId, int effectIndex, String role) {
-        String key = level.dimension().location() + "|" + providerId + "|" + role + "|" + effectIndex;
+        String key = level.dimension().identifier() + "|" + providerId + "|" + role + "|" + effectIndex;
         return LCG.compute(key, (ignored, previous) -> {
             int current = previous == null ? new Random().nextInt() : previous;
             return current * 3 + 1013904223;
@@ -21,7 +21,7 @@ public final class LegacyInstabilityDecayRuntimeState {
 
     public static void clearDimension(ServerLevel level) {
         if (level == null) return;
-        String prefix = level.dimension().location() + "|";
+        String prefix = level.dimension().identifier() + "|";
         LCG.keySet().removeIf(key -> key.startsWith(prefix));
     }
 

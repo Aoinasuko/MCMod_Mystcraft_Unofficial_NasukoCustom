@@ -4,7 +4,7 @@ import com.xcompwiz.mystcraft.Mystcraft;
 import com.xcompwiz.mystcraft.world.worldgen.AgeFeatureKind;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -68,10 +68,10 @@ final class AgeLegacyStructurePopulationBridge {
         int maxZ = minZ + 15;
         BoundingBox populationBox = new BoundingBox(
                 minX,
-                level.getMinBuildHeight() + 1,
+                level.getMinY() + 1,
                 minZ,
                 maxX,
-                level.getMaxBuildHeight() - 1,
+                level.getMaxY() + 1 - 1,
                 maxZ);
 
         StructureManager structures = region.getLevel().structureManager().forWorldGenRegion(region);
@@ -167,16 +167,16 @@ final class AgeLegacyStructurePopulationBridge {
             ChunkPos queryChunk,
             String unavailablePart) {
         ChunkPos center = region.getCenter();
-        String key = region.getLevel().dimension().location()
+        String key = region.getLevel().dimension().identifier()
                 + "|" + kind
-                + "|" + center.x + "," + center.z
-                + "|" + queryChunk.x + "," + queryChunk.z;
+                + "|" + center.x() + "," + center.z()
+                + "|" + queryChunk.x() + "," + queryChunk.z();
         if (LOGGED_UNAVAILABLE_WORLDGEN_CHUNKS.add(key)) {
             Mystcraft.LOGGER.warn(
                     "Skipped unavailable worldgen structure-reference chunk: dimension={}, kind={}, "
                             + "regionCenter={}, populationChunk={}, queryChunk={}, unavailable={}. "
                             + "No out-of-region chunk lookup was attempted.",
-                    region.getLevel().dimension().location(),
+                    region.getLevel().dimension().identifier(),
                     kind,
                     center,
                     populationChunk,
@@ -192,18 +192,18 @@ final class AgeLegacyStructurePopulationBridge {
             ChunkPos queryChunk,
             ChunkPos startChunk) {
         ChunkPos center = region.getCenter();
-        String key = region.getLevel().dimension().location()
+        String key = region.getLevel().dimension().identifier()
                 + "|start|" + kind
-                + "|" + center.x + "," + center.z
-                + "|" + queryChunk.x + "," + queryChunk.z
-                + "|" + startChunk.x + "," + startChunk.z;
+                + "|" + center.x() + "," + center.z()
+                + "|" + queryChunk.x() + "," + queryChunk.z()
+                + "|" + startChunk.x() + "," + startChunk.z();
         if (LOGGED_UNAVAILABLE_WORLDGEN_CHUNKS.add(key)) {
             Mystcraft.LOGGER.warn(
                     "Skipped out-of-region structure start during FEATURES: dimension={}, kind={}, "
                             + "regionCenter={}, populationChunk={}, queryChunk={}, startChunk={}. "
                             + "The reference is valid, but its start chunk is not resident in this WorldGenRegion; "
                             + "skipping is safer than recursively requesting worldgen and crashing the server.",
-                    region.getLevel().dimension().location(),
+                    region.getLevel().dimension().identifier(),
                     kind,
                     center,
                     populationChunk,
@@ -213,11 +213,11 @@ final class AgeLegacyStructurePopulationBridge {
     }
 
     private static Predicate<Structure> predicate(WorldGenLevel level, AgeFeatureKind kind) {
-        Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         return structure -> matches(registry.getKey(structure), kind);
     }
 
-    static boolean matches(ResourceLocation id, AgeFeatureKind kind) {
+    static boolean matches(Identifier id, AgeFeatureKind kind) {
         if (id == null || !"minecraft".equals(id.getNamespace())) return false;
         String path = id.getPath();
         return switch (kind) {

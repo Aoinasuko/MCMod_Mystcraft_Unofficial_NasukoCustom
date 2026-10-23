@@ -2,15 +2,15 @@ package com.xcompwiz.mystcraft.client;
 
 import com.xcompwiz.mystcraft.Mystcraft;
 import com.xcompwiz.mystcraft.api.impl.runtime.ApiWordRegistry;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 
 import java.util.Random;
 
 /** 1.21.1 renderer for the legacy Mystcraft/Narayan four-word symbol glyphs. */
 public final class LegacySymbolRenderer {
-    private static final ResourceLocation COMPONENTS = ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/symbolcomponents.png");
-    private static final ResourceLocation PAGE_LEFT = ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "gui/bookui_pagel.png");
+    private static final Identifier COMPONENTS = Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/symbolcomponents.png");
+    private static final Identifier PAGE_LEFT = Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "gui/bookui_pagel.png");
     /*
      * 0.13.7.06 did NOT ship a fixed table for ordinary Narayan words.
      * DrawableWordManager.getDrawableWord() lower-cased the word and generated
@@ -22,8 +22,8 @@ public final class LegacySymbolRenderer {
     private LegacySymbolRenderer() {}
 
     /** Draws the same 30x40 parchment crop used by 0.13.7.06, scaled to the requested size. */
-    public static void drawPage(GuiGraphics graphics, String descriptor, int x, int y, int width, int height, boolean dimmed) {
-        graphics.blit(PAGE_LEFT, x, y, width, height, 156, 0, 30, 40, 256, 256);
+    public static void drawPage(GuiGraphicsExtractor graphics, String descriptor, int x, int y, int width, int height, boolean dimmed) {
+        LegacyGuiDrawing.blit(graphics, PAGE_LEFT, x, y, width, height, 156, 0, 30, 40, 256, 256);
         if (dimmed) graphics.fill(x, y, x + width, y + height, 0x99000000);
         if (descriptor == null || descriptor.isBlank() || "$BLANK$".equals(descriptor)) return;
         if ("$LINK_PANEL$".equals(descriptor)) {
@@ -39,7 +39,7 @@ public final class LegacySymbolRenderer {
         drawSymbol(graphics, descriptor, x, glyphY, glyphSize);
     }
 
-    public static void drawSymbol(GuiGraphics graphics, String legacyId, int x, int y, int scale) {
+    public static void drawSymbol(GuiGraphicsExtractor graphics, String legacyId, int x, int y, int scale) {
         String[] poem = LegacySymbolVisuals.poem(legacyId);
         int half = Math.max(1, scale / 2);
         float sf = half / 2.41421356237F;
@@ -52,23 +52,23 @@ public final class LegacySymbolRenderer {
         if (poem.length > 3) drawWord(graphics, poem[3], x, y + o, wordSize);
     }
 
-    public static void drawWord(GuiGraphics graphics, String word, int x, int y, int size) {
+    public static void drawWord(GuiGraphicsExtractor graphics, String word, int x, int y, int size) {
         var custom = word == null ? null : ApiWordRegistry.get(word);
-        ResourceLocation source = custom == null ? COMPONENTS : custom.imageSource();
+        Identifier source = custom == null ? COMPONENTS : custom.imageSource();
         int[] components = componentsFor(word);
         for (int i = 0; i < components.length; i++) {
             int color = 0;
             if (custom != null && !custom.colors().isEmpty()) {
                 color = custom.colors().get(Math.min(i, custom.colors().size() - 1));
             }
-            graphics.setColor(((color >> 16) & 0xFF) / 255F, ((color >> 8) & 0xFF) / 255F,
+            LegacyGuiDrawing.setColor(graphics, ((color >> 16) & 0xFF) / 255F, ((color >> 8) & 0xFF) / 255F,
                     (color & 0xFF) / 255F, 1F);
             int component = components[i];
             int iconX = (component % 8) * 64;
             int iconY = (component / 8) * 64;
-            graphics.blit(source, x, y, size, size, iconX, iconY, 64, 64, 512, 512);
+            LegacyGuiDrawing.blit(graphics, source, x, y, size, size, iconX, iconY, 64, 64, 512, 512);
         }
-        graphics.setColor(1F, 1F, 1F, 1F);
+        LegacyGuiDrawing.setColor(graphics, 1F, 1F, 1F, 1F);
     }
 
     /**

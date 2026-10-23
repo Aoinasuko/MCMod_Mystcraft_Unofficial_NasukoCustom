@@ -4,7 +4,7 @@ import com.xcompwiz.mystcraft.page.Page;
 import com.xcompwiz.mystcraft.registry.MystItems;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -28,23 +28,23 @@ public final class ItemBoosterPack extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
-        if (level.isClientSide) return InteractionResultHolder.pass(held);
+        if (level.isClientSide()) return InteractionResult.PASS;
 
         ItemStack folder = generateBooster(player.getRandom());
-        if (folder.isEmpty()) return InteractionResultHolder.pass(held);
+        if (folder.isEmpty()) return InteractionResult.PASS;
 
         held.shrink(1);
         if (held.isEmpty()) {
             player.setItemInHand(hand, folder);
-            return InteractionResultHolder.sidedSuccess(folder, false);
+            return InteractionResult.SUCCESS;
         }
         if (!player.getInventory().add(folder)) {
             held.grow(1);
-            return InteractionResultHolder.pass(held);
+            return InteractionResult.PASS;
         }
-        return InteractionResultHolder.sidedSuccess(held, false);
+        return InteractionResult.SUCCESS;
     }
 
     public static ItemStack generateBooster(RandomSource random) {

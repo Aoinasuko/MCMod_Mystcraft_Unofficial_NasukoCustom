@@ -8,7 +8,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -22,7 +21,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -38,8 +37,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * sneak-use with an empty hand to retrieve it.</p>
  */
 public final class BlockBookDisplay extends BaseEntityBlock {
-    public static final MapCodec<BlockBookDisplay> CODEC = simpleCodec(BlockBookDisplay::new);
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static final VoxelShape STAND_SHAPE = Shapes.or(
             box(5, 0, 5, 11, 3, 11),
             box(7, 3, 7, 9, 11, 9),
@@ -53,10 +51,6 @@ public final class BlockBookDisplay extends BaseEntityBlock {
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
@@ -98,19 +92,19 @@ public final class BlockBookDisplay extends BaseEntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                                Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (!(level.getBlockEntity(pos) instanceof BookDisplayBlockEntity display)
                 || !display.canAccept(stack)
                 || display.hasBook()) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
-        if (!level.isClientSide && display.insertBook(stack)) {
+        if (!level.isClientSide() && display.insertBook(stack)) {
             if (!player.getAbilities().instabuild) stack.shrink(1);
-            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+            com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, net.minecraft.network.chat.Component.translatable(
                     "message.mystcraft.book_display_inserted"), true);
         }
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -119,33 +113,21 @@ public final class BlockBookDisplay extends BaseEntityBlock {
         if (!(level.getBlockEntity(pos) instanceof BookDisplayBlockEntity display) || !display.hasBook()) {
             return InteractionResult.PASS;
         }
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             if (player.isShiftKeyDown()) {
                 ItemStack book = display.removeBook();
                 if (player.getMainHandItem().isEmpty()) player.setItemInHand(InteractionHand.MAIN_HAND, book);
-                else player.getInventory().placeItemBackInInventory(book);
-                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                else player.getInventory().placeItemBackInInventory(book, net.minecraft.util.Prediction.SERVER_ONLY);
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, net.minecraft.network.chat.Component.translatable(
                         "message.mystcraft.book_display_removed"), true);
             } else if (player instanceof ServerPlayer serverPlayer
                     && BookDisplayBlockEntity.isLinkingBook(display.getBook())) {
                 ItemLinking.openStoredBookMenu(serverPlayer, pos, display.getBook());
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
-    @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level.getBlockEntity(pos) instanceof BookDisplayBlockEntity display
-                && !level.isClientSide) {
-            ItemStack book = display.removeBook();
-            if (!book.isEmpty()) {
-                Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, book);
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
 
     @Override
     protected boolean hasAnalogOutputSignal(BlockState state) {
@@ -153,7 +135,7 @@ public final class BlockBookDisplay extends BaseEntityBlock {
     }
 
     @Override
-    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, net.minecraft.core.Direction direction) {
         return level.getBlockEntity(pos) instanceof BookDisplayBlockEntity display && display.hasBook() ? 15 : 0;
     }
 }

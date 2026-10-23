@@ -28,16 +28,16 @@ public final class LegacyInstabilityEntitySlotCache {
         if (level == null || chunk == null) return List.of();
         if (slot < 0 || slot >= LegacyInstabilityPotionRuntimeMath.LEGACY_VERTICAL_SLOTS) return List.of();
 
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         long gameTime = level.getGameTime();
         DimensionCache dimensionCache = CACHE.compute(dimension, (key, old) ->
                 old != null && old.gameTime == gameTime ? old : new DimensionCache(gameTime));
-        long key = slotKey(chunk.getPos().toLong(), slot);
+        long key = slotKey(chunk.getPos().pack(), slot);
         return dimensionCache.byChunkSlot.computeIfAbsent(key, ignored -> query(level, chunk, slot));
     }
 
     private static List<Entity> query(ServerLevel level, LevelChunk chunk, int slot) {
-        var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinBuildHeight(), level.getHeight(), slot);
+        var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinY(), level.getHeight(), slot);
         ChunkPos chunkPos = chunk.getPos();
         int minX = chunkPos.getMinBlockX();
         int minZ = chunkPos.getMinBlockZ();
@@ -46,8 +46,8 @@ public final class LegacyInstabilityEntitySlotCache {
         return List.copyOf(level.getEntitiesOfClass(Entity.class, bounds, entity -> {
             if (entity == null || entity.isRemoved()) return false;
             ChunkPos entityChunk = entity.chunkPosition();
-            return entityChunk.x == chunkPos.x
-                    && entityChunk.z == chunkPos.z
+            return entityChunk.x() == chunkPos.x()
+                    && entityChunk.z() == chunkPos.z()
                     && LegacyInstabilityPotionRuntimeMath.containsY(band, entity.getBlockY());
         }));
     }
@@ -57,7 +57,7 @@ public final class LegacyInstabilityEntitySlotCache {
     }
 
     public static void clear(ServerLevel level) {
-        if (level != null) CACHE.remove(level.dimension().location().toString());
+        if (level != null) CACHE.remove(level.dimension().identifier().toString());
     }
 
     private static final class DimensionCache {

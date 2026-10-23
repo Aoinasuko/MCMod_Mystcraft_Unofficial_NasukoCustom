@@ -46,12 +46,15 @@ public final class MystcraftGridBiomeSource extends BiomeSource {
         return CODEC;
     }
 
-    @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         // Noise-biome coordinates are quart coordinates in modern Minecraft.
         int blockX = x << 2;
         int blockZ = z << 2;
         int index = AgeGridBiomeIndex.indexForBlock(blockX, blockZ, biomes.size());
         return biomes.get(index);
+    }
+    @Override
+    public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler sampler) {
+        return (x, y, z) -> getNoiseBiome(x, y, z, sampler);
     }
 }

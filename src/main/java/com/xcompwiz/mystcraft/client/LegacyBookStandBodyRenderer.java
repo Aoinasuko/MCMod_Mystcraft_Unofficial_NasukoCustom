@@ -9,22 +9,22 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /** Exact ModelBookstand geometry from Mystcraft 0.13.7.06. */
 final class LegacyBookStandBodyRenderer {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
             Mystcraft.MOD_ID, "textures/entity/bookstand.png");
     private static final String[] PARTS = {"leftarm", "post", "base", "rightarm"};
     private final ModelPart root = createLayer().bakeRoot();
 
-    void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+    void render(PoseStack poseStack, SubmitNodeCollector buffers, int packedLight) {
         for (String part : PARTS) {
-            root.getChild(part).render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
+            buffers.submitModelPart(root.getChild(part), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
         }
     }
 

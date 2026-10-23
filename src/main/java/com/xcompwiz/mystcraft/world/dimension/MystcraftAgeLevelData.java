@@ -24,6 +24,8 @@ import java.util.Objects;
  */
 public final class MystcraftAgeLevelData extends DerivedLevelData {
     private final String levelName;
+    private final net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension;
+    private final net.minecraft.world.level.saveddata.WeatherData weather = new net.minecraft.world.level.saveddata.WeatherData();
 
     private BlockPos spawnPos;
     private float spawnAngle;
@@ -51,6 +53,7 @@ public final class MystcraftAgeLevelData extends DerivedLevelData {
                 : age.ageName();
         this.spawnPos = age.spawn() != null ? age.spawn() : Objects.requireNonNull(fallbackSpawn, "fallbackSpawn");
         this.spawnAngle = 0.0F;
+        this.dimension = AgeDimensionDefinition.from(age).levelKey();
         this.gameTime = age.worldTime();
         this.dayTime = age.dayTime();
         this.clearWeatherTime = age.clearWeatherTime();
@@ -58,6 +61,11 @@ public final class MystcraftAgeLevelData extends DerivedLevelData {
         this.rainTime = age.rainTime();
         this.thundering = age.thundering();
         this.raining = age.raining();
+        weather.setClearWeatherTime(clearWeatherTime);
+        weather.setRainTime(rainTime);
+        weather.setThunderTime(thunderTime);
+        weather.setRaining(raining);
+        weather.setThundering(thundering);
 
         // Legacy WeatherControllerBase restored its persisted cycle counters/flags and
         // reconstructed visual strength from the saved raining/thundering booleans.
@@ -79,17 +87,14 @@ public final class MystcraftAgeLevelData extends DerivedLevelData {
         return levelName;
     }
 
-    @Override
     public BlockPos getSpawnPos() {
         return spawnPos;
     }
 
-    @Override
     public float getSpawnAngle() {
         return spawnAngle;
     }
 
-    @Override
     public void setSpawn(BlockPos pos, float angle) {
         this.spawnPos = Objects.requireNonNull(pos, "pos").immutable();
         this.spawnAngle = angle;
@@ -105,64 +110,52 @@ public final class MystcraftAgeLevelData extends DerivedLevelData {
         this.gameTime = time;
     }
 
-    @Override
     public long getDayTime() {
         return dayTime;
     }
 
-    @Override
     public void setDayTime(long time) {
         this.dayTime = time;
     }
 
-    @Override
     public int getClearWeatherTime() {
-        return clearWeatherTime;
+        return weather.getClearWeatherTime();
     }
 
-    @Override
     public void setClearWeatherTime(int time) {
-        this.clearWeatherTime = time;
+        weather.setClearWeatherTime(time);
     }
 
-    @Override
     public int getThunderTime() {
-        return thunderTime;
+        return weather.getThunderTime();
     }
 
-    @Override
     public void setThunderTime(int time) {
-        this.thunderTime = time;
+        weather.setThunderTime(time);
     }
 
-    @Override
     public int getRainTime() {
-        return rainTime;
+        return weather.getRainTime();
     }
 
-    @Override
     public void setRainTime(int time) {
-        this.rainTime = time;
+        weather.setRainTime(time);
     }
 
-    @Override
     public boolean isThundering() {
-        return thundering;
+        return weather.isThundering();
     }
 
-    @Override
     public void setThundering(boolean value) {
-        this.thundering = value;
+        weather.setThundering(value);
     }
 
-    @Override
     public boolean isRaining() {
-        return raining;
+        return weather.isRaining();
     }
 
-    @Override
     public void setRaining(boolean value) {
-        this.raining = value;
+        weather.setRaining(value);
     }
 
 
@@ -178,5 +171,18 @@ public final class MystcraftAgeLevelData extends DerivedLevelData {
     @Override
     public void setInitialized(boolean value) {
         this.initialized = value;
+    }
+
+    public net.minecraft.world.level.saveddata.WeatherData weather() { return weather; }
+
+    @Override
+    public net.minecraft.world.level.storage.LevelData.RespawnData getRespawnData() {
+        return net.minecraft.world.level.storage.LevelData.RespawnData.of(dimension, spawnPos, spawnAngle, 0);
+    }
+
+    @Override
+    public void setSpawn(net.minecraft.world.level.storage.LevelData.RespawnData spawn) {
+        this.spawnPos = spawn.pos();
+        this.spawnAngle = spawn.yaw();
     }
 }

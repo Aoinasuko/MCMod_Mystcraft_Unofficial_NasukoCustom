@@ -3,7 +3,7 @@ package com.xcompwiz.mystcraft.world.worldgen;
 import com.xcompwiz.mystcraft.symbol.SymbolAnalysis;
 import com.xcompwiz.mystcraft.symbol.SymbolCompletionPlan;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 
@@ -21,7 +21,7 @@ public record AgeWorldgenPlan(
         ResourceKey<Biome> fixedBiome,
         ResourceKey<NoiseGeneratorSettings> noiseSettings,
         List<String> requestedSymbols,
-        List<ResourceLocation> resolvedSymbolKeys,
+        List<Identifier> resolvedSymbolKeys,
         List<String> unresolvedSymbols,
         SymbolAnalysis symbolAnalysis,
         SymbolCompletionPlan symbolCompletionPlan,

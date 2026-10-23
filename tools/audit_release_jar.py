@@ -3,8 +3,8 @@
 from pathlib import Path
 import csv, hashlib, io, json, sys, zipfile
 
-VERSION = "0.13.7.06-port.1.0.0-Ueno"
-EXPECTED_NAME = f"mystcraft-{VERSION}.jar"
+VERSION = "0.1.0"
+EXPECTED_NAME = f"mystcraft-unofficial-nasukocustom-{VERSION}.jar"
 MC = "NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT."
 CYAN = "This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan."
 REQUIRED_META = {
@@ -43,7 +43,7 @@ def main():
             try: return z.read(n).decode("utf-8-sig")
             except Exception: return ""
         toml=text("META-INF/neoforge.mods.toml")
-        for token in [f'version="{VERSION}"','displayName="Mystcraft Legacy (Unofficial 1.21.1 Port)"','ueno969','ueno96941@gmail.com',MC,CYAN]:
+        for token in [f'version="{VERSION}"','displayName="Mystcraft Unofficial NasukoCustom"','ueno969','ueno96941@gmail.com',MC,CYAN]:
             if token not in toml: problems.append(f"neoforge.mods.toml missing: {token}")
         prov=text("META-INF/ASSET_PROVENANCE_SHA256.tsv")
         try: rows=list(csv.DictReader(io.StringIO(prov), delimiter="\t"))

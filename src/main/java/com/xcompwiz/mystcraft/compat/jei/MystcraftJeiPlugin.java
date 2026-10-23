@@ -5,7 +5,7 @@ import com.xcompwiz.mystcraft.recipe.LinkingBookRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IVanillaCategoryExtensionRegistration;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Optional JEI integration for Mystcraft's legacy special crafting recipes.
@@ -17,11 +17,11 @@ import net.minecraft.resources.ResourceLocation;
  */
 @JeiPlugin
 public final class MystcraftJeiPlugin implements IModPlugin {
-    private static final ResourceLocation UID =
-            ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "jei_plugin");
+    private static final Identifier UID =
+            Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "jei_plugin");
 
     @Override
-    public ResourceLocation getPluginUid() {
+    public Identifier getPluginUid() {
         return UID;
     }
 

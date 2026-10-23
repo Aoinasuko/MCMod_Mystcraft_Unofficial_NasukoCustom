@@ -13,7 +13,7 @@ import java.util.Map;
  * Legacy 0.13.7.06 symbol-id migration table.
  *
  * <p>The original mod migrated old Page ids lazily when pages/books/folders were
- * loaded. 1.21 ResourceLocation rules cannot represent several of those historic
+ * loaded. 1.21 Identifier rules cannot represent several of those historic
  * mixed-case ids directly, so this port keeps the persisted legacy String as the
  * migration identity and only canonicalizes for map lookup.</p>
  *
@@ -150,7 +150,7 @@ public final class SymbolRemappings {
         String namespace = split < 0 ? "mystcraft" : qualified.substring(0, split);
         String path = split < 0 ? qualified : qualified.substring(split + 1);
 
-        // 0.13.7.06 compatibility rules from SymbolRemappings.remap(ResourceLocation).
+        // 0.13.7.06 compatibility rules from SymbolRemappings.remap(Identifier).
         if (namespace.toLowerCase(Locale.ROOT).startsWith("modmat_")) {
             String realNamespace = namespace.substring("modmat_".length());
             qualified = realNamespace + ":modmat_" + path;

@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.146'
+    id 'net.neoforged.moddev' version '2.0.148'
     id 'idea'
 }
 
@@ -27,10 +27,10 @@ repositories {
 }
 
 base {
-    archivesName = mod_id
+    archivesName = 'mystcraft-unofficial-nasukocustom'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
     version = project.neo_version
@@ -39,15 +39,15 @@ neoForge {
     // I93+ relies on this for the additive Archivist village-pool patch.
     validateAccessTransformers = true
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
-
     runs {
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+        clientSmokeTest {
+            client()
+            systemProperty 'mystcraft.clientValidation', 'true'
+            jvmArgument '-Xmx4G'
         }
         server {
             server()
@@ -56,6 +56,7 @@ neoForge {
         }
         gameTestServer {
             type = 'gameTestServer'
+            systemProperty 'mystcraft.portValidation', 'true'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
         data {
@@ -64,7 +65,7 @@ neoForge {
         }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
+            logLevel = org.slf4j.event.Level.INFO
         }
     }
 
@@ -120,6 +121,7 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xmaxerrs', '2000', '-Xdiags:verbose'])
 }
 
 idea {

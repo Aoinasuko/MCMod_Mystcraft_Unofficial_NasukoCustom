@@ -28,14 +28,14 @@ public final class AgeAcceleratedTickRuntimeEvents {
     @SubscribeEvent
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
 
         var ageOptional = AgeManager.resolveByLevel(level.getServer(), level.dimension());
         if (ageOptional.isEmpty()) return;
         var prepared = AgeRuntimeDimensionLoader.getPrepared(ageOptional.get().ageUid()).orElse(null);
         if (prepared == null || !prepared.worldgenPlan().environmentPlan().acceleratedRandomTicks()) return;
 
-        String key = level.dimension().location().toString();
+        String key = level.dimension().identifier().toString();
         int lcg = UPDATE_LCG.computeIfAbsent(key, ignored -> level.getRandom().nextInt());
         HashSet<Long> visited = new HashSet<>();
         int simulationDistance = level.getServer().getPlayerList().getSimulationDistance();
@@ -44,9 +44,9 @@ public final class AgeAcceleratedTickRuntimeEvents {
             ChunkPos center = player.chunkPosition();
             for (int dz = -simulationDistance; dz <= simulationDistance; dz++) {
                 for (int dx = -simulationDistance; dx <= simulationDistance; dx++) {
-                    int cx = center.x + dx;
-                    int cz = center.z + dz;
-                    long packed = ChunkPos.asLong(cx, cz);
+                    int cx = center.x() + dx;
+                    int cz = center.z() + dz;
+                    long packed = ChunkPos.pack(cx, cz);
                     if (!visited.add(packed)) continue;
                     if (!level.getChunkSource().chunkMap.getDistanceManager().inBlockTickingRange(packed)) continue;
                     LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
@@ -57,10 +57,10 @@ public final class AgeAcceleratedTickRuntimeEvents {
         }
 
         // Keep forced chunks participating even when no player is currently near them.
-        for (long packed : level.getForcedChunks()) {
+        for (long packed : level.getForceLoadedChunks()) {
             if (!visited.add(packed)) continue;
-            ChunkPos pos = new ChunkPos(packed);
-            LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x, pos.z);
+            ChunkPos pos = ChunkPos.unpack(packed);
+            LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x(), pos.z());
             if (chunk != null) lcg = tickChunk(level, chunk, lcg);
         }
         UPDATE_LCG.put(key, lcg);
@@ -69,15 +69,15 @@ public final class AgeAcceleratedTickRuntimeEvents {
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (event.getLevel() instanceof ServerLevel level) {
-            String key = level.dimension().location().toString();
+            String key = level.dimension().identifier().toString();
             UPDATE_LCG.remove(key);
         }
     }
 
     static int tickChunk(ServerLevel level, LevelChunk chunk, int updateLCG) {
         LevelChunkSection[] sections = chunk.getSections();
-        int chunkBaseX = chunk.getPos().x << 4;
-        int chunkBaseZ = chunk.getPos().z << 4;
+        int chunkBaseX = chunk.getPos().x() << 4;
+        int chunkBaseZ = chunk.getPos().z() << 4;
         for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
             LevelChunkSection section = sections[sectionIndex];
             if (section == null || !section.isRandomlyTickingBlocks()) continue;

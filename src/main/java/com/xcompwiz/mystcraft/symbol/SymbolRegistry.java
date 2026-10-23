@@ -1,6 +1,6 @@
 package com.xcompwiz.mystcraft.symbol;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 public final class SymbolRegistry {
     private static final Map<String, SymbolDefinition> BY_LEGACY_ID = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, SymbolDefinition> BY_KEY = new LinkedHashMap<>();
+    private static final Map<Identifier, SymbolDefinition> BY_KEY = new LinkedHashMap<>();
     private static boolean bootstrapped;
 
     private SymbolRegistry() {}
@@ -50,11 +50,11 @@ public final class SymbolRegistry {
         String raw = LegacySymbolId.qualify(legacyId);
         SymbolDefinition exact = BY_LEGACY_ID.get(raw);
         if (exact != null) return Optional.of(exact);
-        ResourceLocation canonical = LegacySymbolId.canonicalKey(raw);
+        Identifier canonical = LegacySymbolId.canonicalKey(raw);
         return canonical == null ? Optional.empty() : Optional.ofNullable(BY_KEY.get(canonical));
     }
 
-    public static Optional<SymbolDefinition> resolveKey(ResourceLocation key) {
+    public static Optional<SymbolDefinition> resolveKey(Identifier key) {
         bootstrapLegacyBuiltins();
         return Optional.ofNullable(BY_KEY.get(key));
     }

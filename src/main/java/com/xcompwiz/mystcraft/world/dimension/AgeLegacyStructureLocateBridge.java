@@ -9,7 +9,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -25,7 +25,7 @@ import java.util.Set;
 /** Locate compatibility for the 0.13.7.06 Nether Fortress Symbol. */
 final class AgeLegacyStructureLocateBridge {
     private static final ResourceKey<Structure> FORTRESS = ResourceKey.create(
-            Registries.STRUCTURE, ResourceLocation.withDefaultNamespace("fortress"));
+            Registries.STRUCTURE, Identifier.withDefaultNamespace("fortress"));
     private static final int LEGACY_REGION_SIZE = 16;
 
     private AgeLegacyStructureLocateBridge() {}
@@ -78,14 +78,14 @@ final class AgeLegacyStructureLocateBridge {
                     if (!candidate.enabled()) continue;
 
                     ChunkPos candidatePos = new ChunkPos(candidate.chunkX(), candidate.chunkZ());
-                    if (!visitedCandidates.add(candidatePos.toLong())) continue;
+                    if (!visitedCandidates.add(candidatePos.pack())) continue;
 
                     ChunkAccess chunk = level.getChunk(
-                            candidatePos.x,
-                            candidatePos.z,
+                            candidatePos.x(),
+                            candidatePos.z(),
                             ChunkStatus.STRUCTURE_STARTS);
                     StructureStart start = structureManager.getStartForStructure(
-                            SectionPos.bottomOf(chunk), fortressHolder.value(), chunk);
+                            fortressHolder.value(), chunk);
                     if (start == null || !start.isValid()) continue;
 
                     if (skipKnownStructures) {
@@ -105,14 +105,14 @@ final class AgeLegacyStructureLocateBridge {
             if (best != null) {
                 Mystcraft.LOGGER.debug(
                         "Legacy Nether Fortress locate: dimension={}, origin={}, result={}, regionRing={}",
-                        level.dimension().location(), origin, best.getFirst(), ring);
+                        level.dimension().identifier(), origin, best.getFirst(), ring);
                 return best;
             }
         }
 
         Mystcraft.LOGGER.warn(
                 "Legacy Nether Fortress locate exhausted: dimension={}, origin={}, searchRadius={}",
-                level.dimension().location(), origin, searchRadius);
+                level.dimension().identifier(), origin, searchRadius);
         return null;
     }
 

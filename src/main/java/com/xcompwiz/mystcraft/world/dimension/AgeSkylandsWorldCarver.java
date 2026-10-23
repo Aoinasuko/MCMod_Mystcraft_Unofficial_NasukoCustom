@@ -9,10 +9,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Aquifer;
-import net.minecraft.world.level.levelgen.carver.CarverConfiguration;
-import net.minecraft.world.level.levelgen.carver.CarvingContext;
 import net.minecraft.world.level.chunk.CarvingMask;
-import net.minecraft.world.level.levelgen.carver.WorldCarver;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -24,38 +21,26 @@ import java.util.function.Function;
  * was not a MapGen source-contribution algorithm, so only the source==target callback executes
  * the 16x16 column filter. This prevents the same destructive filter from being replayed 289 times.</p>
  */
-public final class AgeSkylandsWorldCarver extends WorldCarver<CarverConfiguration> {
+public final class AgeSkylandsWorldCarver implements AgeTerrainAlteration {
     private final LegacySkylandsKernel kernel;
 
     public AgeSkylandsWorldCarver(LegacySkylandsKernel kernel) {
-        super(CarverConfiguration.CODEC.codec());
         this.kernel = Objects.requireNonNull(kernel, "kernel");
     }
 
-    @Override
-    public boolean isStartChunk(CarverConfiguration config, RandomSource random) {
-        return true;
-    }
 
     @Override
-    public boolean carve(
-            CarvingContext context,
-            CarverConfiguration config,
-            ChunkAccess targetChunk,
-            Function<BlockPos, Holder<Biome>> biomeAccessor,
-            RandomSource random,
-            Aquifer aquifer,
-            ChunkPos sourceChunkPos,
-            CarvingMask carvingMask) {
+    public boolean apply(net.minecraft.core.RegistryAccess registries,
+                         ChunkAccess targetChunk, ChunkPos sourceChunkPos) {
 
         ChunkPos target = targetChunk.getPos();
-        if (sourceChunkPos.x != target.x || sourceChunkPos.z != target.z) return false;
+        if (sourceChunkPos.x() != target.x() || sourceChunkPos.z() != target.z()) return false;
 
-        int[] cutoff = kernel.cutoffHeights(target.x, target.z);
+        int[] cutoff = kernel.cutoffHeights(target.x(), target.z());
         int minX = target.getMinBlockX();
         int minZ = target.getMinBlockZ();
-        int minY = targetChunk.getMinBuildHeight();
-        int maxY = targetChunk.getMaxBuildHeight() - 1;
+        int minY = targetChunk.getMinY();
+        int maxY = targetChunk.getMaxY() + 1 - 1;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         for (int x = 0; x < 16; x++) {
@@ -67,7 +52,7 @@ public final class AgeSkylandsWorldCarver extends WorldCarver<CarverConfiguratio
                     var state = targetChunk.getBlockState(pos);
                     if (state.isAir()) continue;
                     if (y <= height || !state.getFluidState().isEmpty()) {
-                        targetChunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false);
+                        targetChunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), 0);
                     }
                 }
             }

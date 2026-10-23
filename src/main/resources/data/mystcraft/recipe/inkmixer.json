@@ -7,9 +7,9 @@
     "PSP"
   ],
   "key": {
-    "S": { "item": "minecraft:stone" },
-    "V": { "item": "minecraft:glass_bottle" },
-    "P": { "tag": "minecraft:planks" }
+    "S": "minecraft:stone",
+    "V": "minecraft:glass_bottle",
+    "P": "#minecraft:planks"
   },
   "result": {
     "id": "mystcraft:blockinkmixer",

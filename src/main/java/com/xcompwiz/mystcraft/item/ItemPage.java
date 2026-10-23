@@ -6,7 +6,7 @@ import com.xcompwiz.mystcraft.page.Page;
 import com.xcompwiz.mystcraft.api.item.IItemRenameable;
 import com.xcompwiz.mystcraft.api.item.IItemWritable;
 import com.xcompwiz.mystcraft.api.item.IItemPageProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import com.xcompwiz.mystcraft.client.LegacySymbolName;
 import com.xcompwiz.mystcraft.registry.MystItems;
 import com.xcompwiz.mystcraft.symbol.SymbolRemappings;
@@ -34,7 +34,7 @@ public final class ItemPage extends Item implements IItemRenameable, IItemWritab
     public void setDisplayName(Player player, ItemStack stack, String name) { /* Legacy ItemPage rename was intentionally a no-op. */ }
 
     @Override
-    public boolean writeSymbol(Player player, ItemStack stack, ResourceLocation symbol) {
+    public boolean writeSymbol(Player player, ItemStack stack, Identifier symbol) {
         if (!Page.isBlank(stack) || symbol == null) return false;
         Page.setSymbolId(stack, symbol.toString());
         return true;
@@ -44,11 +44,16 @@ public final class ItemPage extends Item implements IItemRenameable, IItemWritab
     public List<ItemStack> getPageList(Player player, ItemStack stack) { return List.of(stack); }
 
     @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
-        super.inventoryTick(stack, level, entity, slotId, isSelected);
-        if (level.isClientSide || !(entity instanceof Player player) || stack.isEmpty()) return;
+    public void inventoryTick(ItemStack stack, net.minecraft.server.level.ServerLevel level, Entity entity, net.minecraft.world.entity.EquipmentSlot equipmentSlot) {
+        super.inventoryTick(stack, level, entity, equipmentSlot);
+        if (level.isClientSide() || !(entity instanceof Player player) || stack.isEmpty()) return;
         if (Page.isBlank(stack) || Page.isLinkPanel(stack)) return;
 
+        int slotId = -1;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (player.getInventory().getItem(i) == stack) { slotId = i; break; }
+        }
+        if (slotId < 0) return;
         List<ItemStack> mapping = SymbolRemappings.remapPage(stack);
         if (mapping.isEmpty()) {
             stack.setCount(0);
@@ -72,24 +77,24 @@ public final class ItemPage extends Item implements IItemRenameable, IItemWritab
     @Override
     public Component getName(ItemStack stack) {
         if (Page.isLinkPanel(stack)) {
-            return Component.translatable(getDescriptionId(stack) + ".panel");
+            return Component.translatable(getDescriptionId() + ".panel");
         }
         if (Page.isBlank(stack)) {
-            return Component.translatable(getDescriptionId(stack) + ".blank");
+            return Component.translatable(getDescriptionId() + ".blank");
         }
         String symbol = Page.getSymbolId(stack);
         if (symbol == null) {
-            return Component.translatable(getDescriptionId(stack) + ".symbol", "Unknown");
+            return Component.translatable(getDescriptionId() + ".symbol", "Unknown");
         }
-        return Component.translatable(getDescriptionId(stack) + ".symbol", LegacySymbolName.component(symbol));
+        return Component.translatable(getDescriptionId() + ".symbol", LegacySymbolName.component(symbol));
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltipComponents, TooltipFlag tooltipFlag) {
         Collection<String> properties = Page.getLinkProperties(stack);
         if (properties != null) {
             for (String property : properties) {
-                tooltipComponents.add(Component.translatable("tooltip.mystcraft.link_property", LinkPropertyName.component(property))
+                tooltipComponents.accept(Component.translatable("tooltip.mystcraft.link_property", LinkPropertyName.component(property))
                         .withStyle(ChatFormatting.GRAY));
             }
         }
@@ -98,8 +103,8 @@ public final class ItemPage extends Item implements IItemRenameable, IItemWritab
         // tooltip remains Japanese-only when the client language is Japanese.
         String symbol = Page.getSymbolId(stack);
         if (symbol != null && Thread.currentThread().getName().startsWith("Worker-Main")) {
-            tooltipComponents.add(Component.literal(LegacySymbolName.englishName(symbol)));
+            tooltipComponents.accept(Component.literal(LegacySymbolName.englishName(symbol)));
         }
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        super.appendHoverText(stack, context, display, tooltipComponents, tooltipFlag);
     }
 }

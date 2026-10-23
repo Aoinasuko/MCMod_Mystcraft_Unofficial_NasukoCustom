@@ -5,7 +5,7 @@ import com.xcompwiz.mystcraft.grammar.GrammarRuleRegistry;
 import com.xcompwiz.mystcraft.symbol.LegacyMaterialSymbolRegistry;
 import com.xcompwiz.mystcraft.symbol.SymbolAvailability;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
 
@@ -55,11 +55,11 @@ public final class LegacyImcHandler {
     private static void blacklistFluid(String sender, Object payload) {
         String value = asString(payload);
         if (value == null || value.isBlank()) return;
-        ResourceLocation id = ResourceLocation.tryParse(value);
+        Identifier id = Identifier.tryParse(value);
         if (id == null) {
             // Old FluidRegistry names were frequently bare names.  Treat those as
             // sender-owned first, which matches the old BlockName ownership rule.
-            id = ResourceLocation.tryBuild(sender, value);
+            id = Identifier.tryBuild(sender, value);
         }
         if (id == null) return;
         LegacyMaterialSymbolRegistry.blacklistRuntimeFluid(id);
@@ -88,25 +88,25 @@ public final class LegacyImcHandler {
 
     private static String asString(Object value) {
         if (value instanceof String s) return s;
-        if (value instanceof ResourceLocation id) return id.toString();
+        if (value instanceof Identifier id) return id.toString();
         return null;
     }
 
-    private record FluidSymbolPayload(ResourceLocation fluidId, Boolean seaBanned, Integer cardRank, Integer grammarRank, Float factor1, Float factor2) {
+    private record FluidSymbolPayload(Identifier fluidId, Boolean seaBanned, Integer cardRank, Integer grammarRank, Float factor1, Float factor2) {
         static FluidSymbolPayload from(Object value, String sender) {
             if (value instanceof CompoundTag tag) {
-                String raw = tag.contains("fluidname") ? tag.getString("fluidname") : "";
-                ResourceLocation id = parseFluid(raw, sender);
-                Boolean sea = tag.contains("seabanned") ? tag.getBoolean("seabanned") : null;
-                Integer card = tag.contains("cardrank") ? tag.getInt("cardrank") : null;
-                Integer grammar = tag.contains("grammarrank") ? tag.getInt("grammarrank") : null;
-                Float factor1 = tag.contains("factor1") ? tag.getFloat("factor1") : null;
-                Float factor2 = tag.contains("factor2") ? tag.getFloat("factor2") : null;
+                String raw = tag.contains("fluidname") ? tag.getString("fluidname").orElse("") : "";
+                Identifier id = parseFluid(raw, sender);
+                Boolean sea = tag.contains("seabanned") ? tag.getBoolean("seabanned").orElse(false) : null;
+                Integer card = tag.contains("cardrank") ? tag.getInt("cardrank").orElse(0) : null;
+                Integer grammar = tag.contains("grammarrank") ? tag.getInt("grammarrank").orElse(0) : null;
+                Float factor1 = tag.contains("factor1") ? tag.getFloat("factor1").orElse(0.0F) : null;
+                Float factor2 = tag.contains("factor2") ? tag.getFloat("factor2").orElse(0.0F) : null;
                 return new FluidSymbolPayload(id, sea, card, grammar, factor1, factor2);
             }
             if (value instanceof Map<?, ?> map) {
                 Object rawObj = map.get("fluidname");
-                ResourceLocation id = parseFluid(rawObj == null ? "" : rawObj.toString(), sender);
+                Identifier id = parseFluid(rawObj == null ? "" : rawObj.toString(), sender);
                 Boolean sea = map.get("seabanned") instanceof Boolean b ? b : null;
                 Integer card = asInt(map.get("cardrank"));
                 Integer grammar = asInt(map.get("grammarrank"));
@@ -125,11 +125,11 @@ public final class LegacyImcHandler {
             return value instanceof Number n ? n.floatValue() : null;
         }
 
-        private static ResourceLocation parseFluid(String raw, String sender) {
+        private static Identifier parseFluid(String raw, String sender) {
             if (raw == null || raw.isBlank()) return null;
-            ResourceLocation parsed = ResourceLocation.tryParse(raw);
+            Identifier parsed = Identifier.tryParse(raw);
             if (parsed != null && raw.indexOf(':') >= 0) return parsed;
-            ResourceLocation senderOwned = ResourceLocation.tryBuild(sender, raw);
+            Identifier senderOwned = Identifier.tryBuild(sender, raw);
             return senderOwned != null ? senderOwned : parsed;
         }
     }

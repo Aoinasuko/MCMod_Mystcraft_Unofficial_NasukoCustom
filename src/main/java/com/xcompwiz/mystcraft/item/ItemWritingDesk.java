@@ -32,7 +32,7 @@ public final class ItemWritingDesk extends BlockItem {
     }
 
     public static boolean isTopExtension(ItemStack stack) {
-        return PART_TOP.equals(LegacyItemData.copy(stack).getString(KEY_PART));
+        return PART_TOP.equals(LegacyItemData.copy(stack).getString(KEY_PART).orElse(""));
     }
 
     public static ItemStack baseStack() {
@@ -44,7 +44,7 @@ public final class ItemWritingDesk extends BlockItem {
         LegacyItemData.update(stack, tag -> tag.putString(KEY_PART, PART_TOP));
         // 1.12 used metadata 1 for the distinct desk extension icon. Modern item
         // metadata is gone, so mirror that visible subtype with CustomModelData.
-        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(1));
+        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(java.util.List.of(1F), java.util.List.of(), java.util.List.of(), java.util.List.of()));
         return stack;
     }
 
@@ -90,7 +90,7 @@ public final class ItemWritingDesk extends BlockItem {
             return InteractionResult.FAIL;
         }
 
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             BlockState top = getBlock().defaultBlockState()
                     .setValue(BlockWritingDesk.FACING, mainState.getValue(BlockWritingDesk.FACING))
                     .setValue(BlockWritingDesk.IS_TOP, true)
@@ -101,6 +101,6 @@ public final class ItemWritingDesk extends BlockItem {
                 held.shrink(1);
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 }

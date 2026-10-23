@@ -1,7 +1,7 @@
 package com.xcompwiz.mystcraft.symbol;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,8 +31,8 @@ import java.util.Set;
 public final class LegacyMaterialSymbolRegistry {
     private static final Map<String, LegacyMaterialSymbolDefinition> BY_LEGACY_ID = new LinkedHashMap<>();
     private static final Set<String> RUNTIME_FLUID_IDS = new HashSet<>();
-    private static final Set<ResourceLocation> FLUID_BLACKLIST = new HashSet<>();
-    private static final Map<ResourceLocation, RuntimeFluidOptions> FLUID_OPTIONS = new LinkedHashMap<>();
+    private static final Set<Identifier> FLUID_BLACKLIST = new HashSet<>();
+    private static final Map<Identifier, RuntimeFluidOptions> FLUID_OPTIONS = new LinkedHashMap<>();
     private static boolean bootstrapped;
     private static boolean runtimeFluidsDirty = true;
 
@@ -89,14 +89,14 @@ public final class LegacyMaterialSymbolRegistry {
     public static synchronized boolean bootstrapRuntimeFluids() {
         bootstrapDefaults();
         if (!runtimeFluidsDirty) return false;
-        ArrayList<ResourceLocation> fluidKeys = new ArrayList<>(BuiltInRegistries.FLUID.keySet());
-        fluidKeys.sort(java.util.Comparator.comparing(ResourceLocation::toString));
+        ArrayList<Identifier> fluidKeys = new ArrayList<>(BuiltInRegistries.FLUID.keySet());
+        fluidKeys.sort(java.util.Comparator.comparing(Identifier::toString));
 
         for (String id : RUNTIME_FLUID_IDS) BY_LEGACY_ID.remove(id);
         RUNTIME_FLUID_IDS.clear();
 
-        for (ResourceLocation fluidKey : fluidKeys) {
-            Fluid fluid = BuiltInRegistries.FLUID.get(fluidKey);
+        for (Identifier fluidKey : fluidKeys) {
+            Fluid fluid = BuiltInRegistries.FLUID.getValue(fluidKey);
             if (fluid == Fluids.EMPTY || fluid == Fluids.WATER || fluid == Fluids.FLOWING_WATER
                     || fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA) continue;
             if (isRuntimeFluidBlacklisted(fluidKey, fluid)) continue;
@@ -107,7 +107,7 @@ public final class LegacyMaterialSymbolRegistry {
             BlockState fluidBlockState = fluid.defaultFluidState().createLegacyBlock();
             Block block = fluidBlockState.getBlock();
             if (block == Blocks.AIR) continue;
-            ResourceLocation blockKey = BuiltInRegistries.BLOCK.getKey(block);
+            Identifier blockKey = BuiltInRegistries.BLOCK.getKey(block);
             if (blockKey == null) continue;
 
             String symbolNamespace = blockKey.getNamespace().equals("minecraft") ? "mystcraft" : blockKey.getNamespace();
@@ -133,15 +133,15 @@ public final class LegacyMaterialSymbolRegistry {
         return true;
     }
 
-    public static synchronized void blacklistRuntimeFluid(ResourceLocation fluidId) {
+    public static synchronized void blacklistRuntimeFluid(Identifier fluidId) {
         if (fluidId == null) return;
         boolean changed = FLUID_BLACKLIST.add(fluidId);
-        Fluid target = BuiltInRegistries.FLUID.get(fluidId);
+        Fluid target = BuiltInRegistries.FLUID.getValue(fluidId);
         if (target != null && target != Fluids.EMPTY) {
             Block targetBlock = target.defaultFluidState().createLegacyBlock().getBlock();
             if (targetBlock != Blocks.AIR) {
-                for (ResourceLocation key : BuiltInRegistries.FLUID.keySet()) {
-                    Fluid candidate = BuiltInRegistries.FLUID.get(key);
+                for (Identifier key : BuiltInRegistries.FLUID.keySet()) {
+                    Fluid candidate = BuiltInRegistries.FLUID.getValue(key);
                     if (candidate != null && candidate != Fluids.EMPTY
                             && candidate.defaultFluidState().createLegacyBlock().getBlock() == targetBlock) {
                         changed |= FLUID_BLACKLIST.add(key);
@@ -154,12 +154,12 @@ public final class LegacyMaterialSymbolRegistry {
 
     /** Applies legacy fluidsymboldata fields, including score-only instability factors. */
     public static synchronized void configureRuntimeFluid(
-            ResourceLocation fluidId, Boolean seaBanned, Integer cardRank, Integer grammarRank) {
+            Identifier fluidId, Boolean seaBanned, Integer cardRank, Integer grammarRank) {
         configureRuntimeFluid(fluidId, seaBanned, cardRank, grammarRank, null, null);
     }
 
     public static synchronized void configureRuntimeFluid(
-            ResourceLocation fluidId, Boolean seaBanned, Integer cardRank, Integer grammarRank, Float factor1, Float factor2) {
+            Identifier fluidId, Boolean seaBanned, Integer cardRank, Integer grammarRank, Float factor1, Float factor2) {
         if (fluidId == null) return;
         RuntimeFluidOptions current = FLUID_OPTIONS.getOrDefault(fluidId, RuntimeFluidOptions.DEFAULT);
         RuntimeFluidOptions next = new RuntimeFluidOptions(
@@ -170,12 +170,12 @@ public final class LegacyMaterialSymbolRegistry {
                 factor2 != null ? factor2 : current.factor2());
         FLUID_OPTIONS.put(fluidId, next);
 
-        Fluid target = BuiltInRegistries.FLUID.get(fluidId);
+        Fluid target = BuiltInRegistries.FLUID.getValue(fluidId);
         if (target != null && target != Fluids.EMPTY) {
             Block targetBlock = target.defaultFluidState().createLegacyBlock().getBlock();
             if (targetBlock != Blocks.AIR) {
-                for (ResourceLocation key : BuiltInRegistries.FLUID.keySet()) {
-                    Fluid candidate = BuiltInRegistries.FLUID.get(key);
+                for (Identifier key : BuiltInRegistries.FLUID.keySet()) {
+                    Fluid candidate = BuiltInRegistries.FLUID.getValue(key);
                     if (candidate != null && candidate != Fluids.EMPTY
                             && candidate.defaultFluidState().createLegacyBlock().getBlock() == targetBlock) {
                         FLUID_OPTIONS.put(key, next);
@@ -186,12 +186,12 @@ public final class LegacyMaterialSymbolRegistry {
         runtimeFluidsDirty = true;
     }
 
-    private static boolean isRuntimeFluidBlacklisted(ResourceLocation key, Fluid fluid) {
+    private static boolean isRuntimeFluidBlacklisted(Identifier key, Fluid fluid) {
         if (FLUID_BLACKLIST.contains(key)) return true;
         Block block = fluid.defaultFluidState().createLegacyBlock().getBlock();
         if (block == Blocks.AIR) return false;
-        for (ResourceLocation blacklisted : FLUID_BLACKLIST) {
-            Fluid other = BuiltInRegistries.FLUID.get(blacklisted);
+        for (Identifier blacklisted : FLUID_BLACKLIST) {
+            Fluid other = BuiltInRegistries.FLUID.getValue(blacklisted);
             if (other != null && other != Fluids.EMPTY
                     && other.defaultFluidState().createLegacyBlock().getBlock() == block) return true;
         }
@@ -203,10 +203,10 @@ public final class LegacyMaterialSymbolRegistry {
     }
 
     /** Returns legacy factor1/factor2 for the runtime fluid represented by this block id. */
-    public static synchronized float[] runtimeFluidInstabilityFactors(ResourceLocation blockId) {
+    public static synchronized float[] runtimeFluidInstabilityFactors(Identifier blockId) {
         if (blockId == null) return new float[]{1.0F, 0.25F};
-        for (Map.Entry<ResourceLocation, RuntimeFluidOptions> entry : FLUID_OPTIONS.entrySet()) {
-            Fluid fluid = BuiltInRegistries.FLUID.get(entry.getKey());
+        for (Map.Entry<Identifier, RuntimeFluidOptions> entry : FLUID_OPTIONS.entrySet()) {
+            Fluid fluid = BuiltInRegistries.FLUID.getValue(entry.getKey());
             if (fluid == null || fluid == Fluids.EMPTY) continue;
             Block block = fluid.defaultFluidState().createLegacyBlock().getBlock();
             if (blockId.equals(BuiltInRegistries.BLOCK.getKey(block))) {
@@ -222,10 +222,10 @@ public final class LegacyMaterialSymbolRegistry {
     }
 
     /** Eligible block-backed non-gaseous fluid blocks after legacy blacklist policy. */
-    public static synchronized Set<ResourceLocation> runtimeEligibleFluidBlockIds() {
-        LinkedHashSet<ResourceLocation> result = new LinkedHashSet<>();
-        for (ResourceLocation fluidKey : BuiltInRegistries.FLUID.keySet()) {
-            Fluid fluid = BuiltInRegistries.FLUID.get(fluidKey);
+    public static synchronized Set<Identifier> runtimeEligibleFluidBlockIds() {
+        LinkedHashSet<Identifier> result = new LinkedHashSet<>();
+        for (Identifier fluidKey : BuiltInRegistries.FLUID.keySet()) {
+            Fluid fluid = BuiltInRegistries.FLUID.getValue(fluidKey);
             if (fluid == Fluids.EMPTY || fluid == Fluids.WATER || fluid == Fluids.FLOWING_WATER
                     || fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA) continue;
             if (isRuntimeFluidBlacklisted(fluidKey, fluid)) continue;
@@ -233,19 +233,19 @@ public final class LegacyMaterialSymbolRegistry {
             if (probe.getFluidType().getDensity() <= 0) continue;
             Block block = fluid.defaultFluidState().createLegacyBlock().getBlock();
             if (block == Blocks.AIR) continue;
-            ResourceLocation blockKey = BuiltInRegistries.BLOCK.getKey(block);
+            Identifier blockKey = BuiltInRegistries.BLOCK.getKey(block);
             if (blockKey != null) result.add(blockKey);
         }
         return Set.copyOf(result);
     }
 
     /** Runtime-fluid material symbols currently materialized, deduplicated by block. */
-    public static synchronized Set<ResourceLocation> runtimeRegisteredFluidBlockIds() {
-        LinkedHashSet<ResourceLocation> result = new LinkedHashSet<>();
+    public static synchronized Set<Identifier> runtimeRegisteredFluidBlockIds() {
+        LinkedHashSet<Identifier> result = new LinkedHashSet<>();
         for (String legacyId : RUNTIME_FLUID_IDS) {
             LegacyMaterialSymbolDefinition definition = BY_LEGACY_ID.get(legacyId);
             if (definition == null) continue;
-            ResourceLocation blockId = ResourceLocation.tryParse(definition.modernBlockId());
+            Identifier blockId = Identifier.tryParse(definition.modernBlockId());
             if (blockId != null) result.add(blockId);
         }
         return Set.copyOf(result);

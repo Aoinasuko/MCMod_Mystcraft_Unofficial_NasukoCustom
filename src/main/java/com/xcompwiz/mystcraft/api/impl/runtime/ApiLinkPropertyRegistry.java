@@ -2,7 +2,7 @@ package com.xcompwiz.mystcraft.api.impl.runtime;
 
 import com.xcompwiz.mystcraft.api.util.Color;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -35,9 +35,9 @@ public final class ApiLinkPropertyRegistry {
     }
     public static synchronized void add(String name, String property, float probability) {
         if (name == null || name.isBlank() || property == null) return;
-        ResourceLocation id = ResourceLocation.tryParse(name);
+        Identifier id = Identifier.tryParse(name);
         if (id != null && BuiltInRegistries.ITEM.containsKey(id)) {
-            add(BuiltInRegistries.ITEM.get(id), property, probability);
+            add(BuiltInRegistries.ITEM.getValue(id), property, probability);
             return;
         }
         LinkedHashMap<String,Float> map = new LinkedHashMap<>(ITEM_NAMES.getOrDefault(name, Map.of()));
@@ -49,7 +49,7 @@ public final class ApiLinkPropertyRegistry {
         LinkedHashMap<String,Float> out = new LinkedHashMap<>();
         var direct = ITEMS.get(stack.getItem());
         if (direct != null) out.putAll(direct);
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         var named = ITEM_NAMES.get(id.toString());
         if (named != null) named.forEach((k,v)->out.merge(k,v,Float::sum));
         return out.isEmpty() ? null : Map.copyOf(out);

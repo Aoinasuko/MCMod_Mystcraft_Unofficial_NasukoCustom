@@ -39,11 +39,11 @@ public final class LegacyInstabilityRuntimeRandom {
 
     private static Random shadow(ServerLevel level) {
         return SHADOW.computeIfAbsent(
-                level.dimension().location().toString(), ignored -> new Random());
+                level.dimension().identifier().toString(), ignored -> new Random());
     }
 
     public static void clearDimension(ServerLevel level) {
-        if (level != null) SHADOW.remove(level.dimension().location().toString());
+        if (level != null) SHADOW.remove(level.dimension().identifier().toString());
     }
 
     public static void clearAll() {

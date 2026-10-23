@@ -5,7 +5,7 @@ import com.xcompwiz.mystcraft.world.worldgen.AgeFeaturePlan;
 import com.xcompwiz.mystcraft.world.worldgen.LegacyMapGenCavesKernel;
 import com.xcompwiz.mystcraft.world.worldgen.LegacyMapGenRavineKernel;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -25,8 +25,8 @@ public final class AgeLegacyTerrainAlterationRunner {
             AgeFeaturePlan featurePlan,
             long ageSeed) {
 
-        int chunkX = chunk.getPos().x;
-        int chunkZ = chunk.getPos().z;
+        int chunkX = chunk.getPos().x();
+        int chunkZ = chunk.getPos().z();
 
         for (var entry : featurePlan.entries()) {
             switch (entry.kind()) {
@@ -43,16 +43,16 @@ public final class AgeLegacyTerrainAlterationRunner {
                             .generate(chunkX, chunkZ, buffer);
                 }
                 case TENDRILS -> {
-                    Block block = BuiltInRegistries.BLOCK.get(
-                            ResourceLocation.parse(entry.materialBlockId()));
+                    Block block = BuiltInRegistries.BLOCK.getValue(
+                            Identifier.parse(entry.materialBlockId()));
                     var buffer = new ChunkAccessLegacyTerrainBuffer(
                             chunk, block.defaultBlockState());
                     new LegacyMapGenCavesKernel(ageSeed, 15, 18, true)
                             .generate(chunkX, chunkZ, buffer);
                 }
                 case SPHERES -> {
-                    Block block = BuiltInRegistries.BLOCK.get(
-                            ResourceLocation.parse(entry.materialBlockId()));
+                    Block block = BuiltInRegistries.BLOCK.getValue(
+                            Identifier.parse(entry.materialBlockId()));
                     var buffer = new ChunkAccessLegacyTerrainBuffer(
                             chunk, block.defaultBlockState());
                     new com.xcompwiz.mystcraft.world.worldgen.LegacyMapGenSpheresKernel(ageSeed)
@@ -73,8 +73,8 @@ public final class AgeLegacyTerrainAlterationRunner {
                     var pos = new net.minecraft.core.BlockPos.MutableBlockPos();
                     int minX = chunk.getPos().getMinBlockX();
                     int minZ = chunk.getPos().getMinBlockZ();
-                    int minY = chunk.getMinBuildHeight();
-                    int maxY = chunk.getMaxBuildHeight() - 1;
+                    int minY = chunk.getMinY();
+                    int maxY = chunk.getMaxY() + 1 - 1;
                     for (int x = 0; x < 16; x++) {
                         for (int z = 0; z < 16; z++) {
                             int height = ModernAgeHeight.legacySampleY(chunk, cutoff[(x << 4) | z]);
@@ -82,7 +82,7 @@ public final class AgeLegacyTerrainAlterationRunner {
                                 pos.set(minX + x, y, minZ + z);
                                 var state = chunk.getBlockState(pos);
                                 if (!state.isAir() && (y <= height || !state.getFluidState().isEmpty())) {
-                                    chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false);
+                                    chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), 0);
                                 }
                             }
                         }

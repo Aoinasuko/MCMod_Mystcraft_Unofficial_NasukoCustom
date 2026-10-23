@@ -28,12 +28,12 @@ public final class AgeLegacySpawnPlatform {
     public static boolean ensureForFirstVisit(ServerLevel level, AgeRecord age) {
         if (age.visited()) return false;
 
-        BlockPos spawn = level.getSharedSpawnPos();
+        BlockPos spawn = level.getRespawnData().pos();
         int floorY = spawn.getY() - 1;
-        if (floorY < level.getMinBuildHeight() || floorY >= level.getMaxBuildHeight()) {
+        if (floorY < level.getMinY() || floorY >= level.getMaxY() + 1) {
             Mystcraft.LOGGER.warn(
                     "Skipped legacy spawn platform for Age {}: spawn {} outside build bounds {}..{}",
-                    age.ageUid(), spawn, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
+                    age.ageUid(), spawn, level.getMinY(), level.getMaxY() + 1 - 1);
             return false;
         }
 
@@ -49,7 +49,7 @@ public final class AgeLegacySpawnPlatform {
 
                 for (int dy = 1; dy <= CLEAR_HEIGHT; dy++) {
                     int y = floorY + dy;
-                    if (y >= level.getMaxBuildHeight()) break;
+                    if (y >= level.getMaxY() + 1) break;
                     level.setBlock(new BlockPos(floor.getX(), y, floor.getZ()), Blocks.AIR.defaultBlockState(), updateFlags);
                 }
             }

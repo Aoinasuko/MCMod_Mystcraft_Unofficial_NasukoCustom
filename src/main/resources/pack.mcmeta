@@ -1,6 +1,13 @@
 {
   "pack": {
-    "description": "Mystcraft Legacy 1.21.1 port resources",
-    "pack_format": 34
+    "description": "Mystcraft Unofficial NasukoCustom \u2014 Minecraft 26.3",
+    "min_format": [
+      97,
+      1
+    ],
+    "max_format": [
+      121,
+      0
+    ]
   }
 }

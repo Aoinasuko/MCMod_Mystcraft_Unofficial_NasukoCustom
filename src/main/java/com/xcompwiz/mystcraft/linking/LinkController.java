@@ -13,7 +13,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -62,7 +62,7 @@ public final class LinkController {
     }
 
     private static boolean travelPlayerInternal(ServerPlayer player, InteractionHand hand, ItemStack book, boolean portalTravel, SoundEvent soundOverride) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         if (server == null) return false;
 
         // 0.13.7.06 initialized unresolved books at activation time.  This matters
@@ -77,7 +77,7 @@ public final class LinkController {
                     dimensionKey = reservedAge.dimensionKey();
                 } catch (IllegalStateException | IllegalArgumentException failure) {
                     Mystcraft.LOGGER.warn("Could not establish Descriptive Book before linking", failure);
-                    player.displayClientMessage(Component.translatable("message.mystcraft.link_unestablished"), true);
+                    com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.link_unestablished"), true);
                     return false;
                 }
             } else if (book.getItem() instanceof ItemLinkbook linkbook) {
@@ -85,7 +85,7 @@ public final class LinkController {
                 // like the old ItemLinking.validate()/initialize path: capture the
                 // activator's current dimension, position and yaw without discarding
                 // existing Link Panel flags/properties.
-                linkbook.initializeAt(player.serverLevel(), book, player);
+                linkbook.initializeAt(player.level(), book, player);
                 dimensionKey = LinkOptions.getDimensionKey(book);
             }
         }
@@ -93,7 +93,7 @@ public final class LinkController {
         if (dimensionKey == null || dimensionKey.isBlank()) {
             var reservation = AgeManager.resolveReservation(server, book);
             if (reservation.isEmpty()) {
-                player.displayClientMessage(Component.translatable("message.mystcraft.link_unestablished"), true);
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.link_unestablished"), true);
                 return false;
             }
             reservedAge = reservation.get();
@@ -103,11 +103,11 @@ public final class LinkController {
         // Build API/event link information only after first-use initialization so
         // listeners observe the same established destination the link will use.
         ILinkInfo linkInfo = LinkInfoAdapter.forStack(book);
-        if (NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventAllow(player.serverLevel(), player, linkInfo.clone())).isCanceled()) {
+        if (NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventAllow(player.level(), player, linkInfo.clone())).isCanceled()) {
             return false;
         }
 
-        ResourceLocation id = ResourceLocation.tryParse(dimensionKey);
+        Identifier id = Identifier.tryParse(dimensionKey);
         if (id == null) return false;
 
         ResourceKey<Level> targetKey = ResourceKey.create(Registries.DIMENSION, id);
@@ -127,24 +127,24 @@ public final class LinkController {
                     AgeDimensionDefinition definition = prepared.definition();
 
                     if (prepared.status() == AgeRuntimeDimensionLoader.Status.CONFLICT) {
-                        player.displayClientMessage(Component.translatable(
+                        com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                                 "message.mystcraft.link_age_prepare_conflict",
-                                age.ageName(), definition.levelKey().location().toString()), true);
+                                age.ageName(), definition.levelKey().identifier().toString()), true);
                         return false;
                     }
                     if (prepared.status() == AgeRuntimeDimensionLoader.Status.DEAD) {
-                        player.displayClientMessage(Component.translatable(
+                        com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                                 "message.mystcraft.link_age_install_failed",
-                                age.ageName(), definition.levelKey().location().toString(), "DEAD"), true);
+                                age.ageName(), definition.levelKey().identifier().toString(), "DEAD"), true);
                         return false;
                     }
 
                     AgeRuntimeServerLevelInstaller.InstallResult installed =
                             AgeRuntimeServerLevelInstaller.install(server, age);
                     if (!installed.usable()) {
-                        player.displayClientMessage(Component.translatable(
+                        com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                                 "message.mystcraft.link_age_install_failed",
-                                age.ageName(), definition.levelKey().location().toString(), installed.status().name()), true);
+                                age.ageName(), definition.levelKey().identifier().toString(), installed.status().name()), true);
                         return false;
                     }
                     target = installed.level();
@@ -161,17 +161,17 @@ public final class LinkController {
                             "Failed to prepare/install Mystcraft Age {} ({}) for linking",
                             age.ageUid(), age.dimensionKey(), failure);
                     if (isFeatureOrderCycle(failure)) {
-                        player.displayClientMessage(Component.translatable(
+                        com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                                 "message.mystcraft.link_age_description_contradiction"), true);
                     } else {
-                        player.displayClientMessage(Component.translatable(
+                        com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                                 "message.mystcraft.link_age_install_failed",
                                 age.ageName(), age.dimensionKey(), failure.getClass().getSimpleName()), true);
                     }
                     return false;
                 }
             } else {
-                player.displayClientMessage(Component.translatable(
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                         "message.mystcraft.link_missing_dimension", dimensionKey), true);
                 return false;
             }
@@ -183,20 +183,20 @@ public final class LinkController {
         boolean intra = LinkOptions.getFlag(book, LinkProperties.INTRA_LINKING);
         boolean intraOnly = LinkOptions.getFlag(book, LinkProperties.INTRA_LINKING_ONLY);
         if (sameDimension && !intra && !intraOnly) {
-            player.displayClientMessage(Component.translatable("message.mystcraft.link_intra_denied"), true);
+            com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.link_intra_denied"), true);
             return false;
         }
         if (!sameDimension && intraOnly) {
-            player.displayClientMessage(Component.translatable("message.mystcraft.link_intra_only"), true);
+            com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.link_intra_only"), true);
             return false;
         }
 
         BlockPos targetPos = LinkOptions.getSpawn(book);
-        if (targetPos == null) targetPos = resolvedTarget.getSharedSpawnPos();
+        if (targetPos == null) targetPos = resolvedTarget.getRespawnData().pos();
 
         if (LinkOptions.getFlag(book, LinkProperties.RELATIVE)) {
-            BlockPos sourceSpawn = player.serverLevel().getSharedSpawnPos();
-            BlockPos targetSpawn = resolvedTarget.getSharedSpawnPos();
+            BlockPos sourceSpawn = player.level().getRespawnData().pos();
+            BlockPos targetSpawn = resolvedTarget.getRespawnData().pos();
             BlockPos current = player.blockPosition();
             targetPos = targetSpawn.offset(
                     current.getX() - sourceSpawn.getX(),
@@ -211,17 +211,17 @@ public final class LinkController {
         }
 
         LinkEvent.LinkEventAlter alterEvent = new LinkEvent.LinkEventAlter(
-                player.serverLevel(), resolvedTarget, player, linkInfo.clone());
+                player.level(), resolvedTarget, player, linkInfo.clone());
         NeoForge.EVENT_BUS.post(alterEvent);
         if (alterEvent.spawn != null) targetPos = alterEvent.spawn;
         float targetYaw = alterEvent.rotationYaw != null ? alterEvent.rotationYaw : LinkOptions.getSpawnYaw(book);
 
-        if (NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventAllow(player.serverLevel(), player, linkInfo.clone())).isCanceled()) {
+        if (NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventAllow(player.level(), player, linkInfo.clone())).isCanceled()) {
             return false;
         }
-        NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventStart(player.serverLevel(), player, linkInfo.clone()));
+        NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventStart(player.level(), player, linkInfo.clone()));
 
-        ServerLevel source = player.serverLevel();
+        ServerLevel source = player.level();
         Vec3 sourcePos = player.position();
         Vec3 sourceVelocity = player.getDeltaMovement();
         ItemStack droppedBook = book.copyWithCount(1);
@@ -239,7 +239,7 @@ public final class LinkController {
                 targetPos.getZ() + 0.5D,
                 Collections.emptySet(),
                 targetYaw,
-                player.getXRot());
+                player.getXRot(), true);
         if (!teleported) {
             NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventFailed(source, player, linkInfo.clone()));
             return false;
@@ -296,13 +296,13 @@ public final class LinkController {
         boolean intraOnly = info.getFlag(LinkProperties.INTRA_LINKING_ONLY);
         if (sameDimension && !intra && !intraOnly) {
             if (entity instanceof ServerPlayer player) {
-                player.displayClientMessage(Component.translatable("message.mystcraft.link_intra_denied"), true);
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.link_intra_denied"), true);
             }
             return false;
         }
         if (!sameDimension && intraOnly) {
             if (entity instanceof ServerPlayer player) {
-                player.displayClientMessage(Component.translatable("message.mystcraft.link_intra_only"), true);
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.link_intra_only"), true);
             }
             return false;
         }
@@ -341,7 +341,7 @@ public final class LinkController {
 
         BlockPos targetPos = working.getSpawn();
         if (targetPos == null) {
-            targetPos = target.getSharedSpawnPos();
+            targetPos = target.getRespawnData().pos();
             working.setSpawn(targetPos);
         }
         float targetYaw = working.getSpawnYaw();
@@ -381,7 +381,7 @@ public final class LinkController {
                 targetPos.getZ() + 0.5D,
                 Collections.emptySet(),
                 targetYaw,
-                entity.getXRot());
+                entity.getXRot(), true);
         if (!moved) {
             NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventFailed(source, entity, working.clone()));
             return false;
@@ -496,7 +496,7 @@ public final class LinkController {
 
         BlockPos targetPos = working.getSpawn();
         if (targetPos == null) {
-            targetPos = target.getSharedSpawnPos();
+            targetPos = target.getRespawnData().pos();
             working.setSpawn(targetPos);
         }
         float targetYaw = working.getSpawnYaw();
@@ -573,13 +573,13 @@ public final class LinkController {
                 if (duplicate != null && duplicate != original && !duplicate.isRemoved()) {
                     Mystcraft.LOGGER.warn(
                             "Removed stale destination entity before Crystal Portal transfer: uuid={}, type={}, destination={}",
-                            member.entityId(), duplicate.getType(), target.dimension().location());
+                            member.entityId(), duplicate.getType(), target.dimension().identifier());
                     duplicate.discard();
                 }
             }
 
             boolean moved = original.teleportTo(
-                    target, tx, ty, tz, Collections.emptySet(), yaw, member.pitch());
+                    target, tx, ty, tz, Collections.emptySet(), yaw, member.pitch(), true);
             if (!moved) {
                 movedAll = false;
                 Mystcraft.LOGGER.warn("Crystal Portal group member failed to teleport: {} ({})",
@@ -590,7 +590,7 @@ public final class LinkController {
             Entity arrived;
             if (original instanceof ServerPlayer) {
                 ServerPlayer destinationPlayer = server.getPlayerList().getPlayer(member.entityId());
-                arrived = destinationPlayer != null && destinationPlayer.serverLevel() == target
+                arrived = destinationPlayer != null && destinationPlayer.level() == target
                         ? destinationPlayer
                         : null;
             } else {
@@ -624,7 +624,7 @@ public final class LinkController {
             Vec3 destinationVelocity = keepMomentum
                     ? redirectMomentum(member.velocity(), targetYaw)
                     : new Vec3(0.0D, 0.2D, 0.0D);
-            float destinationFall = keepMomentum ? member.fallDistance() : 0.0F;
+            double destinationFall = keepMomentum ? member.fallDistance() : 0.0F;
             Entity arrived = destinationEntities.get(member.entityId());
             if (arrived != null) {
                 arrived.setDeltaMovement(destinationVelocity);
@@ -676,7 +676,7 @@ public final class LinkController {
         NeoForge.EVENT_BUS.post(new LinkEvent.LinkEventEnd(source, target, eventRoot, working.clone()));
         Mystcraft.LOGGER.debug(
                 "Crystal Portal transactional transfer: root={}, members={}, {} -> {}, momentum={}, resolvedNow={}/{}",
-                root.getType(), members.size(), source.dimension().location(), target.dimension().location(),
+                root.getType(), members.size(), source.dimension().identifier(), target.dimension().identifier(),
                 keepMomentum, destinationEntities.size(), members.size());
         return true;
     }
@@ -729,19 +729,19 @@ public final class LinkController {
                 complete = false;
                 Mystcraft.LOGGER.error(
                         "Crystal Portal rollback could not resolve entity: uuid={}, source={}, target={}",
-                        member.entityId(), source.dimension().location(), target.dimension().location());
+                        member.entityId(), source.dimension().identifier(), target.dimension().identifier());
                 continue;
             }
 
             if (current.level() != source) {
                 Vec3 pos = member.position();
                 boolean returned = current.teleportTo(
-                        source, pos.x, pos.y, pos.z, Collections.emptySet(), member.yaw(), member.pitch());
+                        source, pos.x, pos.y, pos.z, Collections.emptySet(), member.yaw(), member.pitch(), true);
                 if (!returned) {
                     complete = false;
                     Mystcraft.LOGGER.error(
                             "Crystal Portal rollback teleport failed: uuid={}, type={}, {} -> {}",
-                            member.entityId(), current.getType(), target.dimension().location(), source.dimension().location());
+                            member.entityId(), current.getType(), target.dimension().identifier(), source.dimension().identifier());
                     continue;
                 }
             }
@@ -749,7 +749,7 @@ public final class LinkController {
             Entity sourceEntity;
             if (current instanceof ServerPlayer) {
                 ServerPlayer player = server.getPlayerList().getPlayer(member.entityId());
-                sourceEntity = player != null && player.serverLevel() == source ? player : null;
+                sourceEntity = player != null && player.level() == source ? player : null;
             } else {
                 sourceEntity = source.getEntity(member.entityId());
                 if (sourceEntity == null && current.level() == source && !current.isRemoved()) sourceEntity = current;
@@ -758,7 +758,7 @@ public final class LinkController {
                 complete = false;
                 Mystcraft.LOGGER.error(
                         "Crystal Portal rollback lost returned entity: uuid={}, source={}",
-                        member.entityId(), source.dimension().location());
+                        member.entityId(), source.dimension().identifier());
                 continue;
             }
 
@@ -773,7 +773,7 @@ public final class LinkController {
             if (member.parentId() == null) continue;
             Entity child = restored.get(member.entityId());
             Entity parent = restored.get(member.parentId());
-            if (child == null || parent == null || !child.startRiding(parent, true)) {
+            if (child == null || parent == null || !child.startRiding(parent, true, true)) {
                 complete = false;
                 Mystcraft.LOGGER.error(
                         "Crystal Portal rollback could not restore riding relation: rider={}, vehicle={}",
@@ -794,7 +794,7 @@ public final class LinkController {
             Vec3 velocity,
             float yaw,
             float pitch,
-            float fallDistance) {}
+            double fallDistance) {}
 
     /** Legacy LinkListenerBasic Quinn/safe advancement check, executed after LinkEventEnd. */
     private static void triggerMystAgeTravelAdvancement(MinecraftServer server, ServerLevel destination, ServerPlayer player) {
@@ -831,7 +831,7 @@ public final class LinkController {
     private static SoundEvent resolveLinkSound(ILinkInfo info) {
         String property = info.getProperty(LinkProperties.SOUND);
         if (property == null || property.isBlank()) return MystSounds.LINK.get();
-        ResourceLocation key = ResourceLocation.tryParse(property);
+        Identifier key = Identifier.tryParse(property);
         if (key == null) return MystSounds.LINK.get();
         return net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getOptional(key).orElse(MystSounds.LINK.get());
     }

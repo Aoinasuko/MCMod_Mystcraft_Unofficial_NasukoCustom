@@ -192,7 +192,7 @@ public final class InkMixerMenu extends AbstractContainerMenu {
     @Override
     public boolean clickMenuButton(Player player, int id) {
         if (id != ACTION_CATALYST_ALL && id != ACTION_CATALYST_SINGLE) return super.clickMenuButton(player, id);
-        if (!(mixer instanceof InkMixerBlockEntity be) || player.level().isClientSide) return true;
+        if (!(mixer instanceof InkMixerBlockEntity be) || player.level().isClientSide()) return true;
         ItemStack carried = getCarried();
         if (carried.isEmpty() || !be.hasInk()) return true;
         int amount = id == ACTION_CATALYST_SINGLE ? 1 : carried.getCount();

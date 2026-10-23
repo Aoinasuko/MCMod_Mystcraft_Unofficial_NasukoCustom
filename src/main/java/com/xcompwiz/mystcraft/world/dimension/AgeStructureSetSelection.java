@@ -5,7 +5,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 
@@ -26,8 +26,8 @@ public final class AgeStructureSetSelection {
             RegistryAccess registries,
             com.xcompwiz.mystcraft.world.worldgen.AgeLocalGenerationPlan plan) {
 
-        Registry<StructureSet> structureSets = registries.registryOrThrow(Registries.STRUCTURE_SET);
-        Registry<Structure> structures = registries.registryOrThrow(Registries.STRUCTURE);
+        Registry<StructureSet> structureSets = registries.lookupOrThrow(Registries.STRUCTURE_SET);
+        Registry<Structure> structures = registries.lookupOrThrow(Registries.STRUCTURE);
         ArrayList<Holder<StructureSet>> out = new ArrayList<>();
 
         for (String resourceId : plan.allowedStructureSetIds()) {
@@ -61,14 +61,14 @@ public final class AgeStructureSetSelection {
     private static Holder.Reference<StructureSet> structureSet(
             Registry<StructureSet> registry, String resourceId) {
         ResourceKey<StructureSet> key = ResourceKey.create(
-                Registries.STRUCTURE_SET, ResourceLocation.parse(resourceId));
-        return registry.getHolderOrThrow(key);
+                Registries.STRUCTURE_SET, Identifier.parse(resourceId));
+        return registry.getOrThrow(key);
     }
 
     private static Holder.Reference<Structure> structure(
             Registry<Structure> registry, String resourceId) {
         ResourceKey<Structure> key = ResourceKey.create(
-                Registries.STRUCTURE, ResourceLocation.parse(resourceId));
-        return registry.getHolderOrThrow(key);
+                Registries.STRUCTURE, Identifier.parse(resourceId));
+        return registry.getOrThrow(key);
     }
 }

@@ -24,7 +24,12 @@ public final class AgeRegistryData extends SavedData {
 
     public static AgeRegistryData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
-                new SavedData.Factory<>(AgeRegistryData::new, AgeRegistryData::load), DATA_NAME);
+                new net.minecraft.world.level.saveddata.SavedDataType<>(
+                        net.minecraft.resources.Identifier.fromNamespaceAndPath("mystcraft", DATA_NAME),
+                        ignored -> new AgeRegistryData(),
+                        savedLevel -> CompoundTag.CODEC.xmap(
+                                tag -> AgeRegistryData.load(tag, savedLevel.registryAccess()),
+                                data -> data.save(new CompoundTag(), savedLevel.registryAccess()))));
     }
 
     /**
@@ -37,16 +42,16 @@ public final class AgeRegistryData extends SavedData {
         if (!server.isSameThread()) {
             throw new IllegalStateException("Mystcraft Age registry flush must run on the server thread");
         }
-        server.overworld().getDataStorage().save();
+        server.overworld().getDataStorage().saveAndJoin();
     }
 
     public static AgeRegistryData load(CompoundTag tag, HolderLookup.Provider registries) {
         AgeRegistryData data = new AgeRegistryData();
-        data.nextUid = Math.max(2, tag.getInt("NextAgeUID"));
-        ListTag list = tag.getList("Ages", Tag.TAG_COMPOUND);
+        data.nextUid = Math.max(2, tag.getInt("NextAgeUID").orElse(0));
+        ListTag list = tag.getListOrEmpty("Ages");
         boolean migratedInstabilityDecks = false;
         for (int i = 0; i < list.size(); i++) {
-            AgeRecord age = AgeRecord.load(list.getCompound(i), registries);
+            AgeRecord age = AgeRecord.load(list.getCompoundOrEmpty(i), registries);
             if (LegacyInstabilityPhase2Service.ensureDeckPersistence(age)) migratedInstabilityDecks = true;
             if (data.ages.containsKey(age.ageUid())) {
                 throw new IllegalArgumentException("Duplicate Mystcraft AgeUID in SavedData: " + age.ageUid());
@@ -66,7 +71,6 @@ public final class AgeRegistryData extends SavedData {
         return data;
     }
 
-    @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putInt("NextAgeUID", nextUid);
         ListTag list = new ListTag();

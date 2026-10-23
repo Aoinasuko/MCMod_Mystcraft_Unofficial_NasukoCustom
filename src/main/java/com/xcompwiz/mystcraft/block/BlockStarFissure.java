@@ -28,14 +28,12 @@ import net.neoforged.neoforge.common.NeoForge;
 
 /** Legacy Star Fissure surface: non-colliding horizontal portal back to the home world. */
 public final class BlockStarFissure extends BaseEntityBlock {
-    public static final MapCodec<BlockStarFissure> CODEC = simpleCodec(BlockStarFissure::new);
     private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 1.6, 16);
 
     public BlockStarFissure(BlockBehaviour.Properties properties) {
         super(properties);
     }
 
-    @Override protected MapCodec<BlockStarFissure> codec() { return CODEC; }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new com.xcompwiz.mystcraft.blockentity.StarFissureBlockEntity(pos, state);
@@ -44,7 +42,7 @@ public final class BlockStarFissure extends BaseEntityBlock {
     @Override protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return Shapes.empty(); }
 
     @Override
-    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, net.minecraft.world.entity.InsideBlockEffectApplier effectApplier, boolean precise) {
         if (!(level instanceof ServerLevel source)) return;
         if (entity.isOnPortalCooldown()) return;
 

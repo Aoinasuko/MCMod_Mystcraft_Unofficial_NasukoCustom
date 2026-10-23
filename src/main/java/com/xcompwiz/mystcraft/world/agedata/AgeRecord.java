@@ -23,7 +23,7 @@ import java.util.UUID;
 /** Persistent compatibility record for one Mystcraft Age reservation. */
 public final class AgeRecord {
     public static final String VERSION = "4.3";
-    public static final String PORT_VERSION = "1.21.1-port-3";
+    public static final String PORT_VERSION = "26.3-nasuko-1";
 
     private final int ageUid;
     private String dimensionKey;
@@ -174,7 +174,7 @@ public final class AgeRecord {
 
         ListTag pageList = new ListTag();
         for (ItemStack page : pages) {
-            Tag encoded = page.saveOptional(registries);
+            Tag encoded = com.xcompwiz.mystcraft.data.LegacyNbt.writeItem(page, registries);
             if (encoded instanceof CompoundTag compound) pageList.add(compound);
         }
         tag.put("Pages", pageList);
@@ -203,10 +203,10 @@ public final class AgeRecord {
     }
 
     public static AgeRecord load(CompoundTag tag, HolderLookup.Provider registries) {
-        int uid = tag.getInt("AgeUID");
-        String dimensionKey = tag.getString("DimensionKey");
-        String ageName = tag.getString("AgeName");
-        long seed = tag.getLong("Seed");
+        int uid = tag.getInt("AgeUID").orElse(0);
+        String dimensionKey = tag.getString("DimensionKey").orElse("");
+        String ageName = tag.getString("AgeName").orElse("");
+        long seed = tag.getLong("Seed").orElse(0L);
         if (uid < 2) {
             throw new IllegalArgumentException("Invalid Mystcraft AgeUID: " + uid);
         }
@@ -214,7 +214,7 @@ public final class AgeRecord {
             throw new IllegalArgumentException("Invalid Mystcraft DimensionKey for Age " + uid + ": " + dimensionKey);
         }
 
-        String uuidText = tag.getString("UUID");
+        String uuidText = tag.getString("UUID").orElse("");
         if (uuidText == null || uuidText.isBlank()) {
             throw new IllegalArgumentException("Missing UUID for Mystcraft Age " + uid);
         }
@@ -226,34 +226,34 @@ public final class AgeRecord {
         }
 
         AgeRecord record = new AgeRecord(uid, dimensionKey, ageName, seed, uuid);
-        record.baseInstability = tag.getShort("BaseIns");
-        record.storedInstabilityEnabled = !tag.contains("InstabilityEnabled") || tag.getBoolean("InstabilityEnabled");
-        record.visited = tag.getBoolean("Visited");
-        record.dead = tag.getBoolean("Dead");
-        record.starFissureGenerated = tag.getBoolean("StarFissureGenerated");
+        record.baseInstability = tag.getShort("BaseIns").orElse((short) 0);
+        record.storedInstabilityEnabled = !tag.contains("InstabilityEnabled") || tag.getBoolean("InstabilityEnabled").orElse(false);
+        record.visited = tag.getBoolean("Visited").orElse(false);
+        record.dead = tag.getBoolean("Dead").orElse(false);
+        record.starFissureGenerated = tag.getBoolean("StarFissureGenerated").orElse(false);
         record.starFissureProcessed = tag.contains("StarFissureProcessed")
-                ? tag.getBoolean("StarFissureProcessed")
+                ? tag.getBoolean("StarFissureProcessed").orElse(false)
                 : record.starFissureGenerated;
-        record.worldTime = tag.getLong("WorldTime");
-        record.dayTime = tag.contains("DayTime", Tag.TAG_LONG) ? tag.getLong("DayTime") : record.worldTime;
-        record.clearWeatherTime = tag.getInt("ClearWeatherTime");
-        record.thunderTime = tag.getInt("ThunderTime");
-        record.rainTime = tag.getInt("RainTime");
-        record.thundering = tag.getBoolean("Thundering");
-        record.raining = tag.getBoolean("Raining");
-        if (tag.contains("SpawnX", Tag.TAG_INT) && tag.contains("SpawnY", Tag.TAG_INT) && tag.contains("SpawnZ", Tag.TAG_INT)) {
-            record.spawn = new BlockPos(tag.getInt("SpawnX"), tag.getInt("SpawnY"), tag.getInt("SpawnZ"));
+        record.worldTime = tag.getLong("WorldTime").orElse(0L);
+        record.dayTime = com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "DayTime", Tag.TAG_LONG) ? tag.getLong("DayTime").orElse(0L) : record.worldTime;
+        record.clearWeatherTime = tag.getInt("ClearWeatherTime").orElse(0);
+        record.thunderTime = tag.getInt("ThunderTime").orElse(0);
+        record.rainTime = tag.getInt("RainTime").orElse(0);
+        record.thundering = tag.getBoolean("Thundering").orElse(false);
+        record.raining = tag.getBoolean("Raining").orElse(false);
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "SpawnX", Tag.TAG_INT) && com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "SpawnY", Tag.TAG_INT) && com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "SpawnZ", Tag.TAG_INT)) {
+            record.spawn = new BlockPos(tag.getInt("SpawnX").orElse(0), tag.getInt("SpawnY").orElse(0), tag.getInt("SpawnZ").orElse(0));
         }
 
-        ListTag pageList = tag.getList("Pages", Tag.TAG_COMPOUND);
+        ListTag pageList = tag.getListOrEmpty("Pages");
         for (int i = 0; i < pageList.size(); i++) {
-            ItemStack page = ItemStack.parseOptional(registries, pageList.getCompound(i));
+            ItemStack page = com.xcompwiz.mystcraft.data.LegacyNbt.readItem(registries, pageList.getCompoundOrEmpty(i));
             if (!page.isEmpty()) record.pages.add(page);
         }
 
-        ListTag symbolList = tag.getList("Symbols", Tag.TAG_STRING);
+        ListTag symbolList = tag.getListOrEmpty("Symbols");
         for (int i = 0; i < symbolList.size(); i++) {
-            String id = symbolList.getString(i);
+            String id = symbolList.getString(i).orElse("");
             if (!id.isBlank()) record.symbols.add(id);
         }
 
@@ -267,21 +267,21 @@ public final class AgeRecord {
         record.symbols.clear();
         record.symbols.addAll(remappedSymbols);
 
-        ListTag authorList = tag.getList("Authors", Tag.TAG_STRING);
+        ListTag authorList = tag.getListOrEmpty("Authors");
         for (int i = 0; i < authorList.size(); i++) {
-            String author = authorList.getString(i);
+            String author = authorList.getString(i).orElse("");
             if (!author.isBlank()) record.authors.add(author);
         }
 
-        ListTag instabilityDeckList = tag.getList("InstabilityDecks", Tag.TAG_COMPOUND);
+        ListTag instabilityDeckList = tag.getListOrEmpty("InstabilityDecks");
         for (int i = 0; i < instabilityDeckList.size(); i++) {
-            CompoundTag deckTag = instabilityDeckList.getCompound(i);
-            String deck = deckTag.getString("Name");
+            CompoundTag deckTag = instabilityDeckList.getCompoundOrEmpty(i);
+            String deck = deckTag.getString("Name").orElse("");
             if (deck == null || deck.isBlank()) continue;
-            ListTag cardList = deckTag.getList("Cards", Tag.TAG_STRING);
+            ListTag cardList = deckTag.getListOrEmpty("Cards");
             ArrayList<String> cards = new ArrayList<>();
             for (int j = 0; j < cardList.size(); j++) {
-                String card = cardList.getString(j);
+                String card = cardList.getString(j).orElse("");
                 if (!card.isBlank()) cards.add(card);
             }
             record.instabilityDeckOrders.put(deck, List.copyOf(cards));

@@ -9,33 +9,25 @@ import com.xcompwiz.mystcraft.world.dimension.AgeDimensionKeys;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
+
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+
 
 
 /** Client MOD-bus registration events; runtime viewport/network events stay in MystClientEvents. */
-@EventBusSubscriber(modid = Mystcraft.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Mystcraft.MOD_ID, value = Dist.CLIENT)
 public final class MystClientModEvents {
     private MystClientModEvents() {}
 
-    @SubscribeEvent public static void registerDimensionEffects(RegisterDimensionSpecialEffectsEvent e) {
-        e.register(AgeDimensionKeys.AGE_DIMENSION_TYPE_ID, new AgeDimensionSpecialEffects());
-    }
-    @SubscribeEvent public static void registerClientExtensions(RegisterClientExtensionsEvent e) {
-        e.registerItem(new IClientItemExtensions() {
-            private final PageItemRenderer renderer = new PageItemRenderer();
-            @Override public BlockEntityWithoutLevelRenderer getCustomRenderer() { return renderer; }
-        }, MystItems.PAGE.get());
-        e.registerItem(new IClientItemExtensions() {
-            private final DisplayFurnitureItemRenderer renderer = new DisplayFurnitureItemRenderer();
-            @Override public BlockEntityWithoutLevelRenderer getCustomRenderer() { return renderer; }
-        }, MystItems.BOOK_STAND_BLOCK.get(), MystItems.LECTERN_BLOCK.get());
+    @SubscribeEvent
+    public static void registerSpecialModels(net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent event) {
+        event.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "page"), PageItemRenderer.Unbaked.CODEC);
+        event.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "display_furniture"), DisplayFurnitureItemRenderer.Unbaked.CODEC);
     }
 
     @SubscribeEvent public static void registerScreens(RegisterMenuScreensEvent e) {
@@ -57,14 +49,30 @@ public final class MystClientModEvents {
         e.registerBlockEntityRenderer(MystBlockEntities.STAR_FISSURE.get(), StarFissureRenderer::new);
     }
 
-    @SubscribeEvent public static void registerBlockColors(RegisterColorHandlersEvent.Block e) {
-        e.register(AgeBlockColorHandlers::grass,
-                Blocks.GRASS_BLOCK,Blocks.SHORT_GRASS,Blocks.TALL_GRASS,Blocks.FERN,Blocks.LARGE_FERN,
-                Blocks.POTTED_FERN,Blocks.SUGAR_CANE);
-        e.register(AgeBlockColorHandlers::foliage,
-                Blocks.OAK_LEAVES,Blocks.SPRUCE_LEAVES,Blocks.BIRCH_LEAVES,Blocks.JUNGLE_LEAVES,Blocks.ACACIA_LEAVES,Blocks.DARK_OAK_LEAVES,Blocks.MANGROVE_LEAVES,Blocks.CHERRY_LEAVES,
-                Blocks.VINE,Blocks.LILY_PAD,Blocks.MELON_STEM);
-        e.register(AgeBlockColorHandlers::water,Blocks.WATER,Blocks.BUBBLE_COLUMN);
-        e.register(CrystalPortalColorHandler::color, com.xcompwiz.mystcraft.registry.MystBlocks.LINK_PORTAL.get());
+    @SubscribeEvent
+    public static void registerBlockColors(RegisterColorHandlersEvent.BlockTintSources event) {
+        event.register(java.util.List.of(new net.minecraft.client.color.block.BlockTintSource() {
+            public int color(net.minecraft.world.level.block.state.BlockState state) { return -1; }
+            public int colorInWorld(net.minecraft.world.level.block.state.BlockState state,
+                                    net.minecraft.client.renderer.block.BlockAndTintGetter level,
+                                    net.minecraft.core.BlockPos pos) {
+                return 0xFF000000 | CrystalPortalColorHandler.color(state, level, pos, 0);
+            }
+        }), com.xcompwiz.mystcraft.registry.MystBlocks.LINK_PORTAL.get());
+    }
+
+    @SubscribeEvent
+    public static void registerFluidModels(net.neoforged.neoforge.client.event.RegisterFluidModelsEvent event) {
+        var still = new net.minecraft.client.resources.model.sprite.Material(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "block/black_ink_still"));
+        var flowing = new net.minecraft.client.resources.model.sprite.Material(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "block/black_ink_flow"));
+        var tint = net.neoforged.neoforge.client.fluid.FluidTintSources.constant(0xFF191919);
+        event.register(new net.minecraft.client.renderer.block.FluidModel.Unbaked(still, flowing, null, tint),
+                com.xcompwiz.mystcraft.registry.MystFluids.BLACK_INK, com.xcompwiz.mystcraft.registry.MystFluids.FLOWING_BLACK_INK);
+    }
+    @SubscribeEvent
+    public static void registerSkyPipelines(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent event) {
+        AgeSkyGpuUploader.register(event);
     }
 }

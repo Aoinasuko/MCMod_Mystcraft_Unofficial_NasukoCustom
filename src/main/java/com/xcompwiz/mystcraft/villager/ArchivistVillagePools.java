@@ -6,7 +6,7 @@ import com.xcompwiz.mystcraft.world.worldgen.WritingDeskStructureProcessor;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.levelgen.structure.pools.SinglePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
@@ -31,10 +31,10 @@ import java.util.Set;
  * additively instead of replacing vanilla JSON, preserving other mods' pool
  * entries.</p>
  */
-@EventBusSubscriber(modid = Mystcraft.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Mystcraft.MOD_ID)
 public final class ArchivistVillagePools {
-    private static final ResourceLocation HOUSE =
-            ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "village/archivist_house");
+    private static final Identifier HOUSE =
+            Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "village/archivist_house");
     private static final String[] VILLAGE_TYPES = {"plains", "snowy", "savanna", "desert", "taiga"};
     private static final int LEGACY_WEIGHT = 20;
 
@@ -45,13 +45,12 @@ public final class ArchivistVillagePools {
     private ArchivistVillagePools() {}
 
     @SubscribeEvent
-    public static void onTagsUpdated(TagsUpdatedEvent event) {
-        if (event.getUpdateCause() != TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) return;
-        RegistryAccess access = event.getRegistryAccess();
-        Registry<StructureTemplatePool> registry = access.registryOrThrow(Registries.TEMPLATE_POOL);
+    public static void onTagsUpdated(TagsUpdatedEvent.ServerDataLoad event) {
+        RegistryAccess access = event.getRegistries();
+        Registry<StructureTemplatePool> registry = access.lookupOrThrow(Registries.TEMPLATE_POOL);
         for (String type : VILLAGE_TYPES) {
-            ResourceLocation poolId = ResourceLocation.withDefaultNamespace("village/" + type + "/houses");
-            StructureTemplatePool pool = registry.get(poolId);
+            Identifier poolId = Identifier.withDefaultNamespace("village/" + type + "/houses");
+            StructureTemplatePool pool = registry.getValue(poolId);
             if (pool != null) appendIfNeeded(pool);
         }
     }

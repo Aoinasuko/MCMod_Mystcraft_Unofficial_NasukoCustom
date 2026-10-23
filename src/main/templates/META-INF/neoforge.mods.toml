@@ -9,11 +9,11 @@ config="mystcraft.mixins.json"
 modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
-authors="Mystcraft Legacy authors; unofficial 1.21.1 port maintainer: ueno969"
+authors="Mystcraft Legacy authors; 1.21.1 port: ueno969; 26.3 adaptation: NasukoCustom"
 description='''
-An unofficial compatibility-focused port of Mystcraft Legacy 0.13.7.06 for Minecraft 1.21.1 / NeoForge.
+An unofficial compatibility-focused port of Mystcraft Legacy 0.13.7.06 for Minecraft 26.3 / NeoForge, based on the unofficial 1.21.1 port.
 This is not an official release of Mystcraft Org, XCompWiz, or the original Mystcraft development team.
-Release contact: ueno96941@gmail.com
+Upstream 1.21.1 contact: ueno96941@gmail.com
 NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
 This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan.
 See the bundled META-INF compliance, license, attribution and provenance notices for redistribution details.
@@ -22,7 +22,7 @@ See the bundled META-INF compliance, license, attribution and provenance notices
 [[dependencies.${mod_id}]]
 modId="neoforge"
 type="required"
-versionRange="[${neo_version},)"
+versionRange="[${neo_version},26.4)"
 ordering="NONE"
 side="BOTH"
 
@@ -36,6 +36,6 @@ side="BOTH"
 [[dependencies.${mod_id}]]
 modId="jei"
 type="optional"
-versionRange="[19.16,)"
+versionRange="[31.16,32)"
 ordering="NONE"
 side="CLIENT"

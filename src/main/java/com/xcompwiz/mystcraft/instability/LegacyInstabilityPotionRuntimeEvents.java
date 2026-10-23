@@ -26,7 +26,7 @@ public final class LegacyInstabilityPotionRuntimeEvents {
     @SubscribeEvent
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!Mystcraft.MOD_ID.equals(level.dimension().location().getNamespace())) return;
+        if (!Mystcraft.MOD_ID.equals(level.dimension().identifier().getNamespace())) return;
 
         var runtimeOptional = LegacyInstabilityRuntimeSnapshot.resolve(level);
         if (runtimeOptional.isEmpty()) return;

@@ -9,10 +9,11 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Exact modernized geometry for 0.13.7.06 ModelWritingDesk.
@@ -23,7 +24,7 @@ import net.minecraft.resources.ResourceLocation;
  * stretched full-atlas UVs that a baked JSON approximation produced.</p>
  */
 final class LegacyWritingDeskBodyRenderer {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
             Mystcraft.MOD_ID, "textures/entity/desk.png");
 
     private static final String[] BASE = {
@@ -37,18 +38,17 @@ final class LegacyWritingDeskBodyRenderer {
 
     private final ModelPart root = createLayer().bakeRoot();
 
-    void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight,
+    void render(PoseStack poseStack, SubmitNodeCollector buffers, int packedLight,
                 boolean backing, int paperCount) {
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
-        for (String name : BASE) root.getChild(name).render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
+        for (String name : BASE) buffers.submitModelPart(root.getChild(name), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
         if (backing) {
-            for (String name : BACKBOARD) root.getChild(name).render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
+            for (String name : BACKBOARD) buffers.submitModelPart(root.getChild(name), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
         }
-        if (paperCount > 0) root.getChild("paper2").render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
-        if (paperCount > 1) root.getChild("paper3").render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
-        if (paperCount > 2) root.getChild("paper1").render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
-        if (paperCount > 27) root.getChild("paperStack2").render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
-        if (paperCount > 47) root.getChild("paperStack1").render(poseStack, vc, packedLight, OverlayTexture.NO_OVERLAY);
+        if (paperCount > 0) buffers.submitModelPart(root.getChild("paper2"), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
+        if (paperCount > 1) buffers.submitModelPart(root.getChild("paper3"), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
+        if (paperCount > 2) buffers.submitModelPart(root.getChild("paper1"), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
+        if (paperCount > 27) buffers.submitModelPart(root.getChild("paperStack2"), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
+        if (paperCount > 47) buffers.submitModelPart(root.getChild("paperStack1"), poseStack, RenderTypes.entityCutout(TEXTURE), packedLight, OverlayTexture.NO_OVERLAY, null);
     }
 
     private static LayerDefinition createLayer() {

@@ -42,6 +42,7 @@ public final class AgeStructureStateInstaller {
                 chunkSource.randomState(),
                 generator.getBiomeSource(),
                 ageSeed,
+                ChunkPos.ZERO,
                 ageSeed,
                 List.copyOf(selected));
 
@@ -79,18 +80,18 @@ public final class AgeStructureStateInstaller {
             if (positions == null || positions.isEmpty()) {
                 Mystcraft.LOGGER.warn(
                         "Stronghold ring generation produced no positions for Age {} (seed={})",
-                        level.dimension().location(), ageSeed);
+                        level.dimension().identifier(), ageSeed);
                 continue;
             }
 
             String first = positions.stream().limit(3)
-                    .map(pos -> "chunk(" + pos.x + "," + pos.z + ") / block("
+                    .map(pos -> "chunk(" + pos.x() + "," + pos.z() + ") / block("
                             + (pos.getMinBlockX() + 8) + "," + (pos.getMinBlockZ() + 8) + ")")
                     .reduce((a, b) -> a + "; " + b)
                     .orElse("<none>");
             Mystcraft.LOGGER.debug(
                     "Stronghold ring state for Age {}: seed={}, ringCount={}, first={}",
-                    level.dimension().location(), ageSeed, positions.size(), first);
+                    level.dimension().identifier(), ageSeed, positions.size(), first);
         }
     }
 }

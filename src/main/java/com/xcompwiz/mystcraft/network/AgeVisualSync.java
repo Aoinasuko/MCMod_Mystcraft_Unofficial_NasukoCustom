@@ -11,18 +11,19 @@ public final class AgeVisualSync {
     private AgeVisualSync() {}
 
     public static void sendCurrentAge(ServerPlayer player) {
-        var server = player.getServer();
+        player.connection.send(player.level().clockManager().createFullSyncPacket());
+        var server = player.level().getServer();
         if (server == null) return;
-        var resolved = AgeManager.resolveByLevel(server, player.serverLevel().dimension());
+        var resolved = AgeManager.resolveByLevel(server, player.level().dimension());
         if (resolved.isEmpty()) {
             PacketDistributor.sendToPlayer(player, new AgeVisualPayload(
-                    player.serverLevel().dimension().location().toString(), 0L, ""));
+                    player.level().dimension().identifier().toString(), 0L, ""));
             return;
         }
         var age = resolved.get();
         if (age.dead()) {
             PacketDistributor.sendToPlayer(player, new AgeVisualPayload(
-                    player.serverLevel().dimension().location().toString(), 0L, ""));
+                    player.level().dimension().identifier().toString(), 0L, ""));
             return;
         }
         AgeRuntimeDimensionLoader.PrepareResult result = AgeRuntimeDimensionLoader.prepare(server, age);
@@ -34,14 +35,14 @@ public final class AgeVisualSync {
             if (result.status() == AgeRuntimeDimensionLoader.Status.CONFLICT
                     || result.status() == AgeRuntimeDimensionLoader.Status.DEAD) {
                 PacketDistributor.sendToPlayer(player, new AgeVisualPayload(
-                        player.serverLevel().dimension().location().toString(), 0L, ""));
+                        player.level().dimension().identifier().toString(), 0L, ""));
             }
             return;
         }
         AgeRuntimeDimensionLoader.PreparedAgeDimension prepared = result.prepared();
         if (prepared == null) return;
         PacketDistributor.sendToPlayer(player, new AgeVisualPayload(
-                player.serverLevel().dimension().location().toString(),
+                player.level().dimension().identifier().toString(),
                 age.seed(),
                 AgeVisualSnapshotCodec.encode(prepared.worldgenPlan())));
 

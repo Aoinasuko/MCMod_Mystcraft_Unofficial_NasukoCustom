@@ -6,7 +6,7 @@ import com.xcompwiz.mystcraft.world.worldgen.AgeVisualSnapshot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +24,7 @@ public final class AgeBlockColorHandlers {
     private static AgeVisualSnapshot snapshot() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return null;
-        var entry = AgeClientVisualState.get(mc.level.dimension().location().toString());
+        var entry = AgeClientVisualState.get(mc.level.dimension().identifier().toString());
         return entry == null ? null : entry.snapshot();
     }
 
@@ -35,8 +35,8 @@ public final class AgeBlockColorHandlers {
 
     public static int foliage(BlockState state, BlockAndTintGetter level, BlockPos pos, int tintIndex) {
         int vanilla;
-        if (state != null && state.is(Blocks.SPRUCE_LEAVES)) vanilla = FoliageColor.getEvergreenColor();
-        else if (state != null && state.is(Blocks.BIRCH_LEAVES)) vanilla = FoliageColor.getBirchColor();
+        if (state != null && state.is(Blocks.SPRUCE_LEAVES)) vanilla = 0xFF619961;
+        else if (state != null && state.is(Blocks.BIRCH_LEAVES)) vanilla = 0xFF80A755;
         else vanilla = level == null || pos == null ? 0x48B518 : BiomeColors.getAverageFoliageColor(level, pos);
         return AgeBiomeTintBridge.resolve(snapshot(), AgeBiomeTintBridge.Channel.FOLIAGE, vanilla);
     }
@@ -66,12 +66,12 @@ public final class AgeBlockColorHandlers {
     public static int finalModelTint(BlockState state, BlockAndTintGetter level, BlockPos pos, int tintIndex, int original) {
         if (state == null) return original;
         if (isGrassTintBlock(state)) {
-            int vanilla = original >= 0 ? original & 0x00FFFFFF
+            int vanilla = original != -1 ? original & 0x00FFFFFF
                     : (level == null || pos == null ? 0x91BD59 : BiomeColors.getAverageGrassColor(level, pos));
             return AgeBiomeTintBridge.resolve(snapshot(), AgeBiomeTintBridge.Channel.GRASS, vanilla);
         }
         if (isFoliageTintBlock(state)) {
-            int vanilla = original >= 0 ? original & 0x00FFFFFF : foliage(state, level, pos, tintIndex);
+            int vanilla = original != -1 ? original & 0x00FFFFFF : foliage(state, level, pos, tintIndex);
             return AgeBiomeTintBridge.resolve(snapshot(), AgeBiomeTintBridge.Channel.FOLIAGE, vanilla);
         }
         return original;

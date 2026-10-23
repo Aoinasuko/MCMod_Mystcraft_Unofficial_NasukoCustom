@@ -23,12 +23,12 @@ public final class LegacyInstabilityEnvironmentalRuntimeState {
 
     public static void clearDimension(ServerLevel level) {
         if (level == null) return;
-        String prefix = level.dimension().location() + "|";
+        String prefix = level.dimension().identifier() + "|";
         UPDATE_LCG.keySet().removeIf(key -> key.startsWith(prefix));
     }
 
     private static String key(ServerLevel level, String providerId, int effectIndex) {
-        return level.dimension().location() + "|" + providerId + "|" + effectIndex;
+        return level.dimension().identifier() + "|" + providerId + "|" + effectIndex;
     }
 
     public static void clearAll() {

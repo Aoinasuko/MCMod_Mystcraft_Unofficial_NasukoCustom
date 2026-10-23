@@ -3,10 +3,11 @@ package com.xcompwiz.mystcraft.advancement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xcompwiz.mystcraft.Mystcraft;
-import net.minecraft.advancements.CriterionTrigger;
-import net.minecraft.advancements.critereon.ContextAwarePredicate;
-import net.minecraft.advancements.critereon.EntityPredicate;
-import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
+import net.minecraft.advancements.triggers.CriterionTrigger;
+import net.minecraft.core.Holder;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.advancements.predicates.entity.EntityPredicate;
+import net.minecraft.advancements.triggers.SimpleCriterionTrigger;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
@@ -48,10 +49,10 @@ public final class MystCriteriaTriggers {
         }
     }
 
-    public record TriggerInstance(Optional<ContextAwarePredicate> player)
+    public record TriggerInstance(Optional<Holder<LootItemCondition>> player)
             implements SimpleCriterionTrigger.SimpleInstance {
         public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player)
+                LootItemCondition.CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player)
         ).apply(instance, TriggerInstance::new));
     }
 }

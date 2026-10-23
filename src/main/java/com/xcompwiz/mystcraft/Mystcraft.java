@@ -30,7 +30,11 @@ public final class Mystcraft {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public Mystcraft(IEventBus modEventBus, ModContainer modContainer) {
+        if (Boolean.getBoolean("mystcraft.portValidation")) {
+            com.xcompwiz.mystcraft.validation.PortGameTests.register(modEventBus);
+        }
         MystBiomeSources.register(modEventBus);
+        com.xcompwiz.mystcraft.registry.MystStructureProcessors.register(modEventBus);
         MystBlocks.register(modEventBus);
         MystItems.register(modEventBus);
         MystFluids.register(modEventBus);
@@ -47,7 +51,7 @@ public final class Mystcraft {
         modEventBus.addListener(MystNetwork::registerPayloads);
         modEventBus.addListener(MystFluidCapabilities::register);
         modEventBus.addListener(LegacyImcHandler::process);
-        LOGGER.info("Mystcraft Legacy port bootstrap loaded: target 0.13.7.06 semantics on Minecraft 1.21.1");
+        LOGGER.info("Mystcraft Unofficial NasukoCustom loaded: Minecraft 26.3 / NeoForge");
     }
 
 }

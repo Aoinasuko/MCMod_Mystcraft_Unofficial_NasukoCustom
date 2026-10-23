@@ -33,7 +33,7 @@ public final class LegacyMeteorExplosionExecutor {
         ArrayList<BlockPos> applied = new ArrayList<>(affected.size());
 
         for (BlockPos pos : affected) {
-            if (pos.getY() < level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight()) continue;
+            if (pos.getY() < level.getMinY() || pos.getY() >= level.getMaxY() + 1) continue;
             BlockState before = level.getBlockState(pos);
             if (!before.isAir()) {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
@@ -42,7 +42,7 @@ public final class LegacyMeteorExplosionExecutor {
             if (burst.flaming()) {
                 BlockPos below = pos.below();
                 if (level.getBlockState(pos).isAir()
-                        && level.getBlockState(below).isSolidRender(level, below)
+                        && level.getBlockState(below).isSolidRender()
                         && effectRandom.nextInt(LegacyInstabilityMeteorModel.FIRE_CHANCE_DENOMINATOR) == 0) {
                     level.setBlock(pos, Blocks.FIRE.defaultBlockState(), Block.UPDATE_ALL);
                 }
@@ -52,7 +52,7 @@ public final class LegacyMeteorExplosionExecutor {
                 BlockPos below = pos.below();
                 if (effectRandom.nextInt(LegacyInstabilityMeteorModel.ORE_CHANCE_DENOMINATOR) == 0
                         && level.getBlockState(pos).isAir()
-                        && level.getBlockState(below).isSolidRender(level, below)) {
+                        && level.getBlockState(below).isSolidRender()) {
                     BlockState ore = switch (LegacyInstabilityMeteorModel.defaultOreChoice(effectRandom.nextFloat())) {
                         case COAL -> Blocks.COAL_ORE.defaultBlockState();
                         case IRON -> Blocks.IRON_ORE.defaultBlockState();
@@ -94,7 +94,7 @@ public final class LegacyMeteorExplosionExecutor {
 
                     while (power > 0.0F) {
                         BlockPos pos = BlockPos.containing(px, py, pz);
-                        if (pos.getY() >= level.getMinBuildHeight() && pos.getY() < level.getMaxBuildHeight()) {
+                        if (pos.getY() >= level.getMinY() && pos.getY() < level.getMaxY() + 1) {
                             BlockState state = level.getBlockState(pos);
                             float resistance = state.isAir() ? 0.0F : state.getBlock().getExplosionResistance();
                             power -= (resistance + LegacyInstabilityMeteorModel.EXPLOSION_RESISTANCE_BIAS) * step;

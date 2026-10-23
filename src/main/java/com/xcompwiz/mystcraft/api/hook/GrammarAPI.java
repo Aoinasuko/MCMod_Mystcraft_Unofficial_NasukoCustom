@@ -1,3 +1,3 @@
 package com.xcompwiz.mystcraft.api.hook;
-import com.xcompwiz.mystcraft.api.symbol.IAgeSymbol; import net.minecraft.resources.ResourceLocation; import java.util.*;
-public interface GrammarAPI { void registerGrammarRule(ResourceLocation parent,Integer rank,ResourceLocation... args); Collection<IAgeSymbol> getSymbolsExpandingToken(ResourceLocation token); Collection<ResourceLocation> getTokensProducingToken(ResourceLocation token); List<ResourceLocation> generateFromToken(ResourceLocation root,Random rand); List<ResourceLocation> generateFromToken(ResourceLocation root,Random rand,List<ResourceLocation> written); }
+import com.xcompwiz.mystcraft.api.symbol.IAgeSymbol; import net.minecraft.resources.Identifier; import java.util.*;
+public interface GrammarAPI { void registerGrammarRule(Identifier parent,Integer rank,Identifier... args); Collection<IAgeSymbol> getSymbolsExpandingToken(Identifier token); Collection<Identifier> getTokensProducingToken(Identifier token); List<Identifier> generateFromToken(Identifier root,Random rand); List<Identifier> generateFromToken(Identifier root,Random rand,List<Identifier> written); }

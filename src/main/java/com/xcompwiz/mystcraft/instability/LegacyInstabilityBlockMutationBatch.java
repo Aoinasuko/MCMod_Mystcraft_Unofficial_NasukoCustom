@@ -65,7 +65,7 @@ public final class LegacyInstabilityBlockMutationBatch {
     }
 
     private static Batch current(ServerLevel level, boolean create) {
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         long gameTime = level.getGameTime();
         Batch batch = BATCHES.get(dimension);
         if (batch != null && batch.gameTime != gameTime) {
@@ -84,8 +84,8 @@ public final class LegacyInstabilityBlockMutationBatch {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!Mystcraft.MOD_ID.equals(level.dimension().location().getNamespace())) return;
-        String dimension = level.dimension().location().toString();
+        if (!Mystcraft.MOD_ID.equals(level.dimension().identifier().getNamespace())) return;
+        String dimension = level.dimension().identifier().toString();
         Batch batch = BATCHES.remove(dimension);
         if (batch != null) flush(level, batch);
     }
@@ -103,7 +103,7 @@ public final class LegacyInstabilityBlockMutationBatch {
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        BATCHES.remove(level.dimension().location().toString());
+        BATCHES.remove(level.dimension().identifier().toString());
     }
 
     private static final class Batch {

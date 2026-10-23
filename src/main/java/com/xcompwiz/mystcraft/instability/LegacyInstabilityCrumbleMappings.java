@@ -96,8 +96,8 @@ public final class LegacyInstabilityCrumbleMappings {
         }
 
         // 1.12 wool was one metadata block: colored -> default white -> cobweb.
-        if (state.is(Blocks.WHITE_WOOL)) return Blocks.COBWEB.defaultBlockState();
-        if (isLegacyColoredWool(state)) return Blocks.WHITE_WOOL.defaultBlockState();
+        if (state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.WHITE))) return Blocks.COBWEB.defaultBlockState();
+        if (isLegacyColoredWool(state)) return Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.WHITE).defaultBlockState();
 
         if (isLegacySapling(state)
                 || state.is(Blocks.COBWEB)
@@ -114,21 +114,21 @@ public final class LegacyInstabilityCrumbleMappings {
     }
 
     private static boolean isLegacyColoredWool(BlockState state) {
-        return state.is(Blocks.ORANGE_WOOL)
-                || state.is(Blocks.MAGENTA_WOOL)
-                || state.is(Blocks.LIGHT_BLUE_WOOL)
-                || state.is(Blocks.YELLOW_WOOL)
-                || state.is(Blocks.LIME_WOOL)
-                || state.is(Blocks.PINK_WOOL)
-                || state.is(Blocks.GRAY_WOOL)
-                || state.is(Blocks.LIGHT_GRAY_WOOL)
-                || state.is(Blocks.CYAN_WOOL)
-                || state.is(Blocks.PURPLE_WOOL)
-                || state.is(Blocks.BLUE_WOOL)
-                || state.is(Blocks.BROWN_WOOL)
-                || state.is(Blocks.GREEN_WOOL)
-                || state.is(Blocks.RED_WOOL)
-                || state.is(Blocks.BLACK_WOOL);
+        return state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.ORANGE))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.MAGENTA))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.LIGHT_BLUE))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.YELLOW))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.LIME))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.PINK))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.GRAY))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.LIGHT_GRAY))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.CYAN))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.PURPLE))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.BLUE))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.BROWN))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.GREEN))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.RED))
+                || state.is(Blocks.WOOL.pick(net.minecraft.world.item.DyeColor.BLACK));
     }
 
     private static boolean isLegacySapling(BlockState state) {

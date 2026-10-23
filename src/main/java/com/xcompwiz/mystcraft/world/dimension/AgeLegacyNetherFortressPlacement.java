@@ -27,7 +27,7 @@ final class AgeLegacyNetherFortressPlacement extends RandomSpreadStructurePlacem
     AgeLegacyNetherFortressPlacement() {
         super(
                 Vec3i.ZERO,
-                StructurePlacement.FrequencyReductionMethod.DEFAULT,
+                net.minecraft.world.level.levelgen.structure.placement.AbstractSpreadingStructurePlacement.FrequencyReductionMethod.DEFAULT,
                 1.0F,
                 0,
                 Optional.empty(),

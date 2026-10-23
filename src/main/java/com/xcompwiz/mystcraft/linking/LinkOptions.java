@@ -38,7 +38,7 @@ public final class LinkOptions {
     public static void capturePosition(ItemStack book, Level level, Entity entity) {
         LegacyItemData.update(book, data -> {
             ResourceKey<Level> dimension = level.dimension();
-            data.putString(KEY_DIMENSION_KEY, dimension.location().toString());
+            data.putString(KEY_DIMENSION_KEY, dimension.identifier().toString());
 
             Integer legacyId = legacyDimensionId(dimension);
             if (legacyId != null) {
@@ -55,9 +55,9 @@ public final class LinkOptions {
                     data.putInt(KEY_DIMENSION, age.ageUid());
                     data.putInt(KEY_AGE_UID, age.ageUid());
                     data.putString(KEY_TARGET_UUID, age.uuid().toString());
-                    if (!data.contains(KEY_DISPLAY_NAME, Tag.TAG_STRING)
-                            || data.getString(KEY_DISPLAY_NAME).isBlank()
-                            || "???".equals(data.getString(KEY_DISPLAY_NAME))) {
+                    if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_DISPLAY_NAME, Tag.TAG_STRING)
+                            || data.getString(KEY_DISPLAY_NAME).orElse("").isBlank()
+                            || "???".equals(data.getString(KEY_DISPLAY_NAME).orElse(""))) {
                         data.putString(KEY_DISPLAY_NAME, age.ageName());
                     }
                 } else {
@@ -77,7 +77,7 @@ public final class LinkOptions {
                 data.putFloat(KEY_SPAWN_YAW, entity.getYRot());
             }
 
-            if (!data.contains(KEY_DISPLAY_NAME, Tag.TAG_STRING)) {
+            if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_DISPLAY_NAME, Tag.TAG_STRING)) {
                 data.putString(KEY_DISPLAY_NAME, defaultDimensionName(dimension));
             }
         });
@@ -89,19 +89,19 @@ public final class LinkOptions {
 
     public static String getDisplayName(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        if (data.contains(KEY_DISPLAY_NAME, Tag.TAG_STRING)) {
-            return data.getString(KEY_DISPLAY_NAME);
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_DISPLAY_NAME, Tag.TAG_STRING)) {
+            return data.getString(KEY_DISPLAY_NAME).orElse("");
         }
-        if (data.contains("agename", Tag.TAG_STRING)) {
-            return data.getString("agename");
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, "agename", Tag.TAG_STRING)) {
+            return data.getString("agename").orElse("");
         }
         return "???";
     }
 
     public static void setFlag(ItemStack stack, String flag, boolean value) {
         LegacyItemData.update(stack, data -> {
-            CompoundTag flags = data.contains(KEY_FLAGS, Tag.TAG_COMPOUND)
-                    ? data.getCompound(KEY_FLAGS)
+            CompoundTag flags = com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_FLAGS, Tag.TAG_COMPOUND)
+                    ? data.getCompoundOrEmpty(KEY_FLAGS)
                     : new CompoundTag();
             flags.putBoolean(flag, value);
             data.put(KEY_FLAGS, flags);
@@ -110,15 +110,15 @@ public final class LinkOptions {
 
     public static boolean getFlag(ItemStack stack, String flag) {
         CompoundTag data = LegacyItemData.copy(stack);
-        if (!data.contains(KEY_FLAGS, Tag.TAG_COMPOUND)) return false;
-        CompoundTag flags = data.getCompound(KEY_FLAGS);
-        return flags.contains(flag) && flags.getBoolean(flag);
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_FLAGS, Tag.TAG_COMPOUND)) return false;
+        CompoundTag flags = data.getCompoundOrEmpty(KEY_FLAGS);
+        return flags.contains(flag) && flags.getBoolean(flag).orElse(false);
     }
 
     public static void setProperty(ItemStack stack, String property, String value) {
         LegacyItemData.update(stack, data -> {
-            CompoundTag properties = data.contains(KEY_PROPS, Tag.TAG_COMPOUND)
-                    ? data.getCompound(KEY_PROPS)
+            CompoundTag properties = com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_PROPS, Tag.TAG_COMPOUND)
+                    ? data.getCompoundOrEmpty(KEY_PROPS)
                     : new CompoundTag();
             if (value == null) {
                 properties.remove(property);
@@ -131,9 +131,9 @@ public final class LinkOptions {
 
     public static String getProperty(ItemStack stack, String property) {
         CompoundTag data = LegacyItemData.copy(stack);
-        if (!data.contains(KEY_PROPS, Tag.TAG_COMPOUND)) return null;
-        CompoundTag properties = data.getCompound(KEY_PROPS);
-        return properties.contains(property, Tag.TAG_STRING) ? properties.getString(property) : null;
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_PROPS, Tag.TAG_COMPOUND)) return null;
+        CompoundTag properties = data.getCompoundOrEmpty(KEY_PROPS);
+        return com.xcompwiz.mystcraft.data.LegacyNbt.contains(properties, property, Tag.TAG_STRING) ? properties.getString(property).orElse("") : null;
     }
 
 
@@ -154,31 +154,31 @@ public final class LinkOptions {
 
     public static Integer getAgeUid(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        return data.contains(KEY_AGE_UID, Tag.TAG_INT) ? data.getInt(KEY_AGE_UID) : null;
+        return com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_AGE_UID, Tag.TAG_INT) ? data.getInt(KEY_AGE_UID).orElse(0) : null;
     }
 
     public static String getDimensionKey(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        return data.contains(KEY_DIMENSION_KEY, Tag.TAG_STRING) ? data.getString(KEY_DIMENSION_KEY) : null;
+        return com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_DIMENSION_KEY, Tag.TAG_STRING) ? data.getString(KEY_DIMENSION_KEY).orElse("") : null;
     }
 
     public static Integer getLegacyDimensionId(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        if (data.contains(KEY_DIMENSION, Tag.TAG_INT)) return data.getInt(KEY_DIMENSION);
-        if (data.contains("AgeUID", Tag.TAG_INT)) return data.getInt("AgeUID");
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_DIMENSION, Tag.TAG_INT)) return data.getInt(KEY_DIMENSION).orElse(0);
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, "AgeUID", Tag.TAG_INT)) return data.getInt("AgeUID").orElse(0);
         return null;
     }
 
 
     public static net.minecraft.core.BlockPos getSpawn(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        if (!data.contains(KEY_SPAWN_X, Tag.TAG_INT) || !data.contains(KEY_SPAWN_Y, Tag.TAG_INT) || !data.contains(KEY_SPAWN_Z, Tag.TAG_INT)) return null;
-        return new net.minecraft.core.BlockPos(data.getInt(KEY_SPAWN_X), data.getInt(KEY_SPAWN_Y), data.getInt(KEY_SPAWN_Z));
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_SPAWN_X, Tag.TAG_INT) || !com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_SPAWN_Y, Tag.TAG_INT) || !com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_SPAWN_Z, Tag.TAG_INT)) return null;
+        return new net.minecraft.core.BlockPos(data.getInt(KEY_SPAWN_X).orElse(0), data.getInt(KEY_SPAWN_Y).orElse(0), data.getInt(KEY_SPAWN_Z).orElse(0));
     }
 
     public static float getSpawnYaw(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        return data.contains(KEY_SPAWN_YAW, Tag.TAG_FLOAT) ? data.getFloat(KEY_SPAWN_YAW) : 180.0F;
+        return com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_SPAWN_YAW, Tag.TAG_FLOAT) ? data.getFloat(KEY_SPAWN_YAW).orElse(0.0F) : 180.0F;
     }
 
     public static void setTargetUuid(ItemStack stack, UUID uuid) {
@@ -190,9 +190,9 @@ public final class LinkOptions {
 
     public static UUID getTargetUuid(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        if (!data.contains(KEY_TARGET_UUID, Tag.TAG_STRING)) return null;
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_TARGET_UUID, Tag.TAG_STRING)) return null;
         try {
-            return UUID.fromString(data.getString(KEY_TARGET_UUID));
+            return UUID.fromString(data.getString(KEY_TARGET_UUID).orElse(""));
         } catch (IllegalArgumentException ignored) {
             return null;
         }
@@ -209,6 +209,6 @@ public final class LinkOptions {
         if (dimension.equals(Level.OVERWORLD)) return "Overworld";
         if (dimension.equals(Level.NETHER)) return "Nether";
         if (dimension.equals(Level.END)) return "The End";
-        return dimension.location().toString();
+        return dimension.identifier().toString();
     }
 }

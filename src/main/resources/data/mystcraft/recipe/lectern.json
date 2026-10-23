@@ -7,12 +7,8 @@
     "PPP"
   ],
   "key": {
-    "S": {
-      "tag": "c:rods/wooden"
-    },
-    "P": {
-      "tag": "minecraft:planks"
-    }
+    "S": "#c:rods/wooden",
+    "P": "#minecraft:planks"
   },
   "result": {
     "id": "mystcraft:blocklectern",

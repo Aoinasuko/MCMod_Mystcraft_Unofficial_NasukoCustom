@@ -39,7 +39,7 @@ import com.xcompwiz.mystcraft.world.dimension.AgeDimensionKeys;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -156,7 +156,7 @@ public final class InternalAPI {
                     info.setSpawn(location.blockPosition());
                     info.setSpawnYaw(location.getYRot());
                 }
-                if ("???".equals(info.getDisplayName())) info.setDisplayName(level.dimension().location().toString());
+                if ("???".equals(info.getDisplayName())) info.setDisplayName(level.dimension().identifier().toString());
                 return info;
             }
             @Override public ILinkInfo createLinkInfo(CompoundTag tag) { return LinkInfoAdapter.detached(tag); }
@@ -168,56 +168,56 @@ public final class InternalAPI {
             @Override public boolean hasLinkPanel(ItemStack page) { return Page.isLinkPanel(page); }
             @Override public Collection<String> getPageLinkProperties(ItemStack page) { return Page.getLinkProperties(page); }
             @Override public boolean isPageWritable(ItemStack page) { return Page.isBlank(page); }
-            @Override public ResourceLocation getPageSymbol(ItemStack page) { return Page.getSymbol(page); }
-            @Override public void setPageSymbol(ItemStack page, ResourceLocation symbol) { Page.setSymbol(page, symbol); }
+            @Override public Identifier getPageSymbol(ItemStack page) { return Page.getSymbol(page); }
+            @Override public void setPageSymbol(ItemStack page, Identifier symbol) { Page.setSymbol(page, symbol); }
         };
     }
 
     private static GrammarAPI grammarApi() {
         return new GrammarAPI() {
-            @Override public void registerGrammarRule(ResourceLocation parent, Integer rank, ResourceLocation... args) {
+            @Override public void registerGrammarRule(Identifier parent, Integer rank, Identifier... args) {
                 if (parent == null) return;
                 List<String> rhs = new ArrayList<>();
-                if (args != null) for (ResourceLocation arg : args) if (arg != null) rhs.add(arg.toString());
+                if (args != null) for (Identifier arg : args) if (arg != null) rhs.add(arg.toString());
                 GrammarRuleRegistry.registerExternalRule(new GrammarRule(parent.toString(), rhs, rank));
             }
-            @Override public Collection<IAgeSymbol> getSymbolsExpandingToken(ResourceLocation token) {
+            @Override public Collection<IAgeSymbol> getSymbolsExpandingToken(Identifier token) {
                 if (token == null) return List.of();
                 LinkedHashSet<IAgeSymbol> result = new LinkedHashSet<>();
                 for (GrammarRule rule : GrammarRuleRegistry.rulesFor(token.toString())) {
                     for (String value : rule.values()) {
-                        ResourceLocation key = LegacySymbolId.canonicalKey(value);
+                        Identifier key = LegacySymbolId.canonicalKey(value);
                         ApiSymbolView view = key == null ? null : ApiSymbolView.resolve(key);
                         if (view != null) result.add(view);
                     }
                 }
                 return List.copyOf(result);
             }
-            @Override public Collection<ResourceLocation> getTokensProducingToken(ResourceLocation token) {
+            @Override public Collection<Identifier> getTokensProducingToken(Identifier token) {
                 if (token == null) return List.of();
-                LinkedHashSet<ResourceLocation> result = new LinkedHashSet<>();
+                LinkedHashSet<Identifier> result = new LinkedHashSet<>();
                 for (GrammarRule rule : GrammarRuleRegistry.parentRulesFor(token.toString())) {
-                    ResourceLocation key = LegacySymbolId.canonicalKey(rule.parent());
+                    Identifier key = LegacySymbolId.canonicalKey(rule.parent());
                     if (key != null) result.add(key);
                 }
                 return List.copyOf(result);
             }
-            @Override public List<ResourceLocation> generateFromToken(ResourceLocation root, Random rand) {
+            @Override public List<Identifier> generateFromToken(Identifier root, Random rand) {
                 if (root == null) return List.of();
                 return toKeys(GrammarExplorer.explore(root.toString(), rand == null ? new Random() : rand));
             }
-            @Override public List<ResourceLocation> generateFromToken(ResourceLocation root, Random rand, List<ResourceLocation> written) {
+            @Override public List<Identifier> generateFromToken(Identifier root, Random rand, List<Identifier> written) {
                 if (root == null) return List.of();
                 Random use = rand == null ? new Random() : rand;
                 GrammarTree tree = new GrammarTree(root.toString());
-                List<String> terminals = written == null ? List.of() : written.stream().filter(Objects::nonNull).map(ResourceLocation::toString).toList();
+                List<String> terminals = written == null ? List.of() : written.stream().filter(Objects::nonNull).map(Identifier::toString).toList();
                 tree.parseTerminals(terminals, use);
                 return toKeys(tree.getExpanded(use));
             }
-            private List<ResourceLocation> toKeys(List<String> values) {
-                ArrayList<ResourceLocation> result = new ArrayList<>();
+            private List<Identifier> toKeys(List<String> values) {
+                ArrayList<Identifier> result = new ArrayList<>();
                 for (String value : values) {
-                    ResourceLocation key = LegacySymbolId.canonicalKey(value);
+                    Identifier key = LegacySymbolId.canonicalKey(value);
                     if (key != null) result.add(key);
                 }
                 return List.copyOf(result);
@@ -228,7 +228,7 @@ public final class InternalAPI {
     private static ItemFactory itemFactory() {
         return new ItemFactory() {
             @Override public ItemStack buildPage() { return Page.createPage(); }
-            @Override public ItemStack buildSymbolPage(ResourceLocation identifier) {
+            @Override public ItemStack buildSymbolPage(Identifier identifier) {
                 String legacy = ApiSymbolView.legacyIdFor(identifier);
                 return legacy == null ? Page.createSymbolPage(identifier) : Page.createSymbolPage(legacy);
             }
@@ -237,10 +237,10 @@ public final class InternalAPI {
                 if (properties != null) for (String property : properties) if (property != null) Page.addLinkProperty(page, property);
                 return page;
             }
-            @Override public ItemStack buildCollectionItem(String name, ResourceLocation... tokens) {
+            @Override public ItemStack buildCollectionItem(String name, Identifier... tokens) {
                 LinkedHashSet<IAgeSymbol> symbols = new LinkedHashSet<>();
                 GrammarAPI grammar = (GrammarAPI) APIS.get("grammar");
-                if (tokens != null) for (ResourceLocation token : tokens) if (token != null) symbols.addAll(grammar.getSymbolsExpandingToken(token));
+                if (tokens != null) for (Identifier token : tokens) if (token != null) symbols.addAll(grammar.getSymbolsExpandingToken(token));
                 List<IAgeSymbol> sorted = symbols.stream().sorted(Comparator.comparing(IAgeSymbol::getLocalizedName, String.CASE_INSENSITIVE_ORDER)).toList();
                 ItemStack portfolio = new ItemStack(MystItems.PORTFOLIO.get());
                 ItemPageContainer container = (ItemPageContainer) portfolio.getItem();
@@ -309,14 +309,14 @@ public final class InternalAPI {
 
     private static SymbolAPI symbolApi() {
         return new SymbolAPI() {
-            @Override public void blacklistIdentifier(ResourceLocation identifier) {
+            @Override public void blacklistIdentifier(Identifier identifier) {
                 String legacy = ApiSymbolView.legacyIdFor(identifier);
                 if (legacy != null) SymbolAvailability.blacklist(legacy);
                 GrammarRuleRegistry.rebuildForDynamicSymbols();
             }
             @Override public List<IAgeSymbol> getAllRegisteredSymbols() { return ApiSymbolView.all(); }
-            @Override public IAgeSymbol getSymbol(ResourceLocation identifier) { return ApiSymbolView.resolve(identifier); }
-            @Override public String getSymbolOwner(ResourceLocation identifier) {
+            @Override public IAgeSymbol getSymbol(Identifier identifier) { return ApiSymbolView.resolve(identifier); }
+            @Override public String getSymbolOwner(Identifier identifier) {
                 String legacy = ApiSymbolView.legacyIdFor(identifier);
                 if (legacy == null) return null;
                 int split = legacy.indexOf(':');
@@ -334,14 +334,14 @@ public final class InternalAPI {
             }
             @Override public void setSymbolCardRank(IAgeSymbol symbol, int rank) { String id=id(symbol); if(id!=null) ApiSymbolOverrides.setCardRank(id,rank); }
             @Override public void setSymbolIsPurchasable(IAgeSymbol symbol, boolean flag) { String id=id(symbol); if(id!=null) ApiSymbolOverrides.setTradable(id,flag); }
-            @Override public float getSymbolItemWeight(ResourceLocation identifier) { String id=ApiSymbolView.legacyIdFor(identifier); return id==null?0F:SymbolItemEconomy.itemWeight(id); }
-            @Override public boolean getSymbolIsTradable(ResourceLocation identifier) {
+            @Override public float getSymbolItemWeight(Identifier identifier) { String id=ApiSymbolView.legacyIdFor(identifier); return id==null?0F:SymbolItemEconomy.itemWeight(id); }
+            @Override public boolean getSymbolIsTradable(Identifier identifier) {
                 String id=ApiSymbolView.legacyIdFor(identifier);
                 return id != null && ApiSymbolOverrides.tradable(id, SymbolItemEconomy.cardRank(id)>=0);
             }
             @Override public void setSymbolTradeItem(IAgeSymbol symbol, ItemStack stack) { setSymbolTradeItems(symbol,stack,ItemStack.EMPTY); }
             @Override public void setSymbolTradeItems(IAgeSymbol symbol, ItemStack primary, ItemStack secondary) { String id=id(symbol); if(id!=null) ApiSymbolOverrides.setTradeItems(id,primary,secondary); }
-            @Override public List<ItemStack> getSymbolTradeItems(ResourceLocation identifier) {
+            @Override public List<ItemStack> getSymbolTradeItems(Identifier identifier) {
                 String id=ApiSymbolView.legacyIdFor(identifier);
                 if(id==null) return List.of();
                 List<ItemStack> custom=ApiSymbolOverrides.tradeItems(id);
@@ -390,10 +390,10 @@ public final class InternalAPI {
             @Override public IAgeSymbol createSymbol(String ownerModid, BlockState blockState, String thirdword, int rank, SymbolFactory.CategoryPair... categories) { return createSymbol(blockState,thirdword,rank,categories); }
             @Override public IAgeSymbol createSymbol(BlockState blockState, String thirdword, int rank, SymbolFactory.CategoryPair... categories) {
                 if(blockState==null) return null;
-                ResourceLocation blockId=BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
-                ResourceLocation registryName=ResourceLocation.fromNamespaceAndPath(blockId.getNamespace(), "modmat_"+blockId.getPath()+"_0");
+                Identifier blockId=BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
+                Identifier registryName=Identifier.fromNamespaceAndPath(blockId.getNamespace(), "modmat_"+blockId.getPath()+"_0");
                 return new IAgeSymbol() {
-                    @Override public ResourceLocation getRegistryName(){return registryName;}
+                    @Override public Identifier getRegistryName(){return registryName;}
                     @Override public void registerLogic(AgeDirector controller,long seed){
                         BlockDescriptor descriptor=new BlockDescriptor(blockState);
                         if(categories!=null) for(SymbolFactory.CategoryPair pair:categories) if(pair!=null&&pair.category()!=null) descriptor.setUsable(pair.category(),true);
@@ -412,7 +412,7 @@ public final class InternalAPI {
         return new RenderAPI() {
             @Override public void registerRenderEffect(ILinkPanelEffect renderer) { if(renderer!=null) synchronized(RENDER_EFFECTS){RENDER_EFFECTS.add(renderer);} }
             @Override public void drawWord(float x,float y,float zLevel,float scale,String word) { var r=ApiRenderContext.current(); if(r!=null) r.drawWord(x,y,zLevel,scale,word); }
-            @Override public void drawSymbol(float x,float y,float zLevel,float scale,ResourceLocation identifier) { var r=ApiRenderContext.current(); if(r!=null) r.drawSymbol(x,y,zLevel,scale,identifier); }
+            @Override public void drawSymbol(float x,float y,float zLevel,float scale,Identifier identifier) { var r=ApiRenderContext.current(); if(r!=null) r.drawSymbol(x,y,zLevel,scale,identifier); }
             @Override public void drawColorEye(float x,float y,float zLevel,float radius,Color color) { var r=ApiRenderContext.current(); if(r!=null) r.drawColorEye(x,y,zLevel,radius,color); }
         };
     }

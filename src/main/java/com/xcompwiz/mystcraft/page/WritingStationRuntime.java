@@ -34,7 +34,7 @@ public final class WritingStationRuntime {
         ItemStack vial = inventory.getItem(slot);
         vial.shrink(1);
         if (vial.isEmpty()) inventory.setItem(slot, ItemStack.EMPTY);
-        inventory.placeItemBackInInventory(new ItemStack(Items.GLASS_BOTTLE));
+        inventory.placeItemBackInInventory(new ItemStack(Items.GLASS_BOTTLE), net.minecraft.util.Prediction.SERVER_ONLY);
         return true;
     }
 
@@ -50,11 +50,11 @@ public final class WritingStationRuntime {
     }
 
     public static void give(Player player, ItemStack result) {
-        player.getInventory().placeItemBackInInventory(result);
+        player.getInventory().placeItemBackInInventory(result, net.minecraft.util.Prediction.SERVER_ONLY);
     }
 
     public static void message(Player player, String key, Object... args) {
-        player.displayClientMessage(Component.translatable(key, args), true);
+        com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(key, args), true);
     }
 
     private static int findSlot(Inventory inventory, Item item) {

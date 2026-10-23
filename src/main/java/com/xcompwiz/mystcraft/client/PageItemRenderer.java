@@ -6,11 +6,12 @@ import com.xcompwiz.mystcraft.Mystcraft;
 import com.xcompwiz.mystcraft.api.impl.runtime.ApiWordRegistry;
 import com.xcompwiz.mystcraft.page.Page;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
@@ -25,18 +26,16 @@ import java.util.Random;
  * rectangles directly preserves the visible geometry while also supporting
  * runtime biome/material symbols that cannot be pre-baked into resource JSON.</p>
  */
-public final class PageItemRenderer extends BlockEntityWithoutLevelRenderer {
-    private static final ResourceLocation PAGE = ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/item/page_background.png");
-    private static final ResourceLocation COMPONENTS = ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/symbolcomponents.png");
-    private static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/item/white.png");
+public final class PageItemRenderer implements SpecialModelRenderer<ItemStack> {
+    private static final Identifier PAGE = Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/item/page_background.png");
+    private static final Identifier COMPONENTS = Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/symbolcomponents.png");
+    private static final Identifier WHITE = Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, "textures/item/white.png");
 
     public PageItemRenderer() {
-        super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
     }
 
-    @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack poseStack,
-                             MultiBufferSource buffers, int packedLight, int packedOverlay) {
+                             SubmitNodeCollector buffers, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         // BEWLR item space follows the normal baked-item 0..1 quad convention.
         // Do not shift to -0.5..+0.5 here: that double-centers the page after the
@@ -59,7 +58,7 @@ public final class PageItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.popPose();
     }
 
-    private static void drawSymbol(PoseStack poseStack, MultiBufferSource buffers, String symbol,
+    private static void drawSymbol(PoseStack poseStack, SubmitNodeCollector buffers, String symbol,
                                    int packedLight, int packedOverlay) {
         String[] poem = LegacySymbolVisuals.poem(symbol);
         // Exact normalized PageBuilder targets from its 160x160 composition image:
@@ -70,10 +69,10 @@ public final class PageItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (poem.length > 3) drawWord(poseStack, buffers, poem[3], 0F/160F, 48F/160F, packedLight, packedOverlay);
     }
 
-    private static void drawWord(PoseStack poseStack, MultiBufferSource buffers, String word,
+    private static void drawWord(PoseStack poseStack, SubmitNodeCollector buffers, String word,
                                  float x, float y, int packedLight, int packedOverlay) {
         var custom = word == null ? null : ApiWordRegistry.get(word);
-        ResourceLocation source = custom == null ? COMPONENTS : custom.imageSource();
+        Identifier source = custom == null ? COMPONENTS : custom.imageSource();
         int[] components = componentsFor(word);
         float size = 64F / 160F;
         for (int i = 0; i < components.length; i++) {
@@ -108,12 +107,11 @@ public final class PageItemRenderer extends BlockEntityWithoutLevelRenderer {
         return generated;
     }
 
-    private static void quad(PoseStack poseStack, MultiBufferSource buffers, ResourceLocation texture,
+    private static void quad(PoseStack poseStack, SubmitNodeCollector buffers, Identifier texture,
                              float x0, float y0, float x1, float y1, float z,
                              float u0, float v0, float u1, float v1, int color,
                              int packedLight, int packedOverlay) {
-        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
-        PoseStack.Pose pose = poseStack.last();
+        buffers.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), (pose, consumer) -> {
         int a = (color >>> 24) & 0xFF;
         int r = (color >>> 16) & 0xFF;
         int g = (color >>> 8) & 0xFF;
@@ -123,5 +121,30 @@ public final class PageItemRenderer extends BlockEntityWithoutLevelRenderer {
         consumer.addVertex(pose, x1, y0, z).setColor(r,g,b,a).setUv(u1,v1).setOverlay(packedOverlay).setLight(packedLight).setNormal(pose,0,0,1);
         consumer.addVertex(pose, x1, y1, z).setColor(r,g,b,a).setUv(u1,v0).setOverlay(packedOverlay).setLight(packedLight).setNormal(pose,0,0,1);
         consumer.addVertex(pose, x0, y1, z).setColor(r,g,b,a).setUv(u0,v0).setOverlay(packedOverlay).setLight(packedLight).setNormal(pose,0,0,1);
+        });
+    }
+
+    @Override
+    public ItemStack extractArgument(ItemStack stack) { return stack.copy(); }
+
+    @Override
+    public void submit(ItemStack stack, PoseStack poseStack, SubmitNodeCollector collector,
+                       int lightCoords, int overlayCoords, boolean foil, int outlineColor) {
+        renderByItem(stack, ItemDisplayContext.FIXED, poseStack, collector, lightCoords, overlayCoords);
+    }
+
+    @Override
+    public void getExtents(java.util.function.Consumer<org.joml.Vector3fc> output) {
+        output.accept(new org.joml.Vector3f(0, 0, 0));
+        output.accept(new org.joml.Vector3f(1, 1, 1));
+    }
+
+    public record Unbaked() implements SpecialModelRenderer.Unbaked<ItemStack> {
+        public static final com.mojang.serialization.MapCodec<Unbaked> CODEC =
+                com.mojang.serialization.MapCodec.unit(new Unbaked());
+        @Override public com.mojang.serialization.MapCodec<Unbaked> type() { return CODEC; }
+        @Override public SpecialModelRenderer<ItemStack> bake(SpecialModelRenderer.BakingContext context) {
+            return new PageItemRenderer();
+        }
     }
 }

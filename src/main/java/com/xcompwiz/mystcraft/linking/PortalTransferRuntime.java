@@ -71,7 +71,7 @@ public final class PortalTransferRuntime {
             UUID entityId,
             UUID parentId,
             Vec3 velocity,
-            float fallDistance,
+            double fallDistance,
             boolean maintainMomentum,
             Vec3 fallbackPosition,
             float yaw,
@@ -130,7 +130,7 @@ public final class PortalTransferRuntime {
             group.removeIf(state -> !currentLevel.dimension().equals(state.destination));
             Mystcraft.LOGGER.debug(
                     "Retired stale Crystal Portal pending states for live root={} in {}",
-                    rootId, currentLevel.dimension().location());
+                    rootId, currentLevel.dimension().identifier());
         }
         if (group.isEmpty()) {
             if (states.isEmpty()) PENDING.remove(server);
@@ -179,7 +179,7 @@ public final class PortalTransferRuntime {
                 .put(rootId, new PreparedGroup(rootId, currentLevel.dimension(), prepared));
         Mystcraft.LOGGER.debug(
                 "Prepared virtual Crystal Portal riding group for immediate re-transfer: root={}, members={}, dimension={}",
-                rootId, prepared.size(), currentLevel.dimension().location());
+                rootId, prepared.size(), currentLevel.dimension().identifier());
         return true;
     }
 
@@ -255,7 +255,7 @@ public final class PortalTransferRuntime {
             if (level == null) {
                 if (state.ttl < 0) {
                     Mystcraft.LOGGER.error("Crystal Portal transfer expired before destination level became available: {} in {}",
-                            state.entityId, state.destination.location());
+                            state.entityId, state.destination.identifier());
                     iterator.remove();
                 }
                 continue;
@@ -290,7 +290,7 @@ public final class PortalTransferRuntime {
                     // wait, so this only delays the passengers packet; it does not
                     // permit the pair to become independent portal travellers.
                     if (state.age >= RIDING_SYNC_DELAY && entity.getVehicle() != parent) {
-                        entity.startRiding(parent, true);
+                        entity.startRiding(parent, true, true);
                     }
                     state.ridingReady = entity.getVehicle() == parent;
 
@@ -322,7 +322,7 @@ public final class PortalTransferRuntime {
                 }
                 Mystcraft.LOGGER.error(
                         "Crystal Portal transfer recovery expired: root={}, entity={}, parent={}, destination={}, age={} ticks",
-                        state.rootId, state.entityId, state.parentId, state.destination.location(), state.age);
+                        state.rootId, state.entityId, state.parentId, state.destination.identifier(), state.age);
                 iterator.remove();
             }
         }
@@ -333,7 +333,7 @@ public final class PortalTransferRuntime {
     private static Entity resolveDestinationEntity(MinecraftServer server, ServerLevel level, UUID id) {
         ServerPlayer player = server.getPlayerList().getPlayer(id);
         if (player != null) {
-            return player.serverLevel() == level && !player.isRemoved() ? player : null;
+            return player.level() == level && !player.isRemoved() ? player : null;
         }
         Entity entity = level.getEntity(id);
         return entity != null && !entity.isRemoved() ? entity : null;
@@ -352,11 +352,11 @@ public final class PortalTransferRuntime {
                 anchor.z,
                 Collections.emptySet(),
                 state.yaw,
-                state.pitch);
+                state.pitch, true);
         entity.setDeltaMovement(state.velocity);
         entity.fallDistance = state.fallDistance;
         entity.setPortalCooldown();
-        entity.startRiding(parent, true);
+        entity.startRiding(parent, true, true);
         if (entity.getVehicle() == parent && !state.hardRecoveryLogged) {
             Mystcraft.LOGGER.warn(
                     "Crystal Portal hard-recovered riding relation: rider={} vehicle={} after {} ticks",
@@ -378,7 +378,7 @@ public final class PortalTransferRuntime {
         private final UUID entityId;
         private final UUID parentId;
         private final Vec3 velocity;
-        private final float fallDistance;
+        private final double fallDistance;
         private final Vec3 fallbackPosition;
         private final float yaw;
         private final float pitch;
@@ -394,7 +394,7 @@ public final class PortalTransferRuntime {
                 UUID entityId,
                 UUID parentId,
                 Vec3 velocity,
-                float fallDistance,
+                double fallDistance,
                 int momentumApplications,
                 int ttl,
                 Vec3 fallbackPosition,

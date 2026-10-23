@@ -2,8 +2,8 @@ package com.xcompwiz.mystcraft.world.dimension;
 
 import com.xcompwiz.mystcraft.world.worldgen.AgeFeaturePlan;
 import net.minecraft.core.Holder;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+
+
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 import java.util.ArrayList;
@@ -60,8 +60,7 @@ public final class AgeLegacyPopulationPlacedFeatures {
         // Legacy MapGenScatteredFeatureMyst (Small Library) existed in every Age,
         // independent of authored Symbols. The batch therefore always exists.
         var batch = new AgeLegacyPopulationBatchFeature(ordered);
-        var configured = new ConfiguredFeature<>(batch, NoneFeatureConfiguration.INSTANCE);
-        return List.of(Holder.direct(new PlacedFeature(Holder.direct(configured), List.of())));
+        return List.of(Holder.direct(new PlacedFeature(Holder.direct(batch), List.of())));
     }
 
 

@@ -14,7 +14,7 @@ public final class AgeLegacyDeferredBlockWriteEvents {
     @SubscribeEvent
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
         // Bound work per tick; newly generating chunks normally drain their own queue earlier.
         AgeLegacyDeferredBlockWrites.flushFullChunks(level, 8);
     }

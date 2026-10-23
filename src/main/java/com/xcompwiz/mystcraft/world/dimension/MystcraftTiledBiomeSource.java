@@ -35,12 +35,15 @@ public final class MystcraftTiledBiomeSource extends BiomeSource {
         return CODEC;
     }
 
-    @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         // Modern getNoiseBiome receives quart/generation coordinates. Legacy Tiled's
         // generation query passed those coordinates straight into getBiomeAtCoords,
         // unlike Grid which multiplied them by four first.
         int index = AgeTiledBiomeIndex.indexForGenerationCell(x, z, biomes.size());
         return biomes.get(index);
+    }
+    @Override
+    public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler sampler) {
+        return (x, y, z) -> getNoiseBiome(x, y, z, sampler);
     }
 }

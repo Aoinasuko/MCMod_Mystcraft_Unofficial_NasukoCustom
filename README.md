@@ -1,174 +1,59 @@
-# Mystcraft Legacy — Unofficial Minecraft 1.21.1 / NeoForge Port
+# Mystcraft Unofficial NasukoCustom
 
-A compatibility-focused community port of **Mystcraft Legacy 0.13.7.06** to **Minecraft 1.21.1**, **NeoForge**, and **Java 21**.
+Mystcraft Legacy の非公式 Minecraft **26.3 / NeoForge** 移植版です。
+[ueno96941-Clown の 1.21.1 移植版](https://github.com/ueno96941-Clown/Mystcraft-Legacy-Unofficial-NeoForge-Port) を基にしています。
 
-**Release version:** `0.13.7.06-port.1.0.0-Ueno`
+現在のソースコード: [Aoinasuko/MCMod_Mystcraft_Unofficial_NasukoCustom](https://github.com/Aoinasuko/MCMod_Mystcraft_Unofficial_NasukoCustom)。
 
-The `Ueno` suffix is only a maintainer/build identifier for this unofficial port. The project remains **Mystcraft Legacy**; the suffix does not claim ownership of Mystcraft and does not imply endorsement by the original developers.
+- MOD名: **Mystcraft Unofficial NasukoCustom**
+- バージョン: `0.1.0`
+- Minecraft: **26.3**（26.1 / 26.2 / 1.21.1 用ではありません）
+- NeoForge: **26.3.0.95** 以上の 26.3 系
+- Java: **25**、64 bit
+- 内部MOD ID: `mystcraft`。既存のアイテム・ページ・リソースIDを維持しています。
+- JEI: 任意。使用する場合は Minecraft 26.3 用の **31.16** 系。
 
-## What this port brings back
+## 導入
 
-The goal is to make the legacy Mystcraft play loop usable on a modern Minecraft version while preserving the original visible/gameplay behavior where Minecraft 1.21.1 permits it.
+`0.1.0` は、これまでの26.3移植と本のクリック・投棄の不具合修正を含むNasukoCustom版の最初のリリースです。旧バージョンのJARは外して差し替えてください。
 
-- Create and explore custom **Ages** from Mystcraft Pages/Symbols.
-- Use **Descriptive Books** and **Linking Books** for Age travel.
-- Use legacy-style Mystcraft furniture and book infrastructure, including the **Writing Desk**, **Book Binder**, **Ink Mixer**, **Lectern**, **Book Receptacle**, folders/portfolios, and related book handling.
-- Build and use **Crystal Portals** with cross-dimension entity, vehicle, passenger, and momentum handling.
-- Use **Star Fissures** and the restored Age travel/lifecycle systems.
-- Play with the active legacy **Instability** families, including potion effects, Burning, Lightning, Explosions, Crumble, Meteors, and Red/Blue/Purple/White Decay.
-- Use **Dense Ores**, including this port's compatibility extension for ores supplied by other mods.
-- Generate runtime Symbols from compatible registered **biomes** and **fluids**, allowing heavily modded environments to participate in Age construction.
-- Optional **JEI** integration exposes the payload-aware Linking Book crafting recipe through the normal crafting category.
+Minecraft 26.3 に NeoForge 26.3 を導入し、`build/libs/mystcraft-unofficial-nasukocustom-0.1.0.jar` をインスタンスの `mods` フォルダーに入れてください。
+同じ内部IDを使うため、旧MystcraftのJARは一緒に入れないでください。
+26.3用の新しいワールドで使用してください。1.21.1版セーブの直接変換は検証対象に含めていません。
 
-This release does **not** grant the old port-only starter/tutorial Folder on first login. The release-facing Test Pages and manual Decay QA helper items have also been removed.
+記述書・リンク書・ページ、書き物机・製本機・インクミキサー、書見台・クリスタルポータル、Ageの動的生成・保存などを引き継いでいます。
+本の画面からのAge移動、投棄した本の表示、書き物机・製本機の画面表示と10件のGameTestを確認しています。互換性の制約は [KNOWN_ISSUES.md](KNOWN_ISSUES.md) を参照してください。
 
-## Requirements
+## ビルドと検証
 
-- Minecraft **1.21.1**
-- NeoForge **21.1.250 or newer** for Minecraft 1.21.1
-- Java **21**
-- JEI **19.16+** is optional and only required for JEI recipe display integration
+JDK 25 をインストールし、`JAVA_HOME` を設定してください。Gradle Wrapper は同梱しています。
+Windows向けスクリプトは `JAVA_HOME`、PATH、Gradleが取得したJDKの順にJava 25を探します。
 
-## Installation
-
-1. Install Minecraft 1.21.1 with a compatible NeoForge 21.1.x loader.
-2. Place `mystcraft-0.13.7.06-port.1.0.0-Ueno.jar` in the instance's `mods` folder.
-3. Start the game.
-
-No additional Mystcraft library mod is required by this port. If JEI is installed, Mystcraft's JEI compatibility loads as an optional client-side integration.
-
-For an existing world, make a normal backup before changing a mod list. Mystcraft creates and persists custom dimensions, so ordinary world-backup practice is strongly recommended before upgrades or pack changes.
-
-## Important gameplay notes
-
-### Ages and unloading
-
-Mystcraft Ages are installed lazily and can unload when no player is using them. Linking data keeps enough Age identity to restore an unloaded destination when it is needed again.
-
-### Linking Books
-
-Normal Linking Books do not allow same-dimension travel unless the legacy **Intra Linking** property is present. **Intra Linking Only** restricts a link to same-dimension travel.
-
-### PvP
-
-PvP is enabled by default in Mystcraft Ages. The legacy **Anti-PvP / PvPOff** Symbol disables player-vs-player damage for the Age that contains it.
-
-### Dense Ores
-
-Dense Ores uses a bounded legacy-style multiplier while also recognizing compatible ores from other mods:
-
-| Effective Dense Ores Pages | Approx. total ore density | Instability contribution |
-| ---: | ---: | ---: |
-| 0 | 1x | 0 |
-| 1 | 2x | 500 |
-| 2 | 3x | 2100 |
-| 3+ | 5x | 20000 |
-
-Four or more authored Dense Ores Pages are treated as the 3-page tier.
-
-### Instability
-
-Instability is active in normal gameplay. Extremely unstable Ages are intentionally dangerous and can also become computationally expensive, especially while generating new chunks in a large modpack. If an Age produces sustained server-lag warnings, leave the Age and include its Page/Symbol list in a bug report.
-
-## Compatibility scope
-
-This is a port, not a byte-for-byte recreation of the Minecraft 1.12.2 engine.
-
-The port preserves legacy intent and visible behavior where practical, but modern Minecraft world generation is used underneath. Exact 1.12.2 seed-for-seed or block-for-block parity is therefore **not** claimed for terrain, biome distribution, vanilla structures, or every colorizer result.
-
-The bundled Mystcraft gameplay systems are separate from old third-party add-on compatibility. API-v1 compatibility surfaces exist, but **1.12.2 Mystcraft add-ons are not expected to run unchanged on 1.21.1**, and the old external Instability provider API is not fully wired into the built-in production Deck runtime.
-
-See **`KNOWN_ISSUES.md`** for the current disclosed runtime issues, modern-engine approximations, benign diagnostic warnings, and add-on API limits.
-
-## Bug reports
-
-Please include enough information to reconstruct what happened. At minimum provide:
-
-1. `latest.log`
-2. `debug.log`
-3. Minecraft, NeoForge, and Mystcraft version numbers
-4. Mod list or modpack name/version
-5. The action immediately before the problem
-6. For Age/worldgen/Instability problems, the Page/Symbol list used to create the Age
-
-Attach the crash report as well when Minecraft generates one. Full logs are much more useful than only the last few lines because the original cause can occur well before the visible failure.
-
-**Maintainer:** `ueno969`  
-**Direct contact:** `ueno96941@gmail.com`
-
-## Building from source
-
-Build requirements:
-
-- Java 21
-- Minecraft 1.21.1
-- NeoForge 21.1.250
-- Parchment 2024.11.17 for Minecraft 1.21.1
-- Gradle 9.2.1 through the Gradle Wrapper
-
-The normal build command is:
-
-```text
-./gradlew clean build
+```powershell
+.\BUILD.bat
+.\RUN_GAMETEST.bat
+.\RUN_CLIENT_SMOKE_TEST.bat
 ```
 
-`BUILD.bat` provides the clean release build path on Windows. If `gradle/wrapper/gradle-wrapper.jar` is absent, restore it from the pinned official NeoForge 1.21.1 ModDevGradle MDK with:
+通常の開発用起動は `RUN_CLIENT.bat` / `RUN_SERVER.bat` です。
+`RUN_CLIENT_SMOKE_TEST.bat` は `run/saves/NasukoPortValidation` という専用ワールドを作成し、本でAgeへ移動して画面のスクリーンショットを保存した後、自動終了します。
+サーバー利用時のMinecraft EULAは利用者が確認してください。
 
-```text
-python bootstrap_wrapper.py
-```
+Gradleから直接実行する場合は `gradlew.bat build`、`gradlew.bat runGameTestServer`、`gradlew.bat runClientSmokeTest` を使用できます。
+JDK 25でWindowsのUnix socketパスが長すぎる場合は `-Djdk.net.unixdomain.tmpdir=<短い作業用フォルダー>` を設定します。上記スクリプトは自動設定します。
 
-Windows users may alternatively run `BOOTSTRAP_WINDOWS.bat` / `bootstrap_wrapper.ps1`. Both bootstrap paths verify the pinned wrapper JAR checksum and pin the Gradle 9.2.1 distribution checksum.
+## 出典とライセンス
 
-The built mod JAR is written under `build/libs/`.
+原作: Mystcraft / Mystcraft Legacy、XCompWizおよびMystcraft開発者。
+1.21.1移植: **ueno969 / ueno96941-Clown**（上流の連絡先: ueno96941@gmail.com）。
+26.3移植版の名称: **Mystcraft Unofficial NasukoCustom**。
 
-### Public source package
-
-Development checkpoint archives contain internal QA/history material and are **not** intended to be uploaded as the public source package.
-
-Generate and audit the source-only public package with:
-
-```text
-python tools/make_public_source_export.py <output.zip>
-python tools/audit_public_source_export.py <output.zip>
-```
-
-The exact matching public source ZIP should be published alongside the binary release.
-
-## Upstream and licensing
-
-The porting baseline is the official open-source Mystcraft Legacy repository:
-
-- Repository: `Mystcraft/Mystcraft-Legacy`
-- Branch: `1.12/develop`
-- Pinned commit: `9bc8ddc061845df0cd5ea47f4fdef773cff786ae`
-- Legacy behavior target: `0.13.7.06`
-- Repository license at the pinned source baseline: **GNU LGPL v3**
-
-The historical CurseForge binary is used only as a private comparison/reference input and is **not redistributed** by this project. Shipped Mystcraft-derived material is tied to files verifiably present in the official LGPLv3 source repository; provenance records are included with the source package.
-
-For redistribution details, see:
-
-- `COMPLIANCE_AND_LICENSE_NOTICE.md`
-- `COMPLIANCE_AUDIT_REPORT.md`
-- `COMPLIANCE_SUMMARY_JA.md`
-- `ATTRIBUTION.md`
-- `MODIFICATION_NOTICE.md`
-- `SOURCE_PROVENANCE.md`
-- `ASSET_PROVENANCE_SHA256.tsv`
-- `THIRD_PARTY_NOTICES.md`
-- `RELEASE_DISTRIBUTION_CHECKLIST.md`
-- `RELEASE_LISTING_TEMPLATE.md`
-- `KNOWN_ISSUES.md`
-- `CHANGELOG.md`
-- `LICENSES/`
-
-The project's primary Mystcraft-derived license declaration is `LGPL-3.0-only`. Separate Minecraft/Mojang/Microsoft and Cyan policies apply to their respective names, brands, and content; they do not alter the LGPL terms covering Mystcraft-derived code/assets.
-
-## Required unofficial-project notices
+LGPL-3.0-only。原作者と上流移植者の表示・ライセンス・素材の出典を保持しています。
+[ATTRIBUTION.md](ATTRIBUTION.md)、[MODIFICATION_NOTICE.md](MODIFICATION_NOTICE.md)、[SOURCE_PROVENANCE.md](SOURCE_PROVENANCE.md)、[LICENSE](LICENSE) を参照してください。
+上流版のREADMEは [上流リポジトリのREADME](https://github.com/ueno96941-Clown/Mystcraft-Legacy-Unofficial-NeoForge-Port/blob/7e83df32feb5c68e1faee558daab2338ccadbb5d/README.md) で参照できます。既存の法的告知・監査報告は上流1.21.1版の記録を含み、26.3の動作保証を示すものではありません。
 
 **NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.**
 
 **This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan.**
 
-This is also **not an official Mystcraft release** and is not endorsed by Mystcraft Org, XCompWiz, or the original Mystcraft development team.
+Mystcraft Org、XCompWiz、Mojang、Microsoft、NeoForged、Cyanによる公式版・承認版ではありません。

@@ -3,7 +3,7 @@ package com.xcompwiz.mystcraft.symbol;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.biome.Biome;
 
 import com.xcompwiz.mystcraft.world.worldgen.LegacyModernBiomeIdResolver;
@@ -178,17 +178,17 @@ public final class LegacyBiomeSymbolRegistry {
     /**
      * Adds every biome visible in the current dynamic biome registry while preserving the
      * original 1.12 numeric IDs for legacy pages. New 1.21/modded biomes receive a stable
-     * synthetic numeric ID derived from their ResourceLocation, so they retain the original
+     * synthetic numeric ID derived from their Identifier, so they retain the original
      * {@code mystcraft:Biome<number>} shape without colliding with vanilla 1.12 IDs.
      */
     public static synchronized boolean bootstrapRuntime(RegistryAccess access) {
         bootstrapDefaults();
-        Registry<Biome> registry = access.registryOrThrow(Registries.BIOME);
+        Registry<Biome> registry = access.lookupOrThrow(Registries.BIOME);
         Registry<Biome> previous = lastRuntimeRegistry.get();
         if (previous == registry && lastRuntimeRegistrySize == registry.size()) return false;
-        ArrayList<ResourceLocation> keys = new ArrayList<>(registry.keySet());
-        keys.sort(Comparator.comparing(ResourceLocation::toString));
-        String fingerprint = String.join("\n", keys.stream().map(ResourceLocation::toString).toList());
+        ArrayList<Identifier> keys = new ArrayList<>(registry.keySet());
+        keys.sort(Comparator.comparing(Identifier::toString));
+        String fingerprint = String.join("\n", keys.stream().map(Identifier::toString).toList());
         if (fingerprint.equals(runtimeFingerprint)) {
             lastRuntimeRegistry = new WeakReference<>(registry);
             lastRuntimeRegistrySize = registry.size();
@@ -207,7 +207,7 @@ public final class LegacyBiomeSymbolRegistry {
         HashSet<Integer> usedNumericIds = new HashSet<>();
         for (LegacyBiomeSymbolDefinition definition : BY_LEGACY_ID.values()) usedNumericIds.add(definition.legacyNumericId());
 
-        for (ResourceLocation key : keys) {
+        for (Identifier key : keys) {
             String modernId = key.toString();
             if (representedModernIds.contains(modernId)) continue;
             int numericId = stableRuntimeNumericId(modernId, usedNumericIds);
@@ -269,7 +269,7 @@ public final class LegacyBiomeSymbolRegistry {
     public static String legacyVisualWord(LegacyBiomeSymbolDefinition definition) {
         String legacyName = LEGACY_BIOME_NAMES.get(definition.legacyNumericId());
         if (legacyName != null) return legacyName + definition.legacyNumericId();
-        ResourceLocation modern = ResourceLocation.tryParse(definition.modernBiomeId());
+        Identifier modern = Identifier.tryParse(definition.modernBiomeId());
         String fallback = modern == null
                 ? definition.modernBiomeId().replace(':', '_')
                 : modern.getNamespace() + "_" + modern.getPath();

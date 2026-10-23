@@ -41,9 +41,23 @@ public final class AgeRuntimeWorldBorderBridge {
         // Startup dimensions receive current settings because MinecraftServer
         // reapplies the Overworld border after all delegates are registered.
         // Runtime dimensions miss that pass, so copy the current snapshot first.
-        target.applySettings(source.createSettings());
+        target.setCenter(source.getCenterX(), source.getCenterZ());
+        target.setSize(source.getSize());
+        target.setDamagePerBlock(source.getDamagePerBlock());
+        target.setSafeZone(source.getSafeZone());
+        target.setWarningBlocks(source.getWarningBlocks());
+        target.setWarningTime(source.getWarningTime());
+        if (source.getLerpTime() > 0) target.lerpSizeBetween(source.getSize(), source.getLerpTarget(), source.getLerpTime(), ageLevel.getGameTime());
 
-        BorderChangeListener listener = new BorderChangeListener.DelegateBorderChangeListener(target);
+        BorderChangeListener listener = new BorderChangeListener() {
+            public void onSetSize(WorldBorder border, double size) { target.setSize(size); }
+            public void onLerpSize(WorldBorder border, double from, double to, long ticks, long gameTime) { target.lerpSizeBetween(from, to, ticks, ageLevel.getGameTime()); }
+            public void onSetCenter(WorldBorder border, double x, double z) { target.setCenter(x, z); }
+            public void onSetWarningTime(WorldBorder border, int time) { target.setWarningTime(time); }
+            public void onSetWarningBlocks(WorldBorder border, int blocks) { target.setWarningBlocks(blocks); }
+            public void onSetDamagePerBlock(WorldBorder border, double damage) { target.setDamagePerBlock(damage); }
+            public void onSetSafeZone(WorldBorder border, double zone) { target.setSafeZone(zone); }
+        };
         source.addListener(listener);
         BINDINGS.put(ageLevel, new Binding(source, listener));
     }

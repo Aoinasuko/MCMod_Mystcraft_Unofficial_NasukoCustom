@@ -4,7 +4,7 @@ import com.xcompwiz.mystcraft.linking.LinkOptions;
 import com.xcompwiz.mystcraft.api.item.IItemRenameable;
 import com.xcompwiz.mystcraft.api.item.IItemWritable;
 import com.xcompwiz.mystcraft.api.item.IItemPageProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import com.xcompwiz.mystcraft.linking.LinkProperties;
 import com.xcompwiz.mystcraft.page.Page;
 import com.xcompwiz.mystcraft.symbol.SymbolRemappings;
@@ -48,7 +48,7 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
     public void setDisplayName(Player player, ItemStack stack, String name) {
         LinkOptions.setDisplayName(stack, name == null ? "" : name);
         if (player instanceof ServerPlayer serverPlayer) {
-            var server = serverPlayer.getServer();
+            var server = serverPlayer.level().getServer();
             if (server != null) {
                 AgeManager.resolveReservation(server, stack).ifPresent(age -> {
                     age.setAgeName(name == null ? "" : name);
@@ -59,7 +59,7 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
     }
 
     @Override
-    public boolean writeSymbol(Player player, ItemStack stack, ResourceLocation symbol) {
+    public boolean writeSymbol(Player player, ItemStack stack, Identifier symbol) {
         return symbol != null && writeSymbolLegacy(stack, player.level().registryAccess(), player, symbol.toString());
     }
 
@@ -134,12 +134,12 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
     public List<ItemStack> getPageList(ItemStack stack, HolderLookup.Provider registries) {
         if (stack.isEmpty()) return Collections.emptyList();
         CompoundTag data = LegacyItemData.copy(stack);
-        if (!data.contains(KEY_PAGES, Tag.TAG_LIST)) return Collections.emptyList();
+        if (!com.xcompwiz.mystcraft.data.LegacyNbt.contains(data, KEY_PAGES, Tag.TAG_LIST)) return Collections.emptyList();
 
-        ListTag list = data.getList(KEY_PAGES, Tag.TAG_COMPOUND);
+        ListTag list = data.getListOrEmpty(KEY_PAGES);
         List<ItemStack> result = new ArrayList<>(list.size());
         for (int i = 0; i < list.size(); i++) {
-            ItemStack page = ItemStack.parseOptional(registries, list.getCompound(i));
+            ItemStack page = com.xcompwiz.mystcraft.data.LegacyNbt.readItem(registries, list.getCompoundOrEmpty(i));
             if (!page.isEmpty()) result.add(page);
         }
 
@@ -156,7 +156,7 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
         ListTag encoded = new ListTag();
         for (ItemStack page : pages) {
             if (page.isEmpty()) continue;
-            Tag saved = page.saveOptional(registries);
+            Tag saved = com.xcompwiz.mystcraft.data.LegacyNbt.writeItem(page, registries);
             if (saved instanceof CompoundTag compound) {
                 encoded.add(compound);
             }
@@ -167,9 +167,9 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
     public void addAuthor(ItemStack stack, String author) {
         if (author == null || author.isBlank()) return;
         LegacyItemData.update(stack, data -> {
-            ListTag authors = data.getList(KEY_AUTHORS, Tag.TAG_STRING);
+            ListTag authors = data.getListOrEmpty(KEY_AUTHORS);
             for (int i = 0; i < authors.size(); i++) {
-                if (author.equals(authors.getString(i))) return;
+                if (author.equals(authors.getString(i).orElse(""))) return;
             }
             authors.add(StringTag.valueOf(author));
             data.put(KEY_AUTHORS, authors);
@@ -178,19 +178,19 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
 
     public Collection<String> getAuthors(ItemStack stack) {
         CompoundTag data = LegacyItemData.copy(stack);
-        ListTag authors = data.getList(KEY_AUTHORS, Tag.TAG_STRING);
+        ListTag authors = data.getListOrEmpty(KEY_AUTHORS);
         List<String> result = new ArrayList<>(authors.size());
         for (int i = 0; i < authors.size(); i++) {
-            result.add(authors.getString(i));
+            result.add(authors.getString(i).orElse(""));
         }
         return Collections.unmodifiableList(result);
     }
 
-    public boolean writeSymbol(ItemStack stack, HolderLookup.Provider registries, Player player, net.minecraft.resources.ResourceLocation symbol) {
+    public boolean writeSymbol(ItemStack stack, HolderLookup.Provider registries, Player player, net.minecraft.resources.Identifier symbol) {
         return symbol != null && writeSymbolLegacy(stack, registries, player, symbol.toString());
     }
 
-    /** Writes the exact persisted 0.13.7.06 Symbol ID string without ResourceLocation normalization. */
+    /** Writes the exact persisted 0.13.7.06 Symbol ID string without Identifier normalization. */
     public boolean writeSymbolLegacy(ItemStack stack, HolderLookup.Provider registries, Player player, String legacySymbolId) {
         if (legacySymbolId == null || legacySymbolId.isBlank()) return false;
         // Legacy ItemAgebook refused all page writing once the target Age had been
@@ -198,7 +198,7 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
         // lifecycle boundary rather than allowing a page mutation that cannot
         // safely rewrite an already-generated runtime dimension.
         if (player instanceof ServerPlayer serverPlayer) {
-            var server = serverPlayer.getServer();
+            var server = serverPlayer.level().getServer();
             if (server != null && AgeManager.resolveReservation(server, stack)
                     .map(age -> age.visited())
                     .orElse(false)) {
@@ -227,6 +227,6 @@ public class ItemAgebook extends ItemLinking implements IItemRenameable, IItemWr
     }
 
     private boolean hasPageList(ItemStack stack) {
-        return LegacyItemData.copy(stack).contains(KEY_PAGES, Tag.TAG_LIST);
+        return com.xcompwiz.mystcraft.data.LegacyNbt.contains(LegacyItemData.copy(stack), KEY_PAGES, Tag.TAG_LIST);
     }
 }

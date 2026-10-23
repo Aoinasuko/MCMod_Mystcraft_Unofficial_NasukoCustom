@@ -50,7 +50,7 @@ public final class LegacyInstabilityEnvironmentalRuntimeAdapter {
         }
 
         int slot = LegacyInstabilityRuntimeRandom.nextInt(level, LegacyInstabilityPotionRuntimeMath.LEGACY_VERTICAL_SLOTS);
-        var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinBuildHeight(), level.getHeight(), slot);
+        var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinY(), level.getHeight(), slot);
         ChunkPos chunkPos = chunk.getPos();
         AABB bounds = new AABB(
                 chunkPos.getMinBlockX(), band.minY(), chunkPos.getMinBlockZ(),
@@ -58,8 +58,8 @@ public final class LegacyInstabilityEnvironmentalRuntimeAdapter {
         List<Entity> candidates = level.getEntitiesOfClass(Entity.class, bounds, entity -> {
             if (entity == null || entity.isRemoved()) return false;
             ChunkPos entityChunk = entity.chunkPosition();
-            return entityChunk.x == chunkPos.x
-                    && entityChunk.z == chunkPos.z
+            return entityChunk.x() == chunkPos.x()
+                    && entityChunk.z() == chunkPos.z()
                     && LegacyInstabilityPotionRuntimeMath.containsY(band, entity.getBlockY());
         });
         if (candidates.isEmpty()) return AttemptResult.EMPTY_VERTICAL_BAND;
@@ -100,9 +100,9 @@ public final class LegacyInstabilityEnvironmentalRuntimeAdapter {
             return AttemptResult.BLOCKED_AT_FINAL_GATE;
         }
 
-        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+        LightningBolt bolt = net.minecraft.world.entity.EntityTypes.LIGHTNING_BOLT.create(level, net.minecraft.world.entity.EntitySpawnReason.EVENT);
         if (bolt == null) return AttemptResult.ENTITY_CREATE_FAILED;
-        bolt.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+        bolt.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
         level.addFreshEntity(bolt);
         return AttemptResult.APPLIED_LIGHTNING;
     }
@@ -122,7 +122,7 @@ public final class LegacyInstabilityEnvironmentalRuntimeAdapter {
         int z = chunk.getPos().getMinBlockZ() + LegacyInstabilityEnvironmentalRuntimeMath.localZ(coords);
         int rawY = LegacyInstabilityEnvironmentalRuntimeMath.legacyRawY(coords);
         int y = LegacyInstabilityEnvironmentalRuntimeMath.mapExplosionY(
-                rawY, level.getMinBuildHeight(), level.getHeight());
+                rawY, level.getMinY(), level.getHeight());
 
         if (!plan.executionAllowed() || !InstabilityPolicy.allowProvider(plan.providerId())) {
             return AttemptResult.BLOCKED_AT_FINAL_GATE;
@@ -150,7 +150,7 @@ public final class LegacyInstabilityEnvironmentalRuntimeAdapter {
         int z = chunk.getPos().getMinBlockZ() + LegacyInstabilityEnvironmentalRuntimeMath.localZ(coords);
         int rawY = LegacyInstabilityEnvironmentalRuntimeMath.legacyRawY(coords);
         int y = LegacyInstabilityEnvironmentalRuntimeMath.mapCrumbleY(
-                rawY, level.getMinBuildHeight(), level.getHeight());
+                rawY, level.getMinY(), level.getHeight());
         BlockPos pos = new BlockPos(x, y, z);
         var replacement = LegacyInstabilityCrumbleMappings.replacement(
                 LegacyInstabilityBlockMutationBatch.effectiveState(level, pos));

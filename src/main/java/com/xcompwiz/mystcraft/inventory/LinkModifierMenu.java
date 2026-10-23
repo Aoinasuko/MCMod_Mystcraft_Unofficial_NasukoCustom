@@ -115,20 +115,20 @@ public final class LinkModifierMenu extends AbstractContainerMenu {
     }
 
     public void setTitleFromNetwork(String text) {
-        if (modifier instanceof LinkModifierBlockEntity be && !player.level().isClientSide) {
+        if (modifier instanceof LinkModifierBlockEntity be && !player.level().isClientSide()) {
             be.setBookTitle(player, text == null ? "" : text);
             broadcastChanges();
         }
     }
     public void setSeedFromNetwork(String text) {
-        if (modifier instanceof LinkModifierBlockEntity be && !player.level().isClientSide) {
+        if (modifier instanceof LinkModifierBlockEntity be && !player.level().isClientSide()) {
             be.setSeedText(player, text == null ? "" : text);
             broadcastChanges();
         }
     }
 
     @Override public boolean clickMenuButton(Player player, int id) {
-        if (!(modifier instanceof LinkModifierBlockEntity be) || player.level().isClientSide) return true;
+        if (!(modifier instanceof LinkModifierBlockEntity be) || player.level().isClientSide()) return true;
         if (id >= ACTION_TOGGLE_BASE && id < ACTION_TOGGLE_BASE + properties.size()) {
             String property = properties.get(id - ACTION_TOGGLE_BASE);
             be.setLinkOption(property, !be.getLinkOption(property));

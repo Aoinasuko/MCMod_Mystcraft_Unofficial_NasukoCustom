@@ -17,8 +17,9 @@ public final class AgeWeatherRuntimeEvents {
     @SubscribeEvent
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
         if (!(level.getLevelData() instanceof MystcraftAgeLevelData data)) return;
+        if (level instanceof MystcraftRuntimeServerLevel runtimeLevel) runtimeLevel.tickAgeClock();
 
         var ageOptional = AgeManager.resolveByLevel(level.getServer(), level.dimension());
         if (ageOptional.isEmpty()) return;
@@ -51,5 +52,16 @@ public final class AgeWeatherRuntimeEvents {
                 : state.rainStrength();
         level.setRainLevel(appliedRainStrength);
         level.setThunderLevel(state.thunderStrength());
+    }
+
+    @SubscribeEvent
+    public static void syncAgeClocks(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        if (event.getServer().getTickCount() % 20 != 0) return;
+        for (ServerLevel level : event.getServer().getAllLevels()) {
+            if (level instanceof MystcraftRuntimeServerLevel age) {
+                var packet = age.clockManager().createFullSyncPacket();
+                for (var player : level.players()) player.connection.send(packet);
+            }
+        }
     }
 }

@@ -44,8 +44,8 @@ public final class AgeSpawnResolver {
         }
 
         ChunkAccess chunk = carversChunk(level, x, z);
-        int y = Math.max(level.getSeaLevel(), level.getMinBuildHeight());
-        int top = level.getMaxBuildHeight();
+        int y = Math.max(level.getSeaLevel(), level.getMinY());
+        int top = level.getMaxY() + 1;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, y, z);
         while (y < top && !chunk.getBlockState(cursor.set(x, y, z)).isAir()) ++y;
         if (y >= top) y = top - 1;
@@ -55,16 +55,16 @@ public final class AgeSpawnResolver {
     private static boolean canCoordinateBeSpawn(ServerLevel level, int x, int z) {
         ChunkAccess chunk = carversChunk(level, x, z);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        for (int y = level.getMaxBuildHeight() - 1; y >= level.getMinBuildHeight(); --y) {
+        for (int y = level.getMaxY() + 1 - 1; y >= level.getMinY(); --y) {
             BlockState state = chunk.getBlockState(cursor.set(x, y, z));
             if (state.isAir()) continue;
             if (state.is(Blocks.BEDROCK)) return false;
-            return state.blocksMotion();
+            return state.isSolid();
         }
         return false;
     }
 
     private static ChunkAccess carversChunk(ServerLevel level, int x, int z) {
-        return level.getChunk(Math.floorDiv(x, 16), Math.floorDiv(z, 16), ChunkStatus.CARVERS);
+        return level.getChunk(Math.floorDiv(x, 16), Math.floorDiv(z, 16), net.minecraft.core.registries.BuiltInRegistries.CHUNK_STATUS.getValue(net.minecraft.resources.Identifier.withDefaultNamespace("terrain")));
     }
 }

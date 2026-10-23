@@ -4,8 +4,8 @@ Development checkpoint archives are working/handoff packages and must not be pub
 
 The public source exporter excludes:
 
-- `.gradle/`, `build/`, `run/`, `runs/`, `logs/`, `crash-reports/`, IDE/cache directories;
-- the entire internal `docs/` tree;
+- `.git/`, `.gradle/`, `build/`, `run/`, `runs/`, `logs/`, `crash-reports/`, IDE/cache directories;
+- the local `Docs/` migration and validation notes;
 - root-level internal checkpoint files beginning with `CP` followed by a checkpoint number;
 - development-only harnesses under `tools/harness/` and top-level Instability checkpoint harnesses;
 - obsolete/development-only helper scripts and embedded `tools/gradle-*` distributions;
@@ -25,7 +25,7 @@ python tools/audit_public_source_export.py <output.zip>
 After building the release JAR, audit the exact binary with:
 
 ```text
-python tools/audit_release_jar.py build/libs/mystcraft-0.13.7.06-port.1.0.0-Ueno.jar
+python tools/audit_release_jar.py build/libs/mystcraft-unofficial-nasukocustom-0.1.0.jar
 ```
 
 A passing package audit is a release gate, not a substitute for re-reading current third-party policies or running the final release-candidate tests.

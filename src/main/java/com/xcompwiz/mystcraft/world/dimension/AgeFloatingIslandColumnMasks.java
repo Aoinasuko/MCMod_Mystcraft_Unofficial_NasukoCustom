@@ -25,7 +25,7 @@ public final class AgeFloatingIslandColumnMasks {
         }
 
         MutableEntry entry = masks.computeIfAbsent(
-                target.toLong(),
+                target.pack(),
                 ignored -> new MutableEntry(new boolean[256], biomeLegacySymbol));
 
         for (int i = 0; i < 256; ++i) {
@@ -34,7 +34,7 @@ public final class AgeFloatingIslandColumnMasks {
         entry.callbacks++;
 
         if (entry.callbacks >= MODERN_CARVER_CALLBACKS_PER_TARGET) {
-            masks.remove(target.toLong());
+            masks.remove(target.pack());
             return Optional.of(new Entry(entry.columns, entry.biomeLegacySymbol));
         }
         return Optional.empty();

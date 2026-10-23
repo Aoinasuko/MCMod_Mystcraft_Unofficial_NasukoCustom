@@ -7,14 +7,14 @@ import com.xcompwiz.mystcraft.world.worldgen.LegacyBiomeSurfaceRegistry;
 import com.xcompwiz.mystcraft.world.worldgen.LegacyModernBiomeIdResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+
+
 
 /**
  * Restores the biome surface pass which Legacy ChunkProviderMyst ran after base terrain.
@@ -30,13 +30,23 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  * guard is important: an authored End Stone/Netherrack/etc. terrain material must not be
  * silently converted to grass just because the selected biome is Forest.</p>
  */
-public final class AgeLegacyFlatBiomeSurfaceFeature extends Feature<NoneFeatureConfiguration> {
+public final class AgeLegacyFlatBiomeSurfaceFeature implements Feature {
     public AgeLegacyFlatBiomeSurfaceFeature() {
-        super(NoneFeatureConfiguration.CODEC);
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+    public com.mojang.serialization.MapCodec<? extends Feature> codec() {
+        return com.mojang.serialization.MapCodec.unit(this);
+    }
+
+    @Override
+    public boolean place(net.minecraft.world.level.WorldGenLevel level,
+                         net.minecraft.world.level.chunk.ChunkGenerator generator,
+                         net.minecraft.util.RandomSource random, net.minecraft.core.BlockPos origin) {
+        return place(new AgeFeatureContext(level, generator, random, origin));
+    }
+
+    public boolean place(AgeFeatureContext context) {
         WorldGenLevel level = context.level();
         BlockPos origin = context.origin();
         int chunkX = Math.floorDiv(origin.getX(), 16) * 16;
@@ -49,7 +59,7 @@ public final class AgeLegacyFlatBiomeSurfaceFeature extends Feature<NoneFeatureC
                 int x = chunkX + dx;
                 int z = chunkZ + dz;
                 int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
-                if (surfaceY <= level.getMinBuildHeight()) continue;
+                if (surfaceY <= level.getMinY()) continue;
 
                 pos.set(x, surfaceY, z);
                 if (!level.getBlockState(pos).is(Blocks.STONE)) continue;
@@ -73,7 +83,7 @@ public final class AgeLegacyFlatBiomeSurfaceFeature extends Feature<NoneFeatureC
 
     private static SurfaceBlocks surfaceBlocks(WorldGenLevel level, BlockPos pos) {
         String modernId = level.getBiome(pos).unwrapKey()
-                .map(key -> key.location().toString())
+                .map(key -> key.identifier().toString())
                 .orElse("");
 
         // Prefer the explicit 1.12 numeric-biome compatibility table. Several old biomes
@@ -85,13 +95,13 @@ public final class AgeLegacyFlatBiomeSurfaceFeature extends Feature<NoneFeatureC
             if (!LegacyModernBiomeIdResolver.resolveModernId(definition.modernBiomeId()).equals(modernId)) continue;
             LegacyBiomeSurfaceDefinition surface = LegacyBiomeSurfaceRegistry.resolve(definition.legacyId());
             return new SurfaceBlocks(
-                    BuiltInRegistries.BLOCK.get(ResourceLocation.parse(surface.topBlockId())).defaultBlockState(),
-                    BuiltInRegistries.BLOCK.get(ResourceLocation.parse(surface.fillerBlockId())).defaultBlockState());
+                    BuiltInRegistries.BLOCK.getValue(Identifier.parse(surface.topBlockId())).defaultBlockState(),
+                    BuiltInRegistries.BLOCK.getValue(Identifier.parse(surface.fillerBlockId())).defaultBlockState());
         }
 
-        String path = ResourceLocation.tryParse(modernId) == null
+        String path = Identifier.tryParse(modernId) == null
                 ? ""
-                : ResourceLocation.parse(modernId).getPath();
+                : Identifier.parse(modernId).getPath();
 
         // Runtime/modded biome fallback where no 1.12 numeric identity exists.
         if (path.contains("mushroom")) {

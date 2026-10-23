@@ -28,13 +28,17 @@ final class AgeLegacyDeferredBlockWritesData extends SavedData {
 
     private List<AgeLegacyDeferredBlockWrites.PersistedWrite> writes = List.of();
 
-    static SavedData.Factory<AgeLegacyDeferredBlockWritesData> factory() {
-        return new SavedData.Factory<>(AgeLegacyDeferredBlockWritesData::new,
-                AgeLegacyDeferredBlockWritesData::load);
+    static net.minecraft.world.level.saveddata.SavedDataType<AgeLegacyDeferredBlockWritesData> factory() {
+        return new net.minecraft.world.level.saveddata.SavedDataType<>(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath("mystcraft", FILE_ID),
+                ignored -> new AgeLegacyDeferredBlockWritesData(),
+                savedLevel -> CompoundTag.CODEC.xmap(
+                        tag -> load(tag, savedLevel.registryAccess()),
+                        data -> data.save(new CompoundTag(), savedLevel.registryAccess())));
     }
 
     static AgeLegacyDeferredBlockWritesData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(factory(), FILE_ID);
+        return level.getDataStorage().computeIfAbsent(factory());
     }
 
     static void capture(ServerLevel level) {
@@ -48,7 +52,7 @@ final class AgeLegacyDeferredBlockWritesData extends SavedData {
         // NeoForge posts LevelEvent.Save after ServerLevel#saveLevelData has already
         // flushed DimensionDataStorage. Flush once more here so the snapshot created
         // by the event is durable in the same save cycle rather than the next one.
-        level.getDataStorage().save();
+        level.getDataStorage().saveAndJoin();
     }
 
     static void restore(ServerLevel level) {
@@ -58,26 +62,25 @@ final class AgeLegacyDeferredBlockWritesData extends SavedData {
 
     private static AgeLegacyDeferredBlockWritesData load(CompoundTag tag, HolderLookup.Provider registries) {
         AgeLegacyDeferredBlockWritesData data = new AgeLegacyDeferredBlockWritesData();
-        ListTag list = tag.getList(TAG_WRITES, Tag.TAG_COMPOUND);
+        ListTag list = tag.getListOrEmpty(TAG_WRITES);
         ArrayList<AgeLegacyDeferredBlockWrites.PersistedWrite> restored = new ArrayList<>(list.size());
         HolderLookup.RegistryLookup<net.minecraft.world.level.block.Block> blocks =
                 registries.lookupOrThrow(Registries.BLOCK);
         for (int i = 0; i < list.size(); ++i) {
-            CompoundTag entry = list.getCompound(i);
-            BlockPos pos = BlockPos.of(entry.getLong("Pos"));
-            BlockState state = NbtUtils.readBlockState(blocks, entry.getCompound("State"));
-            if (state.isAir() && !"minecraft:air".equals(entry.getCompound("State").getString("Name"))) {
+            CompoundTag entry = list.getCompoundOrEmpty(i);
+            BlockPos pos = BlockPos.of(entry.getLong("Pos").orElse(0L));
+            BlockState state = NbtUtils.readBlockState(blocks, entry.getCompoundOrEmpty("State"));
+            if (state.isAir() && !"minecraft:air".equals(entry.getCompoundOrEmpty("State").getString("Name").orElse(""))) {
                 // Missing registry entries must not turn a deferred authored block into air.
                 // Drop that write rather than destroying terrain on load.
                 continue;
             }
-            restored.add(new AgeLegacyDeferredBlockWrites.PersistedWrite(pos, state, entry.getInt("Flags")));
+            restored.add(new AgeLegacyDeferredBlockWrites.PersistedWrite(pos, state, entry.getInt("Flags").orElse(0)));
         }
         data.writes = List.copyOf(restored);
         return data;
     }
 
-    @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag list = new ListTag();
         for (AgeLegacyDeferredBlockWrites.PersistedWrite write : writes) {

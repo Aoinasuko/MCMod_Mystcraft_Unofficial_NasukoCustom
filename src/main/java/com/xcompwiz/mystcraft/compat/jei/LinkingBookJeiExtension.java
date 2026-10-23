@@ -23,6 +23,12 @@ import java.util.List;
  */
 public final class LinkingBookJeiExtension implements ICraftingCategoryExtension<LinkingBookRecipe> {
     @Override
+    public java.util.List<net.minecraft.world.item.crafting.display.SlotDisplay> getIngredients(RecipeHolder<LinkingBookRecipe> recipe) {
+        return List.of(new net.minecraft.world.item.crafting.display.SlotDisplay.ItemStackSlotDisplay(net.minecraft.world.item.ItemStackTemplate.fromNonEmptyStack(Page.createLinkPage())),
+                new net.minecraft.world.item.crafting.display.SlotDisplay.ItemStackSlotDisplay(net.minecraft.world.item.ItemStackTemplate.fromNonEmptyStack(new ItemStack(Items.LEATHER))));
+    }
+
+    @Override
     public void setRecipe(
             RecipeHolder<LinkingBookRecipe> recipeHolder,
             IRecipeLayoutBuilder builder,

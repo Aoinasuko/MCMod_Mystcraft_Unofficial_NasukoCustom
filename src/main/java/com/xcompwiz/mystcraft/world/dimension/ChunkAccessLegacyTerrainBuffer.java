@@ -71,7 +71,7 @@ public class ChunkAccessLegacyTerrainBuffer implements LegacyTerrainBuffer {
     @Override
     public void setReplacement(int x, int y, int z) {
         for (int worldY = startY(y); worldY <= endY(y); ++worldY) {
-            chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), replacement, false);
+            chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), replacement, 0);
         }
     }
 }

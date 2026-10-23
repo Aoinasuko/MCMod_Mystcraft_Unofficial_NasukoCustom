@@ -11,7 +11,7 @@ import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.FixedBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -43,14 +43,14 @@ public final class AgeLevelStemFactory {
         Objects.requireNonNull(plan, "plan");
 
         Holder.Reference<DimensionType> dimensionType = registries
-                .registryOrThrow(Registries.DIMENSION_TYPE)
-                .getHolderOrThrow(definition.dimensionTypeKey());
+                .lookupOrThrow(Registries.DIMENSION_TYPE)
+                .getOrThrow(definition.dimensionTypeKey());
 
         BiomeSource biomeSource = resolveBiomeSource(registries, plan);
 
-        var noiseRegistry = registries.registryOrThrow(Registries.NOISE_SETTINGS);
+        var noiseRegistry = registries.lookupOrThrow(Registries.NOISE_SETTINGS);
         Holder.Reference<NoiseGeneratorSettings> overworldNoise =
-                noiseRegistry.getHolderOrThrow(plan.noiseSettings());
+                noiseRegistry.getOrThrow(plan.noiseSettings());
 
         BlockState terrainBlock = resolveBlockState(registries, plan.terrainBlockId());
         BlockState seaBlock = resolveBlockState(registries, plan.seaBlockId());
@@ -65,16 +65,16 @@ public final class AgeLevelStemFactory {
                     AgeNoiseRouterIsolation.withoutImplicitOverworldCaves(
                             registries,
                             withMaterials(
-                                    noiseRegistry.getHolderOrThrow(NoiseGeneratorSettings.AMPLIFIED).value(),
+                                    noiseRegistry.getOrThrow(NoiseGeneratorSettings.AMPLIFIED).value(),
                                     terrainBlock, seaBlock, plan.seaLevel()),
                             true));
             case NETHER -> createNoiseTerrain(biomeSource,
                     withMaterials(
-                            noiseRegistry.getHolderOrThrow(NoiseGeneratorSettings.NETHER).value(),
+                            noiseRegistry.getOrThrow(NoiseGeneratorSettings.NETHER).value(),
                             terrainBlock, seaBlock, plan.seaLevel()));
             case END -> createNoiseTerrain(biomeSource,
                     withMaterials(
-                            noiseRegistry.getHolderOrThrow(NoiseGeneratorSettings.END).value(),
+                            noiseRegistry.getOrThrow(NoiseGeneratorSettings.END).value(),
                             terrainBlock, seaBlock, plan.seaLevel()));
             case FLAT -> createFlatTerrain(
                     biomeSource,
@@ -97,21 +97,21 @@ public final class AgeLevelStemFactory {
                 plan.terrainMode(),
                 plan.terrainBlockId());
 
-        return new LevelStem(dimensionType, generator);
+        return new LevelStem(dimensionType, generator, java.util.OptionalLong.of(definition.seed()));
     }
 
 
     private static BiomeSource resolveBiomeSource(RegistryAccess registries, AgeWorldgenPlan plan) {
-        var biomeRegistry = registries.registryOrThrow(Registries.BIOME);
+        var biomeRegistry = registries.lookupOrThrow(Registries.BIOME);
         var selection = plan.biomeSourceSelection();
 
         if (selection.readyForWorldgen()) {
             java.util.ArrayList<Holder<Biome>> resolved = new java.util.ArrayList<>();
             for (String modernId : selection.modernBiomeIds()) {
                 String resolvedModernId = LegacyModernBiomeIdResolver.resolveModernId(modernId);
-                ResourceLocation id = ResourceLocation.parse(resolvedModernId);
+                Identifier id = Identifier.parse(resolvedModernId);
                 var key = net.minecraft.resources.ResourceKey.create(Registries.BIOME, id);
-                resolved.add(biomeRegistry.getHolderOrThrow(key));
+                resolved.add(biomeRegistry.getOrThrow(key));
             }
 
             return switch (selection.mode()) {
@@ -122,17 +122,17 @@ public final class AgeLevelStemFactory {
                 case HUGE, LARGE, MEDIUM, SMALL, TINY -> new MystcraftZoomBiomeSource(
                         selection.ageSeed(), selection.zoomScale(), resolved);
                 default -> new FixedBiomeSource(
-                        biomeRegistry.getHolderOrThrow(plan.fixedBiome()));
+                        biomeRegistry.getOrThrow(plan.fixedBiome()));
             };
         }
 
-        return new FixedBiomeSource(biomeRegistry.getHolderOrThrow(plan.fixedBiome()));
+        return new FixedBiomeSource(biomeRegistry.getOrThrow(plan.fixedBiome()));
     }
 
     private static BiomeSource createNativeBiomeSource(RegistryAccess registries) {
         var parameters = registries
-                .registryOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
-                .getHolderOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+                .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD);
         return MultiNoiseBiomeSource.createFromPreset(parameters);
     }
 
@@ -166,20 +166,19 @@ public final class AgeLevelStemFactory {
                 terrainBlock,
                 seaBlock,
                 base.noiseRouter(),
-                base.surfaceRule(),
+                base.materialRule(),
                 base.spawnTarget(),
                 seaLevel,
                 base.disableMobGeneration(),
-                base.aquifersEnabled(),
-                base.oreVeinsEnabled(),
-                base.useLegacyRandomSource());
+                base.aquifers(),
+                base.useLegacyRandomSource(), base.debugFunctions());
     }
 
     private static BlockState resolveBlockState(RegistryAccess registries, String blockId) {
         // Blocks are a built-in/NeoForge registry; Mystcraft's DeferredRegister entries are
         // present here once server world creation reaches this path.
-        ResourceLocation id = ResourceLocation.parse(blockId);
-        Block block = BuiltInRegistries.BLOCK.get(id);
+        Identifier id = Identifier.parse(blockId);
+        Block block = BuiltInRegistries.BLOCK.getValue(id);
         if (block == Blocks.AIR && !"minecraft:air".equals(blockId)
                 && !BuiltInRegistries.BLOCK.containsKey(id)) {
             throw new IllegalStateException("Unknown Mystcraft terrain material block: " + blockId);

@@ -258,6 +258,15 @@ public final class BookBinderBlockEntity extends BlockEntity implements Containe
     }
 
     @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        if (level != null && !level.isClientSide()) {
+            for (ItemStack page : pages) net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), page.copy());
+            pages.clear();
+        }
+        super.preRemoveSideEffects(pos, state);
+    }
+
+    @Override
     public void clearContent() {
         items.clear();
         pages.clear();
@@ -265,38 +274,49 @@ public final class BookBinderBlockEntity extends BlockEntity implements Containe
     }
 
     @Override
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
+        loadAdditional(input.read(com.mojang.serialization.MapCodec.assumeMapUnsafe(CompoundTag.CODEC))
+                .orElseGet(CompoundTag::new), input.lookup());
+    }
+
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
         items.clear();
         pages.clear();
 
         // Read the modern one-slot representation first.
-        ContainerHelper.loadAllItems(tag, items, registries);
-        pendingTitle = tag.getString("title");
+        ContainerHelper.loadAllItems(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, registries, tag), items);
+        pendingTitle = tag.getString("title").orElse("");
 
-        if (tag.contains("pages", Tag.TAG_LIST)) {
-            ListTag list = tag.getList("pages", Tag.TAG_COMPOUND);
+        if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "pages", Tag.TAG_LIST)) {
+            ListTag list = tag.getListOrEmpty("pages");
             for (int i = 0; i < list.size(); i++) {
-                ItemStack parsed = ItemStack.parseOptional(registries, list.getCompound(i));
+                ItemStack parsed = com.xcompwiz.mystcraft.data.LegacyNbt.readItem(registries, list.getCompoundOrEmpty(i));
                 if (!parsed.isEmpty()) pages.add(parsed.copyWithCount(1));
             }
-        } else if (tag.contains("Items", Tag.TAG_LIST)) {
+        } else if (com.xcompwiz.mystcraft.data.LegacyNbt.contains(tag, "Items", Tag.TAG_LIST)) {
             // I82-I91 migration: page inventory slots 1..16 were serialized in Items.
             NonNullList<ItemStack> legacy = NonNullList.withSize(PORT_MIGRATION_SLOT_COUNT, ItemStack.EMPTY);
-            ContainerHelper.loadAllItems(tag, legacy, registries);
+            ContainerHelper.loadAllItems(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, registries, tag), legacy);
             if (items.getFirst().isEmpty() && !legacy.getFirst().isEmpty()) items.set(0, legacy.getFirst());
             for (int i = 1; i < legacy.size(); i++) if (!legacy.get(i).isEmpty()) pages.add(legacy.get(i).copyWithCount(1));
         }
     }
 
     @Override
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, level.registryAccess());
+        output.store(tag);
+    }
+
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, items, registries);
+        com.xcompwiz.mystcraft.data.LegacyInventoryNbt.save(tag, items, registries);
         if (!pendingTitle.isEmpty()) tag.putString("title", pendingTitle);
         ListTag list = new ListTag();
         for (ItemStack page : pages) {
-            Tag saved = page.saveOptional(registries);
+            Tag saved = com.xcompwiz.mystcraft.data.LegacyNbt.writeItem(page, registries);
             if (saved instanceof CompoundTag compound) list.add(compound);
         }
         tag.put("pages", list);

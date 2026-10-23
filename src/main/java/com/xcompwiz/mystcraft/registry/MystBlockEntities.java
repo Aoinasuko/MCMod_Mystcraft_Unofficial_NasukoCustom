@@ -21,32 +21,32 @@ public final class MystBlockEntities {
 
     public static final Supplier<BlockEntityType<BookBinderBlockEntity>> BOOK_BINDER = BLOCK_ENTITY_TYPES.register(
             "blockbookbinder",
-            () -> BlockEntityType.Builder.of(BookBinderBlockEntity::new, MystBlocks.BOOK_BINDER.get()).build(null));
+            () -> new BlockEntityType<>(BookBinderBlockEntity::new, MystBlocks.BOOK_BINDER.get()));
 
     public static final Supplier<BlockEntityType<BookReceptacleBlockEntity>> BOOK_RECEPTACLE = BLOCK_ENTITY_TYPES.register(
             "blockbookreceptacle",
-            () -> BlockEntityType.Builder.of(BookReceptacleBlockEntity::new, MystBlocks.BOOK_RECEPTACLE.get()).build(null));
+            () -> new BlockEntityType<>(BookReceptacleBlockEntity::new, MystBlocks.BOOK_RECEPTACLE.get()));
 
     public static final Supplier<BlockEntityType<BookDisplayBlockEntity>> BOOK_DISPLAY = BLOCK_ENTITY_TYPES.register(
             "book_display",
-            () -> BlockEntityType.Builder.of(BookDisplayBlockEntity::new,
-                    MystBlocks.BOOK_STAND.get(), MystBlocks.LECTERN.get()).build(null));
+            () -> new BlockEntityType<>(BookDisplayBlockEntity::new,
+                    MystBlocks.BOOK_STAND.get(), MystBlocks.LECTERN.get()));
 
     public static final Supplier<BlockEntityType<LinkModifierBlockEntity>> LINK_MODIFIER = BLOCK_ENTITY_TYPES.register(
             "blocklinkmodifier",
-            () -> BlockEntityType.Builder.of(LinkModifierBlockEntity::new, MystBlocks.LINK_MODIFIER.get()).build(null));
+            () -> new BlockEntityType<>(LinkModifierBlockEntity::new, MystBlocks.LINK_MODIFIER.get()));
 
     public static final Supplier<BlockEntityType<WritingDeskBlockEntity>> WRITING_DESK = BLOCK_ENTITY_TYPES.register(
             "writingdesk",
-            () -> BlockEntityType.Builder.of(WritingDeskBlockEntity::new, MystBlocks.WRITING_DESK.get()).build(null));
+            () -> new BlockEntityType<>(WritingDeskBlockEntity::new, MystBlocks.WRITING_DESK.get()));
 
     public static final Supplier<BlockEntityType<InkMixerBlockEntity>> INK_MIXER = BLOCK_ENTITY_TYPES.register(
             "blockinkmixer",
-            () -> BlockEntityType.Builder.of(InkMixerBlockEntity::new, MystBlocks.INK_MIXER.get()).build(null));
+            () -> new BlockEntityType<>(InkMixerBlockEntity::new, MystBlocks.INK_MIXER.get()));
 
     public static final Supplier<BlockEntityType<StarFissureBlockEntity>> STAR_FISSURE = BLOCK_ENTITY_TYPES.register(
             "starfissure",
-            () -> BlockEntityType.Builder.of(StarFissureBlockEntity::new, MystBlocks.STAR_FISSURE.get()).build(null));
+            () -> new BlockEntityType<>(StarFissureBlockEntity::new, MystBlocks.STAR_FISSURE.get()));
 
     private MystBlockEntities() {}
 

@@ -25,17 +25,17 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerLevel;
@@ -51,8 +51,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
+import com.xcompwiz.mystcraft.fluid.FluidContainerAccess;
+
 
 import java.util.UUID;
 
@@ -120,7 +120,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
 
     /** Legacy TileEntityDesk processed its fluid-container slot every server tick. */
     public static void serverTick(net.minecraft.world.level.Level level, BlockPos pos, BlockState state, WritingDeskBlockEntity desk) {
-        if (level.isClientSide) return;
+        if (level.isClientSide()) return;
 
         // CP243: never let the old "initialized" flag suppress the one geometry probe on load.
         // This is what allows already-generated CP241/CP242 houses to self-heal.
@@ -299,7 +299,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
 
         java.util.List<Villager> nearby = level.getEntitiesOfClass(Villager.class, search, v -> !v.isBaby());
         for (Villager villager : nearby) {
-            if (villager.getVillagerData().getProfession() == MystVillagers.ARCHIVIST.get()) {
+            if (villager.getVillagerData().profession().value() == MystVillagers.ARCHIVIST.get()) {
                 if (!bindArchivist(villager, level, deskPos)) continue;
                 archivistVillagerUuid = villager.getUUID();
                 return true;
@@ -329,7 +329,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
         }
 
         if (!level.isLoaded(spawnPos)) return false;
-        Villager villager = EntityType.VILLAGER.spawn(level, spawnPos, MobSpawnType.STRUCTURE);
+        Villager villager = net.minecraft.world.entity.EntityTypes.VILLAGER.spawn(level, spawnPos, EntitySpawnReason.STRUCTURE);
         if (villager == null) {
             Mystcraft.LOGGER.warn("Could not spawn Archivist for desk {} at {}", deskPos, spawnPos);
             return false;
@@ -365,7 +365,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
         boolean alreadyBound = oldJob.isPresent()
                 && oldJob.get().dimension().equals(level.dimension())
                 && oldJob.get().pos().equals(deskPos)
-                && poiManager.getFreeTickets(deskPos) == 0;
+                && poiManager.getInRange(type -> true, deskPos, 1, net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.ANY).filter(poi -> poi.getPos().equals(deskPos)).mapToInt(net.minecraft.world.entity.ai.village.poi.PoiRecord::getFreeTickets).findFirst().orElse(0) == 0;
 
         if (!alreadyBound) {
             // CP243 victims may currently own a smith/grindstone/blast-furnace POI. Release that
@@ -385,12 +385,12 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
             if (claimed.isEmpty()) {
                 Mystcraft.LOGGER.warn(
                         "Failed to reserve Archivist POI at {} for villager {} (freeTickets={})",
-                        deskPos, villager.getUUID(), poiManager.getFreeTickets(deskPos));
+                        deskPos, villager.getUUID(), poiManager.getInRange(type -> true, deskPos, 1, net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.ANY).filter(poi -> poi.getPos().equals(deskPos)).mapToInt(net.minecraft.world.entity.ai.village.poi.PoiRecord::getFreeTickets).findFirst().orElse(0));
                 return false;
             }
         }
 
-        villager.setVillagerData(villager.getVillagerData().setProfession(MystVillagers.ARCHIVIST.get()));
+        villager.setVillagerData(villager.getVillagerData().withProfession(net.minecraft.core.Holder.direct(MystVillagers.ARCHIVIST.get())));
         // Profession-specific work activities are installed when the Brain is refreshed. Do this
         // before writing the claimed JOB_SITE back so the final memory survives the refresh.
         villager.refreshBrain(level);
@@ -403,7 +403,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
 
         Mystcraft.LOGGER.debug(
                 "Bound Archivist {} to POI {} (freeTickets={}, xp={})",
-                villager.getUUID(), deskPos, poiManager.getFreeTickets(deskPos), villager.getVillagerXp());
+                villager.getUUID(), deskPos, poiManager.getInRange(type -> true, deskPos, 1, net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.ANY).filter(poi -> poi.getPos().equals(deskPos)).mapToInt(net.minecraft.world.entity.ai.village.poi.PoiRecord::getFreeTickets).findFirst().orElse(0), villager.getVillagerXp());
         return true;
     }
 
@@ -412,22 +412,22 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
         net.minecraft.world.entity.Entity entity = level.getEntity(archivistVillagerUuid);
         if (!(entity instanceof Villager villager)) return;
         var job = villager.getBrain().getMemory(MemoryModuleType.JOB_SITE);
-        boolean correctProfession = villager.getVillagerData().getProfession() == MystVillagers.ARCHIVIST.get();
+        boolean correctProfession = villager.getVillagerData().profession().value() == MystVillagers.ARCHIVIST.get();
         boolean correctJob = job.isPresent() && job.get().dimension().equals(level.dimension())
                 && job.get().pos().equals(deskPos);
         Mystcraft.LOGGER.debug(
                 "Delayed Archivist verification {}: professionOk={}, jobSiteOk={}, profession={}",
                 villager.getUUID(), correctProfession, correctJob,
-                BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().getProfession()));
+                BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().profession().value()));
         if (!correctProfession || !correctJob) {
             bindArchivist(villager, level, deskPos);
         }
     }
 
     private static boolean isUnemployed(Villager villager) {
-        ResourceLocation id = BuiltInRegistries.VILLAGER_PROFESSION.getKey(
-                villager.getVillagerData().getProfession());
-        return ResourceLocation.withDefaultNamespace("none").equals(id);
+        Identifier id = BuiltInRegistries.VILLAGER_PROFESSION.getKey(
+                villager.getVillagerData().profession().value());
+        return Identifier.withDefaultNamespace("none").equals(id);
     }
 
     private void processFluidContainer() {
@@ -438,13 +438,13 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
         // transaction: only consume the real input if its resulting container fits
         // the output slot. This is the 1.21 analogue of FluidUtils/FluidUtil in 1.12.
         ItemStack working = input.copyWithCount(1);
-        IFluidHandlerItem handler = working.getCapability(Capabilities.FluidHandler.ITEM);
+        FluidContainerAccess handler = FluidContainerAccess.of(working);
         if (handler == null) return;
 
         int room = CAPACITY - inkAmount;
         if (room > 0) {
             FluidStack request = new FluidStack(MystFluids.BLACK_INK.get(), room);
-            FluidStack drained = handler.drain(request, IFluidHandler.FluidAction.EXECUTE);
+            FluidStack drained = handler.drain(request, FluidContainerAccess.FluidAction.EXECUTE);
             if (!drained.isEmpty() && drained.is(MystFluids.BLACK_INK.get()) && drained.getAmount() > 0) {
                 ItemStack resultContainer = handler.getContainer().copy();
                 if (canMergeOutput(resultContainer)) {
@@ -460,9 +460,9 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
         // Recreate the copy because the failed/blocked drain attempt above may have
         // mutated its handler even though the transaction was not committed.
         working = input.copyWithCount(1);
-        handler = working.getCapability(Capabilities.FluidHandler.ITEM);
+        handler = FluidContainerAccess.of(working);
         if (handler == null) return;
-        int filled = handler.fill(new FluidStack(MystFluids.BLACK_INK.get(), inkAmount), IFluidHandler.FluidAction.EXECUTE);
+        int filled = handler.fill(new FluidStack(MystFluids.BLACK_INK.get(), inkAmount), FluidContainerAccess.FluidAction.EXECUTE);
         if (filled <= 0) return;
         ItemStack resultContainer = handler.getContainer().copy();
         if (!canMergeOutput(resultContainer)) return;
@@ -498,6 +498,10 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
     }
 
     /** Capability-safe setter used by the external black-ink tank view. */
+    public void setInkAmountInTransaction(int amount) {
+        inkAmount = Mth.clamp(amount, 0, CAPACITY);
+    }
+
     public void setInkAmount(int amount) {
         int clamped = Mth.clamp(amount, 0, CAPACITY);
         if (clamped == inkAmount) return;
@@ -580,7 +584,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
             LinkOptions.setDisplayName(target, normalized);
             // Legacy Agebook rename also renamed the persisted Age once established.
             if (target.getItem() instanceof ItemAgebook && player instanceof ServerPlayer serverPlayer) {
-                var server = serverPlayer.getServer();
+                var server = serverPlayer.level().getServer();
                 if (server != null) {
                     String finalName = normalized;
                     AgeManager.resolveReservation(server, target).ifPresent(age -> {
@@ -612,7 +616,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
             try {
                 AgeManager.establish(player, target);
             } catch (IllegalStateException ex) {
-                player.displayClientMessage(Component.literal(ex.getMessage()), true);
+                com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.literal(ex.getMessage()), true);
                 return false;
             }
         }
@@ -627,7 +631,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
      * actually committed.
      */
     public boolean writeSymbol(Player player, String legacySymbolId) {
-        if (level == null || level.isClientSide || legacySymbolId == null || legacySymbolId.isBlank()) return false;
+        if (level == null || level.isClientSide() || legacySymbolId == null || legacySymbolId.isBlank()) return false;
         if (!hasWritingInk()) return false;
 
         if (items.get(TARGET_SLOT).isEmpty() && !items.get(PAPER_SLOT).isEmpty()) {
@@ -706,7 +710,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
     }
 
     private void syncClient() {
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }
@@ -725,9 +729,8 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
     }
 
     @Override
-    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider registries) {
-        CompoundTag tag = packet.getTag();
-        if (tag != null) loadAdditional(tag, registries);
+    public void onDataPacket(Connection connection, net.minecraft.world.level.storage.ValueInput input) {
+        loadAdditional(input);
     }
 
     @Override
@@ -782,13 +785,13 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
         if (slot == CONTAINER_SLOT) {
             if (stack.isEmpty()) return false;
             ItemStack single = stack.copyWithCount(1);
-            IFluidHandlerItem handler = single.getCapability(Capabilities.FluidHandler.ITEM);
+            FluidContainerAccess handler = FluidContainerAccess.of(single);
             if (handler == null) return false;
             for (int tank = 0; tank < handler.getTanks(); tank++) {
                 FluidStack fluid = handler.getFluidInTank(tank);
                 if (!fluid.isEmpty() && fluid.is(MystFluids.BLACK_INK.get())) return true;
             }
-            return handler.fill(new FluidStack(MystFluids.BLACK_INK.get(), CAPACITY), IFluidHandler.FluidAction.SIMULATE) > 0;
+            return handler.fill(new FluidStack(MystFluids.BLACK_INK.get(), CAPACITY), FluidContainerAccess.FluidAction.SIMULATE) > 0;
         }
         if (slot == OUTPUT_SLOT) return false;
         if (slot >= FIRST_TAB_SLOT && slot < SLOT_COUNT) return isValidTab(stack);
@@ -809,23 +812,34 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
     }
 
     @Override
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
+        loadAdditional(input.read(com.mojang.serialization.MapCodec.assumeMapUnsafe(CompoundTag.CODEC))
+                .orElseGet(CompoundTag::new), input.lookup());
+    }
+
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        inkAmount = Mth.clamp(tag.getInt("InkAmount"), 0, CAPACITY);
-        archivistSpawnPending = tag.getBoolean("ArchivistSpawnPending");
-        archivistHouseInitialized = tag.getBoolean("ArchivistHouseInitialized");
-        archivistVillagerUuid = tag.hasUUID("ArchivistVillager") ? tag.getUUID("ArchivistVillager") : null;
+        inkAmount = Mth.clamp(tag.getInt("InkAmount").orElse(0), 0, CAPACITY);
+        archivistSpawnPending = tag.getBoolean("ArchivistSpawnPending").orElse(false);
+        archivistHouseInitialized = tag.getBoolean("ArchivistHouseInitialized").orElse(false);
+        archivistVillagerUuid = tag.read("ArchivistVillager", net.minecraft.core.UUIDUtil.CODEC).orElse(null);
         items.clear();
-        ContainerHelper.loadAllItems(tag, items, registries);
+        ContainerHelper.loadAllItems(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, registries, tag), items);
     }
 
     @Override
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, level.registryAccess());
+        output.store(tag);
+    }
+
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
         tag.putInt("InkAmount", inkAmount);
         if (archivistSpawnPending) tag.putBoolean("ArchivistSpawnPending", true);
         if (archivistHouseInitialized) tag.putBoolean("ArchivistHouseInitialized", true);
-        if (archivistVillagerUuid != null) tag.putUUID("ArchivistVillager", archivistVillagerUuid);
-        ContainerHelper.saveAllItems(tag, items, registries);
+        if (archivistVillagerUuid != null) tag.store("ArchivistVillager", net.minecraft.core.UUIDUtil.CODEC, archivistVillagerUuid);
+        com.xcompwiz.mystcraft.data.LegacyInventoryNbt.save(tag, items, registries);
     }
 }

@@ -79,7 +79,7 @@ public final class LegacyInstabilityDecayRuntime {
         int pulses = 0;
         SectionTickLookup sectionTicks = SectionTickLookup.capture(level, chunk);
         for (int slot = 0; slot < LegacyInstabilityPotionRuntimeMath.LEGACY_VERTICAL_SLOTS; slot++) {
-            var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinBuildHeight(), level.getHeight(), slot);
+            var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinY(), level.getHeight(), slot);
             int bandHeight = Math.max(1, band.maxExclusiveY() - band.minY());
             for (int attempt = 0; attempt < 3; attempt++) {
                 int lcg = LegacyInstabilityDecayRuntimeState.advance(level, providerId, extraEffectIndex, "extra");
@@ -111,7 +111,7 @@ public final class LegacyInstabilityDecayRuntime {
         private static SectionTickLookup capture(ServerLevel level, LevelChunk chunk) {
             LevelChunkSection[] sections = chunk.getSections();
             boolean[] flags = new boolean[sections.length];
-            int firstBaseY = sections.length == 0 ? level.getMinBuildHeight()
+            int firstBaseY = sections.length == 0 ? level.getMinY()
                     : level.getSectionYFromSectionIndex(0) << 4;
             for (int i = 0; i < sections.length; i++) {
                 LevelChunkSection section = sections[i];
@@ -228,7 +228,7 @@ public final class LegacyInstabilityDecayRuntime {
 
     public static void whiteDecayContact(Level level, Entity entity) {
         if (level instanceof ServerLevel server && entity != null && !entity.isRemoved()) {
-            boolean damaged = entity.hurt(server.damageSources().magic(), 1.0F);
+            boolean damaged = entity.hurtServer(server, server.damageSources().magic(), 1.0F);
             if (damaged) {
                 if (entity instanceof net.minecraft.server.level.ServerPlayer) {
                 }
@@ -242,7 +242,7 @@ public final class LegacyInstabilityDecayRuntime {
     }
 
     private static int modernYToLegacy(ServerLevel level, int y) {
-        int relative = Math.max(0, Math.min(level.getHeight() - 1, y - level.getMinBuildHeight()));
+        int relative = Math.max(0, Math.min(level.getHeight() - 1, y - level.getMinY()));
         return Math.max(0, Math.min(255, Math.floorDiv(relative * 256, Math.max(1, level.getHeight()))));
     }
 }

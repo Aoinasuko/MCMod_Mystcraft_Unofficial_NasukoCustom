@@ -23,7 +23,7 @@ public final class AgeEndPortalTravelGuard {
     public static void onTravel(EntityTravelToDimensionEvent event) {
         if (!event.getDimension().equals(Level.END)) return;
         var entity = event.getEntity();
-        if (!entity.level().dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!entity.level().dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
         if (entity.portalProcess == null) return;
 
         var entryPos = entity.portalProcess.getEntryPosition();

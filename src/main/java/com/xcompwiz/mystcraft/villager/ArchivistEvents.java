@@ -7,17 +7,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.BasicItemListing;
+
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.village.VillagerTradesEvent;
+
 
 /** Legacy Archivist interaction and fallback vanilla trade bridge. */
-@EventBusSubscriber(modid = Mystcraft.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Mystcraft.MOD_ID)
 public final class ArchivistEvents {
     private ArchivistEvents() {}
 
@@ -25,7 +25,7 @@ public final class ArchivistEvents {
     public static void onVillagerInteraction(PlayerInteractEvent.EntityInteract event) {
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
         if (!(event.getTarget() instanceof Villager villager)) return;
-        if (villager.getVillagerData().getProfession() != MystVillagers.ARCHIVIST.get()) return;
+        if (villager.getVillagerData().profession().value() != MystVillagers.ARCHIVIST.get()) return;
         if (!com.xcompwiz.mystcraft.util.MystMenuOpenPolicy.canOpen(event.getEntity())) return;
         // Legacy sneaking deliberately bypassed the custom shop, allowing the
         // normal Merchant UI (which contained the 25-emerald Booster trade).
@@ -45,14 +45,4 @@ public final class ArchivistEvents {
         }
     }
 
-    @SubscribeEvent
-    public static void addLegacyFallbackTrade(VillagerTradesEvent event) {
-        if (event.getType() != MystVillagers.ARCHIVIST.get()) return;
-        // Mystcraft 0.13.7.06 registered this normal trade in addition to its
-        // custom non-sneak shop: 25 Emeralds -> one Booster Pack.
-        event.getTrades().get(1).add(new BasicItemListing(
-                new ItemStack(Items.EMERALD, 25),
-                new ItemStack(MystItems.BOOSTER.get()),
-                7, 1, 0.05F));
-    }
 }

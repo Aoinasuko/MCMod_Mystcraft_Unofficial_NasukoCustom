@@ -17,7 +17,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -174,7 +174,7 @@ public final class WritingDeskMenu extends AbstractContainerMenu {
     }
 
     public void setTargetTitleFromNetwork(String title) {
-        if (!(desk instanceof WritingDeskBlockEntity blockEntity) || player.level().isClientSide) return;
+        if (!(desk instanceof WritingDeskBlockEntity blockEntity) || player.level().isClientSide()) return;
         blockEntity.setTargetTitle(player, title);
         broadcastChanges();
     }
@@ -419,9 +419,9 @@ public final class WritingDeskMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+    public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
         if (slotId >= TAB_MENU_START && slotId < TAB_MENU_START + VISIBLE_TAB_SLOTS
-                && getCarried().isEmpty() && clickType == ClickType.PICKUP) {
+                && getCarried().isEmpty() && clickType == ContainerInput.PICKUP) {
             setActiveTab(firstTab + (slotId - TAB_MENU_START));
             return;
         }

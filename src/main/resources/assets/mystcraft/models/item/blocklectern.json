@@ -1,5 +1,4 @@
 {
-  "parent": "minecraft:builtin/entity",
   "gui_light": "side",
   "display": {
     "gui": {
@@ -111,5 +110,9 @@
         0.8
       ]
     }
+  },
+  "elements": [],
+  "textures": {
+    "particle": "mystcraft:entity/lectern"
   }
 }

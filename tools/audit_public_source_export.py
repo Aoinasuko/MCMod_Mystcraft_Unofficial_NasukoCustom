@@ -5,8 +5,8 @@ import csv, hashlib, io, json, re, sys, zipfile
 
 p=Path(sys.argv[1]) if len(sys.argv)>1 else None
 if not p or not p.is_file(): raise SystemExit("usage: audit_public_source_export.py <zip>")
-ROOT="Mystcraft-Legacy-1.21.1/"
-VERSION="0.13.7.06-port.1.0.0-Ueno"
+ROOT="Mystcraft-NasukoCustom-26.3/"
+VERSION="0.1.0"
 MC="NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT."
 CYAN="This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan."
 GRADLE_SHA="72f44c9f8ebcb1af43838f45ee5c4aa9c5444898b3468ab3f4af7b6076c5bc3f"
@@ -41,11 +41,11 @@ with zipfile.ZipFile(p) as z:
         mode=(info.external_attr>>16)&0o170000
         if mode==0o120000: problems.append(f"symlink in public source: {n}")
         low=rel.lower()
+        if low.startswith("docs/"): problems.append(f"local documentation in public source: {rel}")
         top="/" not in rel.strip("/")
-        if rel.startswith("docs/"): problems.append(f"internal docs leaked: {rel}")
         if top and re.match(r"^CP\d",rel,re.I): problems.append(f"checkpoint file leaked: {rel}")
         if rel.startswith("tools/harness/") or re.fullmatch(r"tools/InstabilityCp\d+.*Harness\.java",rel): problems.append(f"development harness leaked: {rel}")
-        if any(x in parts for x in (".gradle","build","run","runs","logs","crash-reports",".idea",".vscode","__pycache__")): problems.append(f"build/private artifact: {rel}")
+        if any(x in parts for x in (".git",".jt",".gradle","build","run","runs","logs","crash-reports",".idea",".vscode","__pycache__")): problems.append(f"build/private artifact: {rel}")
         if low.endswith((".class",".log",".zip",".patch")): problems.append(f"forbidden artifact: {rel}")
         if low.endswith(".jar") and rel!="gradle/wrapper/gradle-wrapper.jar": problems.append(f"unexpected JAR: {rel}")
         if rel.startswith("src/main/java/net/minecraft/") or rel.startswith("src/main/java/com/mojang/"): problems.append(f"Minecraft/Mojang source namespace: {rel}")
@@ -81,7 +81,7 @@ with zipfile.ZipFile(p) as z:
         txt=text(rel)
         if WRAPPER_SHA not in txt or GRADLE_SHA not in txt or "30cafee9cd8d7f46427ec88fa8579d49c146df9a" not in txt: problems.append(f"{rel} missing pinned bootstrap identity/checksums")
     if "prebuild_static_audit.py" in text("VERIFY_ENVIRONMENT.bat"): problems.append("VERIFY_ENVIRONMENT.bat still references deleted prebuild audit")
-    if " clean build --stacktrace" not in text("BUILD.bat"): problems.append("BUILD.bat is not a clean release build")
+    if "-Task build -Clean" not in text("BUILD.bat"): problems.append("BUILD.bat is not a clean release build")
     # Asset provenance exactness.
     prefix=ROOT+"src/main/resources/assets/mystcraft/"
     assets=sorted(n for n in names if n.startswith(prefix) and n.lower().endswith((".png",".ogg")))

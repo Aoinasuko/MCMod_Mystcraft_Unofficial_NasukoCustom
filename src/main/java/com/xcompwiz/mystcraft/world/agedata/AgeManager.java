@@ -9,7 +9,7 @@ import com.xcompwiz.mystcraft.page.Page;
 import com.xcompwiz.mystcraft.world.dimension.AgeDimensionKeys;
 import com.xcompwiz.mystcraft.world.worldgen.AgeSymbolResolver;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -78,7 +78,7 @@ public final class AgeManager {
     /** Resolves a persisted Age from its live Level key. */
     public static Optional<AgeRecord> resolveByLevel(MinecraftServer server, ResourceKey<Level> levelKey) {
         if (server == null || levelKey == null) return Optional.empty();
-        return AgeRegistryData.get(server).byDimensionKey(levelKey.location().toString());
+        return AgeRegistryData.get(server).byDimensionKey(levelKey.identifier().toString());
     }
 
     /**
@@ -86,7 +86,7 @@ public final class AgeManager {
      * fields by reusing an already persisted matching Age.
      */
     public static AgeRecord establish(ServerPlayer player, ItemStack book) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         if (server == null) throw new IllegalStateException("Cannot establish an Age without a server");
         if (!(book.getItem() instanceof ItemAgebook agebook)) {
             throw new IllegalArgumentException("Only Descriptive Books can establish Ages");

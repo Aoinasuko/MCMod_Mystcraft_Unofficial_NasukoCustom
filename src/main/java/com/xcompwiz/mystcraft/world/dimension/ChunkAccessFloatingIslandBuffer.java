@@ -56,7 +56,7 @@ public final class ChunkAccessFloatingIslandBuffer implements LegacyFloatingIsla
 
     private void fillCell(int x, int y, int z, BlockState state) {
         for (int worldY = startY(y); worldY <= endY(y); ++worldY) {
-            chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), state, false);
+            chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), state, 0);
         }
     }
 
@@ -85,7 +85,7 @@ public final class ChunkAccessFloatingIslandBuffer implements LegacyFloatingIsla
     @Override public void setTop(int x, int y, int z) {
         // Surface semantics apply to the highest modern block represented by this legacy cell.
         int worldY = endY(y);
-        chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), top, false);
+        chunk.setBlockState(pos.set(minBlockX + x, worldY, minBlockZ + z), top, 0);
     }
 
     @Override public void setFiller(int x, int y, int z) { fillCell(x, y, z, filler); }

@@ -34,8 +34,11 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
  * block entity, while keeping the single legacy {@code mystcraft:writingdesk}
  * block ID and state flags.</p>
  */
-public final class WritingDeskStructureProcessor extends StructureProcessor {
+public final class WritingDeskStructureProcessor implements StructureProcessor {
     public static final WritingDeskStructureProcessor INSTANCE = new WritingDeskStructureProcessor();
+
+    public static final com.mojang.serialization.MapCodec<WritingDeskStructureProcessor> CODEC =
+            com.mojang.serialization.MapCodec.unit(INSTANCE);
 
     private WritingDeskStructureProcessor() {}
 
@@ -75,7 +78,7 @@ public final class WritingDeskStructureProcessor extends StructureProcessor {
         // invoked; `current` is the processed placement state.  Applying settings a second time
         // rotates non-owning Writing Desk parts twice and can disagree with the owning lower part.
         ChunkAccess chunk = level.getChunk(current.pos());
-        chunk.setBlockState(current.pos(), processedState, false);
+        chunk.setBlockState(current.pos(), processedState, 0);
         // Remove any stale pending/entity data if another processor or an old
         // generated version touched this position before us.
         chunk.removeBlockEntity(current.pos());
@@ -83,10 +86,7 @@ public final class WritingDeskStructureProcessor extends StructureProcessor {
     }
 
     @Override
-    protected StructureProcessorType<?> getType() {
-        // This processor exists only inside the runtime-injected direct processor
-        // list and is never data-driven/serialized.  Returning NOP keeps the
-        // vanilla codec contract without inventing a persistent registry entry.
-        return StructureProcessorType.NOP;
+    public com.mojang.serialization.MapCodec<? extends StructureProcessor> codec() {
+        return CODEC;
     }
 }

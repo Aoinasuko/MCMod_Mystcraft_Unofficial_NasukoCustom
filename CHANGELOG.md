@@ -1,3 +1,31 @@
+# 0.1.0 — 2026-10-24
+
+- Publish the first Mystcraft Unofficial NasukoCustom release for Minecraft 26.3 / NeoForge 26.3.0.95 / Java 25.
+- Include the completed 26.3 port and fixes for Link Panel clicks, physical book movement and Archivist structure persistence.
+- Keep local migration/validation notes in ignored `Docs/`; retain public attribution, license and provenance notices in the repository and binary.
+- Adopt the NasukoCustom version number `0.1.0`; earlier local port identifiers are retained below as development history.
+
+---
+
+# 0.13.7.06-nasuko.26.3.2 — 2026-10-24
+
+- Fix Link Panel clicks by using Minecraft 26.3 mouse button constants. Correct left/right click behavior in Book Binder, Ink Mixer and Writing Desk custom controls too.
+- Declare the ItemEntity-style server/client movement simulation policy for physical books and meteors, preventing the client movement-authority crash.
+- Register the Archivist Writing Desk structure processor codec so generated village chunks can be saved.
+- Replace direct server travel in the client smoke test with opening a real book menu, left-clicking its Link Panel, awaiting network travel, dropping a selected book and verifying client ticking.
+
+---
+
+# 0.13.7.06-nasuko.26.3.1 — 2026-10-23
+
+- Port to Minecraft 26.3, NeoForge 26.3.0.95 and Java 25.
+- Display name: Mystcraft Unofficial NasukoCustom.
+- Migrate networking/menu data, serialization, resource transfers, worldgen and client render APIs.
+- Preserve original source attribution and all original PNG/OGG asset hashes.
+- Add server GameTests and a disposable-world client smoke test.
+
+---
+
 # Changelog
 
 All notable player-facing changes for the **Mystcraft Legacy — Unofficial Minecraft 1.21.1 / NeoForge Port** are summarized here.

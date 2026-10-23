@@ -18,9 +18,7 @@ import net.minecraft.world.level.Level;
  * exact Link Panel payload.
  */
 public final class LinkingBookRecipe extends CustomRecipe {
-    public LinkingBookRecipe(CraftingBookCategory category) {
-        super(category);
-    }
+    public LinkingBookRecipe() {}
 
     @Override
     public boolean matches(CraftingInput input, Level level) {
@@ -43,7 +41,7 @@ public final class LinkingBookRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+    public ItemStack assemble(CraftingInput input) {
         for (int i = 0; i < input.size(); i++) {
             ItemStack stack = input.getItem(i);
             if (!stack.isEmpty() && Page.isLinkPanel(stack)) {
@@ -53,13 +51,9 @@ public final class LinkingBookRecipe extends CustomRecipe {
         return ItemStack.EMPTY;
     }
 
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= 2;
-    }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<LinkingBookRecipe> getSerializer() {
         return MystRecipes.LINKING_BOOK.get();
     }
 }

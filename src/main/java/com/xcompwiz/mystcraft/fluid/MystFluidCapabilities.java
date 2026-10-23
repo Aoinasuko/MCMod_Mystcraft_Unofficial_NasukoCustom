@@ -13,19 +13,19 @@ public final class MystFluidCapabilities {
 
     public static void register(RegisterCapabilitiesEvent event) {
         event.registerItem(
-                Capabilities.FluidHandler.ITEM,
-                (stack, context) -> new InkVialFluidHandler(stack),
+                Capabilities.Fluid.ITEM,
+                (stack, context) -> new InkVialFluidHandler(context),
                 MystItems.INK_VIAL.get());
         event.registerBlockEntity(
-                Capabilities.FluidHandler.BLOCK,
+                Capabilities.Fluid.BLOCK,
                 MystBlockEntities.WRITING_DESK.get(),
                 (desk, side) -> new WritingDeskInkHandler(desk));
         event.registerBlockEntity(
-                Capabilities.ItemHandler.BLOCK,
+                Capabilities.Item.BLOCK,
                 MystBlockEntities.WRITING_DESK.get(),
                 (desk, side) -> new WritingDeskItemHandler(desk));
         event.registerBlockEntity(
-                Capabilities.ItemHandler.BLOCK,
+                Capabilities.Item.BLOCK,
                 MystBlockEntities.INK_MIXER.get(),
                 (mixer, side) -> new InkMixerItemHandler(mixer));
     }

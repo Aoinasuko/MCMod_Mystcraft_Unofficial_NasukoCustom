@@ -34,7 +34,12 @@ public final class LegacyChunkProfilerData extends SavedData {
 
     public static LegacyChunkProfilerData get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(
-                new SavedData.Factory<>(LegacyChunkProfilerData::new, LegacyChunkProfilerData::load), FILE_ID);
+                new net.minecraft.world.level.saveddata.SavedDataType<>(
+                        net.minecraft.resources.Identifier.fromNamespaceAndPath("mystcraft", FILE_ID),
+                        ignored -> new LegacyChunkProfilerData(),
+                        savedLevel -> CompoundTag.CODEC.xmap(
+                                tag -> LegacyChunkProfilerData.load(tag, savedLevel.registryAccess()),
+                                data -> data.save(new CompoundTag(), savedLevel.registryAccess()))));
     }
 
     public int count() { return count; }
@@ -42,9 +47,9 @@ public final class LegacyChunkProfilerData extends SavedData {
 
     public boolean profile(ServerLevel level, LevelChunk chunk, Map<net.minecraft.world.level.block.Block, LegacyInstabilityBlockManager.Factor> watched) {
         if (ready()) return false;
-        long posKey = chunk.getPos().toLong();
+        long posKey = chunk.getPos().pack();
         if (!profiledChunks.add(posKey)) return false;
-        ensureShape(level.getMinBuildHeight(), level.getHeight());
+        ensureShape(level.getMinY(), level.getHeight());
 
         Map<String, LegacyInstabilityBlockManager.Factor> factors = logicalFactors(watched);
         for (String key : factors.keySet()) blocksByY.computeIfAbsent(key, k -> new long[height]);
@@ -144,10 +149,10 @@ public final class LegacyChunkProfilerData extends SavedData {
 
     public static LegacyChunkProfilerData load(CompoundTag tag, HolderLookup.Provider registries) {
         LegacyChunkProfilerData data = new LegacyChunkProfilerData();
-        data.minY = tag.getInt("MinY");
-        data.height = tag.getInt("Height");
-        data.count = tag.getInt("Count");
-        data.solidByY = tag.getLongArray("SolidByY");
+        data.minY = tag.getInt("MinY").orElse(0);
+        data.height = tag.getInt("Height").orElse(0);
+        data.count = tag.getInt("Count").orElse(0);
+        data.solidByY = tag.getLongArray("SolidByY").orElseGet(() -> new long[0]);
         boolean invalidShape = data.height <= 0 || data.height > 4096 || data.solidByY.length != data.height;
         boolean invalidCount = data.count < 0 || data.count > LegacyInstabilityData.PROFILE_CHUNKS;
         if (invalidShape || invalidCount) {
@@ -159,7 +164,7 @@ public final class LegacyChunkProfilerData extends SavedData {
             data.solidByY = new long[0];
             return data;
         }
-        for (long key : tag.getLongArray("ProfiledChunks")) data.profiledChunks.add(key);
+        for (long key : tag.getLongArray("ProfiledChunks").orElseGet(() -> new long[0])) data.profiledChunks.add(key);
         if (data.profiledChunks.size() < data.count) {
             // A count larger than the recorded unique chunks cannot be trusted. Re-profile
             // rather than feeding a denominator inconsistent with the persisted sample.
@@ -170,17 +175,16 @@ public final class LegacyChunkProfilerData extends SavedData {
             data.profiledChunks.clear();
             return data;
         }
-        ListTag list = tag.getList("Blocks", Tag.TAG_COMPOUND);
+        ListTag list = tag.getListOrEmpty("Blocks");
         for (int i = 0; i < list.size(); ++i) {
-            CompoundTag row = list.getCompound(i);
-            String key = row.getString("Key");
-            long[] values = row.getLongArray("ByY");
+            CompoundTag row = list.getCompoundOrEmpty(i);
+            String key = row.getString("Key").orElse("");
+            long[] values = row.getLongArray("ByY").orElseGet(() -> new long[0]);
             if (!key.isBlank() && values.length == data.height) data.blocksByY.put(key, values);
         }
         return data;
     }
 
-    @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putInt("MinY", minY == Integer.MIN_VALUE ? 0 : minY);
         tag.putInt("Height", height);

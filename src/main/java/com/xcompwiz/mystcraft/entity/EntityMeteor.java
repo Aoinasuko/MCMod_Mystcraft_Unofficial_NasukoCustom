@@ -52,6 +52,12 @@ public final class EntityMeteor extends Entity {
 
     @Override protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {}
 
+    /** Like vanilla ItemEntity, keep visual physics on both sides; damage stays server-only. */
+    @Override
+    public net.minecraft.world.entity.MoveSimulationType getMoveSimulationType() {
+        return net.minecraft.world.entity.MoveSimulationType.SERVER_AND_CLIENT;
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -103,7 +109,7 @@ public final class EntityMeteor extends Entity {
         }
 
         move(MoverType.SELF, getDeltaMovement());
-        if (getY() < level().getMinBuildHeight() - 64 || getY() > 1024) discard();
+        if (getY() < level().getMinY() - 64 || getY() > 1024) discard();
     }
 
 
@@ -158,7 +164,11 @@ public final class EntityMeteor extends Entity {
     public float getScale() { return scale; }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
+    protected void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+        readLegacyData(input.read(com.mojang.serialization.MapCodec.assumeMapUnsafe(CompoundTag.CODEC)).orElseGet(CompoundTag::new));
+    }
+
+    private void readLegacyData(CompoundTag tag) {
         // Legacy meteors died on reload. Preserve that behavior without removing the
         // entity from inside the NBT-load callback (see CP326 note in tick()).
         retireAfterLoad = true;
@@ -167,9 +177,19 @@ public final class EntityMeteor extends Entity {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
+    protected void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyData(tag);
+        output.store(tag);
+    }
+
+    private void writeLegacyData(CompoundTag tag) {
         tag.putFloat("Scale", scale);
         tag.putInt("Penetration", penetration);
         tag.putInt("InGround", inGroundTime);
+    }
+    @Override
+    public boolean hurtServer(ServerLevel level, net.minecraft.world.damagesource.DamageSource source, float amount) {
+        return false;
     }
 }

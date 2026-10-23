@@ -4,7 +4,7 @@ import com.xcompwiz.mystcraft.api.item.IItemOrderablePageProvider;
 import com.xcompwiz.mystcraft.api.item.IItemRenameable;
 import com.xcompwiz.mystcraft.api.item.IItemWritable;
 import com.xcompwiz.mystcraft.page.Page;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -23,7 +23,7 @@ public final class ItemFolder extends ItemPageContainer implements IItemRenameab
     @Override public void setDisplayName(Player player, ItemStack stack, String name) { setLegacyName(stack,name); }
 
     @Override
-    public boolean writeSymbol(Player player, ItemStack stack, ResourceLocation symbol) {
+    public boolean writeSymbol(Player player, ItemStack stack, Identifier symbol) {
         if (symbol == null) return false;
         List<ItemStack> pages = new ArrayList<>(getPages(stack));
         for (ItemStack page : pages) {

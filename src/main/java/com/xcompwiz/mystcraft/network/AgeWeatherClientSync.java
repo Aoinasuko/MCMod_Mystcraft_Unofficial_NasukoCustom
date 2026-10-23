@@ -14,7 +14,7 @@ public final class AgeWeatherClientSync {
 
     public static void sendEntrySnapshot(ServerPlayer player, AgeWeatherPlan plan) {
         if (player == null || plan == null) return;
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         if (!(level.getLevelData() instanceof MystcraftAgeLevelData data)) return;
 
         var state = data.weatherRuntimeState();

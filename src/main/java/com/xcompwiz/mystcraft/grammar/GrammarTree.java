@@ -17,7 +17,7 @@ import java.util.Random;
  * Explicit symbols are parsed right-to-left into a forest, then {@link #getExpanded(Random)}
  * reconnects that forest to the Age root, expands the remaining grammar holes and returns the
  * final terminal symbol sequence. Legacy mixed-case grammar/symbol strings are deliberately kept
- * as strings instead of being forced through modern ResourceLocation validation.</p>
+ * as strings instead of being forced through modern Identifier validation.</p>
  */
 public final class GrammarTree {
     public static final String DEFAULT_ROOT = "mystcraft:Age";

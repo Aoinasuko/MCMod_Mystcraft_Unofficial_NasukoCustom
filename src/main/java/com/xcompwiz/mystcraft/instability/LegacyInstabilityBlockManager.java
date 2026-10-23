@@ -3,7 +3,7 @@ package com.xcompwiz.mystcraft.instability;
 import com.xcompwiz.mystcraft.symbol.LegacyMaterialSymbolRegistry;
 import com.xcompwiz.mystcraft.world.dimension.DenseOreResourceClassifier;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -52,14 +52,14 @@ public final class LegacyInstabilityBlockManager {
                 }
             }
 
-            Block crystal = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("mystcraft", "blockcrystal"));
+            Block crystal = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("mystcraft", "blockcrystal"));
             if (crystal != Blocks.AIR) out.put(crystal, new Factor("mystcraft:crystal", 20F, 4F, false));
             out.put(Blocks.GLOWSTONE, new Factor("minecraft:glowstone", 50F, 4F, false));
 
             // Legacy fluid-symbol defaults are factor1=1.0 / factor2=0.25. Runtime
             // material symbols are non-ore and therefore retain their original score role.
-            for (ResourceLocation id : LegacyMaterialSymbolRegistry.runtimeRegisteredFluidBlockIds()) {
-                Block block = BuiltInRegistries.BLOCK.get(id);
+            for (Identifier id : LegacyMaterialSymbolRegistry.runtimeRegisteredFluidBlockIds()) {
+                Block block = BuiltInRegistries.BLOCK.getValue(id);
                 if (block != Blocks.AIR && !out.containsKey(block)) {
                     float[] factors = LegacyMaterialSymbolRegistry.runtimeFluidInstabilityFactors(id);
                     out.put(block, new Factor("fluid:" + id, factors[0], factors[1], false));

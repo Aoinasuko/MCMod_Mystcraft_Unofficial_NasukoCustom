@@ -168,7 +168,7 @@ public final class BookReceptacleBlockEntity extends BlockEntity {
     }
 
     private void sync() {
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, 3);
             // Portal tint is baked into block-model meshes.  Re-send every active cell
@@ -194,34 +194,54 @@ public final class BookReceptacleBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider registries) {
-        CompoundTag tag = pkt.getTag();
-        if (tag != null) loadAdditional(tag, registries);
+    public void onDataPacket(Connection connection, net.minecraft.world.level.storage.ValueInput input) {
+        loadAdditional(input);
     }
 
     @Override
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
+        loadAdditional(input.read(com.mojang.serialization.MapCodec.assumeMapUnsafe(CompoundTag.CODEC))
+                .orElseGet(CompoundTag::new), input.lookup());
+    }
+
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        this.book = ItemStack.parseOptional(registries, tag.getCompound("Book"));
+        this.book = com.xcompwiz.mystcraft.data.LegacyNbt.readItem(registries, tag.getCompoundOrEmpty("Book"));
         portalBlocks.clear();
-        for (long packed : tag.getLongArray("PortalBlocks")) {
+        for (long packed : tag.getLongArray("PortalBlocks").orElseGet(() -> new long[0])) {
             portalBlocks.add(BlockPos.of(packed));
         }
         frameBlocks.clear();
-        for (long packed : tag.getLongArray("FrameBlocks")) {
+        for (long packed : tag.getLongArray("FrameBlocks").orElseGet(() -> new long[0])) {
             frameBlocks.add(BlockPos.of(packed));
         }
-        if (tag.contains("PortalColor")) portalColor = tag.getInt("PortalColor") & 0xFFFFFF;
+        if (tag.contains("PortalColor")) portalColor = tag.getInt("PortalColor").orElse(0) & 0xFFFFFF;
     }
 
     @Override
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, level.registryAccess());
+        output.store(tag);
+    }
+
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
         if (!book.isEmpty()) {
-            tag.put("Book", book.saveOptional(registries));
+            tag.put("Book", com.xcompwiz.mystcraft.data.LegacyNbt.writeItem(book, registries));
         }
         tag.putLongArray("PortalBlocks", portalBlocks.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putLongArray("FrameBlocks", frameBlocks.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putInt("PortalColor", portalColor & 0xFFFFFF);
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level == null || level.isClientSide()) return;
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) deactivatePortal(serverLevel);
+        ItemStack dropped = getBook().copy();
+        if (!dropped.isEmpty()) net.minecraft.world.Containers.dropItemStack(level,
+                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, dropped);
     }
 }

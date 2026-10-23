@@ -1,15 +1,5 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-if not exist gradle\wrapper\gradle-wrapper.jar (
-  echo Gradle wrapper is missing. Run BOOTSTRAP_WINDOWS.bat first.
-  pause
-  exit /b 1
-)
-call gradlew.bat runClient
-if errorlevel 1 (
-  echo.
-  echo runClient failed. Preserve run\logs\latest.log and the console output.
-  pause
-  exit /b 1
-)
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\run_gradle.ps1" -Task runClient
+exit /b %errorlevel%

@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -738,7 +738,7 @@ public final class AgeLegacySmallLibraryFeature {
         new Placement((byte)1, (byte)3, (byte)6, 'W')
     };
 
-    public boolean place(FeaturePlaceContext<?> context) {
+    public boolean place(AgeFeatureContext context) {
         WorldGenLevel level = context.level();
         int chunkX = Math.floorDiv(context.origin().getX(), 16);
         int chunkZ = Math.floorDiv(context.origin().getZ(), 16);
@@ -748,14 +748,14 @@ public final class AgeLegacySmallLibraryFeature {
         int baseX = chunkX * 16;
         int baseZ = chunkZ * 16;
         int ground = averageGround(level, baseX, baseZ, turns);
-        if (ground < level.getMinBuildHeight()) return false;
+        if (ground < level.getMinY()) return false;
         int baseY = ground + 1;
 
         // Legacy foundation: replace air/liquid downward below the 11x11 footprint.
         for (int lx = 0; lx < SIZE; ++lx) {
             for (int lz = 0; lz < SIZE; ++lz) {
                 BlockPos surface = map(baseX, baseY - 1, baseZ, lx, 0, lz, turns);
-                for (int y = surface.getY(); y > level.getMinBuildHeight() + 1; --y) {
+                for (int y = surface.getY(); y > level.getMinY() + 1; --y) {
                     BlockPos at = new BlockPos(surface.getX(), y, surface.getZ());
                     BlockState existing = level.getBlockState(at);
                     if (!existing.isAir() && existing.getFluidState().isEmpty()) break;

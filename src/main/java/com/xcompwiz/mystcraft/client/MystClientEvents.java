@@ -37,13 +37,12 @@ public final class MystClientEvents {
         Minecraft mc = Minecraft.getInstance();
         // 0.13.7.06 installed wrappers into the live vanilla BlockColors table after bootstrap.
         // Reproduce that ordering guarantee once the client level exists.
-        AgeLegacyBlockTintInstaller.installIfReady();
         if (mc.level == null || mc.levelRenderer == null) {
             lastVisualDimension = null;
             lastVisualEntry = null;
             return;
         }
-        String dimension = mc.level.dimension().location().toString();
+        String dimension = mc.level.dimension().identifier().toString();
         AgeClientVisualState.Entry entry = AgeClientVisualState.get(dimension);
         if (!dimension.equals(lastVisualDimension) || entry != lastVisualEntry) {
             lastVisualDimension = dimension;
@@ -52,8 +51,7 @@ public final class MystClientEvents {
                 // CP231 runtime: foliage used our wrapper but grass did not.  Re-assert the live
                 // BlockColors entries at the exact point the Age payload becomes authoritative,
                 // then invalidate baked chunk meshes so all tint callbacks are re-evaluated.
-                AgeLegacyBlockTintInstaller.reinstallForSnapshot();
-                mc.levelRenderer.allChanged();
+                mc.levelExtractor.allChanged();
             }
         }
     }
@@ -63,7 +61,7 @@ public final class MystClientEvents {
     public static void computeFogColor(ViewportEvent.ComputeFogColor event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
-        String dimension = mc.level.dimension().location().toString();
+        String dimension = mc.level.dimension().identifier().toString();
 
         // Capture vanilla/NeoForge atmosphere before Mystcraft overrides it.
         AgeVanillaFogColorCache.capture(dimension, event.getRed(), event.getGreen(), event.getBlue());
@@ -72,7 +70,6 @@ public final class MystClientEvents {
 
         // Cloud rendering re-enters LevelRenderer through AgeCloudRenderer. Keep vanilla atmospheric
         // fog for that nested pass so ColorFog does not strongly recolour the cloud layer.
-        if (AgeCloudRenderer.isVanillaDelegationActive()) return;
 
         // Water immersion owns its own visual channel. ColorFog must never override underwater
         // visibility. Custom ColorWater uses a slightly lightened water colour as the underwater veil;
@@ -86,7 +83,7 @@ public final class MystClientEvents {
         if (channel == null || channel.isEmpty()) return;
         float partial = (float) event.getPartialTick();
         var color = AgeFogColorBridge.resolve(
-                channel, mc.level.getDayTime() / 12000.0F, mc.level.getTimeOfDay(partial));
+                channel, mc.level.getDefaultClockTime() / 12000.0F, (mc.level.getDefaultClockTime() % 24000L + partial) / 24000.0F);
         event.setRed(color.r());
         event.setGreen(color.g());
         event.setBlue(color.b());
@@ -97,7 +94,7 @@ public final class MystClientEvents {
         List<AgeColorChannelPlan> waterChannel = snapshot.colors().get("water");
         if (!hasCustomWaterColor(waterChannel)) return;
 
-        BlockPos pos = BlockPos.containing(event.getCamera().getPosition());
+        BlockPos pos = BlockPos.containing(event.getCamera().position());
         int vanillaWater = BiomeColors.getAverageWaterColor(mc.level, pos);
         int rgb = AgeBiomeTintBridge.resolve(snapshot, AgeBiomeTintBridge.Channel.WATER, vanillaWater);
 
@@ -127,9 +124,9 @@ public final class MystClientEvents {
     public static void clientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         AgeClientVisualState.clear();
         LegacySkyMeshCache.clearDynamic();
+        AgeSkyGpuUploader.clear();
         lastVisualDimension = null;
         lastVisualEntry = null;
-        AgeLegacyBlockTintInstaller.reset();
         AgeVanillaFogColorCache.clear();
     }
 }

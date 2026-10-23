@@ -77,15 +77,18 @@ public final class AgeFlatNoiseBasedChunkGenerator extends NoiseBasedChunkGenera
             ChunkGeneratorStructureState structureState,
             StructureManager structureManager,
             ChunkAccess chunk,
-            StructureTemplateManager structureTemplateManager) {
-        super.createStructures(registryAccess, structureState, structureManager, chunk, structureTemplateManager);
+            StructureTemplateManager structureTemplateManager,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
+        super.createStructures(registryAccess, structureState, structureManager, chunk, structureTemplateManager, dimension);
         AgeLegacyStructureGenerationBridge.ensureNetherFortress(
-                this, registryAccess, structureState, structureManager, chunk, structureTemplateManager);
+                this, registryAccess, structureState, structureManager, chunk, structureTemplateManager, dimension);
     }
 
     @Override
-    public CompletableFuture<ChunkAccess> fillFromNoise(
-            Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
+    public CompletableFuture<ChunkAccess> buildTerrain(
+            ChunkAccess chunk, Blender blender, RandomState randomState, StructureManager structureManager,
+            net.minecraft.world.level.biome.BiomeManager biomeManager, WorldGenRegion carverRegion,
+            java.util.Set<Holder<net.minecraft.world.level.biome.Biome>> possibleBiomes) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         Heightmap oceanFloor = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.OCEAN_FLOOR_WG);
         Heightmap worldSurface = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
@@ -94,25 +97,27 @@ public final class AgeFlatNoiseBasedChunkGenerator extends NoiseBasedChunkGenera
         for (int index = 0; index < count; ++index) {
             BlockState state = layers.get(index);
             if (state.isAir()) continue;
-            int y = chunk.getMinBuildHeight() + index;
+            int y = chunk.getMinY() + index;
             for (int x = 0; x < 16; ++x) {
                 for (int z = 0; z < 16; ++z) {
-                    chunk.setBlockState(pos.set(x, y, z), state, false);
+                    chunk.setBlockState(pos.set(x, y, z), state, 0);
                     oceanFloor.update(x, y, z, state);
                     worldSurface.update(x, y, z, state);
                 }
             }
         }
+        try (var noiseChunk = createNoiseChunk(chunk, structureManager, blender, randomState,
+                generatorSettings().value().noiseSettings().clampToHeightAccessor(chunk))) {
+            generateCarvers(chunk, blender, noiseChunk, randomState, biomeManager, carverRegion,
+                    generatorSettings().value().materialRule().value());
+        }
         return CompletableFuture.completedFuture(chunk);
     }
 
-    @Override
-    public void buildSurface(WorldGenRegion level, StructureManager structureManager, RandomState random, ChunkAccess chunk) {
-    }
 
     @Override
     public int getSpawnHeight(LevelHeightAccessor level) {
-        int topSolid = Math.max(level.getMinBuildHeight(), Math.min(level.getMaxBuildHeight(), seaLevel + 1));
+        int topSolid = Math.max(level.getMinY(), Math.min(level.getMaxY() + 1, seaLevel + 1));
         return topSolid;
     }
 
@@ -121,9 +126,9 @@ public final class AgeFlatNoiseBasedChunkGenerator extends NoiseBasedChunkGenera
         int max = Math.min(layers.size(), level.getHeight());
         for (int i = max - 1; i >= 0; --i) {
             BlockState state = layers.get(i);
-            if (type.isOpaque().test(state)) return level.getMinBuildHeight() + i + 1;
+            if (type.isOpaque().test(state)) return level.getMinY() + i + 1;
         }
-        return level.getMinBuildHeight();
+        return level.getMinY();
     }
 
     @Override
@@ -132,7 +137,7 @@ public final class AgeFlatNoiseBasedChunkGenerator extends NoiseBasedChunkGenera
         for (int i = 0; i < column.length; ++i) {
             column[i] = i < layers.size() ? layers.get(i) : Blocks.AIR.defaultBlockState();
         }
-        return new NoiseColumn(height.getMinBuildHeight(), column);
+        return new NoiseColumn(height.getMinY(), column);
     }
 
     @Override public int getMinY() { return ModernAgeHeight.MIN_Y; }

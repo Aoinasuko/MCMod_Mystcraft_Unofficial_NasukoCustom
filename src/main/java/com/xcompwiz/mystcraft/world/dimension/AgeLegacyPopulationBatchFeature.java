@@ -2,8 +2,8 @@ package com.xcompwiz.mystcraft.world.dimension;
 
 import com.xcompwiz.mystcraft.world.worldgen.AgeFeatureKind;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+
+
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ import java.util.List;
  * world-dependent operations. We intentionally keep Minecraft's supplied batch RandomSource
  * rather than pretending the legacy boundary seed is the exact post-decoration state.</p>
  */
-public final class AgeLegacyPopulationBatchFeature extends Feature<NoneFeatureConfiguration> {
+public final class AgeLegacyPopulationBatchFeature implements Feature {
     public record PopulationStep(AgeFeatureKind kind, AgeLegacyPopulationFeature feature) {
         public static PopulationStep starFissureSentinel() {
             return new PopulationStep(AgeFeatureKind.STAR_FISSURE, null);
@@ -49,12 +49,22 @@ public final class AgeLegacyPopulationBatchFeature extends Feature<NoneFeatureCo
     private final AgeLegacySmallLibraryFeature smallLibrary = new AgeLegacySmallLibraryFeature();
 
     public AgeLegacyPopulationBatchFeature(List<PopulationStep> orderedSteps) {
-        super(NoneFeatureConfiguration.CODEC);
         this.orderedSteps = List.copyOf(orderedSteps);
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+    public com.mojang.serialization.MapCodec<? extends Feature> codec() {
+        return com.mojang.serialization.MapCodec.unit(this);
+    }
+
+    @Override
+    public boolean place(net.minecraft.world.level.WorldGenLevel level,
+                         net.minecraft.world.level.chunk.ChunkGenerator generator,
+                         net.minecraft.util.RandomSource random, net.minecraft.core.BlockPos origin) {
+        return place(new AgeFeatureContext(level, generator, random, origin));
+    }
+
+    public boolean place(AgeFeatureContext context) {
         // MapGenScatteredFeatureMyst was unconditional in every Legacy Age. Run the
         // Small Library before the Symbol-authored Mystcraft population stream.
         int chunkX = Math.floorDiv(context.origin().getX(), 16) * 16;

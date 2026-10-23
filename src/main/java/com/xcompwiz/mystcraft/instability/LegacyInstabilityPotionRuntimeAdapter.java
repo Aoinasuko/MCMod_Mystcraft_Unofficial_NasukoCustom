@@ -29,7 +29,7 @@ public final class LegacyInstabilityPotionRuntimeAdapter {
 
         // Legacy EffectPotion.tick(): world.rand.nextInt(entityLists.length)
         int slot = LegacyInstabilityRuntimeRandom.nextInt(level, LegacyInstabilityPotionRuntimeMath.LEGACY_VERTICAL_SLOTS);
-        var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinBuildHeight(), level.getHeight(), slot);
+        var band = LegacyInstabilityPotionRuntimeMath.band(level.getMinY(), level.getHeight(), slot);
 
         // 0.13.7.06 read the chosen vertical entity list directly from the chunk. CP323 caches a
         // modern equivalent once per chunk/game tick so multiple Potion/Burning providers do not
@@ -75,12 +75,12 @@ public final class LegacyInstabilityPotionRuntimeAdapter {
         return switch (effectId) {
             case "minecraft:blindness" -> MobEffects.BLINDNESS;
             case "minecraft:regeneration" -> MobEffects.REGENERATION;
-            case "minecraft:resistance" -> MobEffects.DAMAGE_RESISTANCE;
-            case "minecraft:mining_fatigue" -> MobEffects.DIG_SLOWDOWN;
+            case "minecraft:resistance" -> MobEffects.RESISTANCE;
+            case "minecraft:mining_fatigue" -> MobEffects.MINING_FATIGUE;
             case "minecraft:hunger" -> MobEffects.HUNGER;
-            case "minecraft:nausea" -> MobEffects.CONFUSION;
+            case "minecraft:nausea" -> MobEffects.NAUSEA;
             case "minecraft:poison" -> MobEffects.POISON;
-            case "minecraft:slowness" -> MobEffects.MOVEMENT_SLOWDOWN;
+            case "minecraft:slowness" -> MobEffects.SLOWNESS;
             case "minecraft:weakness" -> MobEffects.WEAKNESS;
             case "minecraft:wither" -> MobEffects.WITHER;
             default -> null;

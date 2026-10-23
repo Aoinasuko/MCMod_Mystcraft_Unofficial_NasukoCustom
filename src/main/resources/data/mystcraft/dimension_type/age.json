@@ -1,10 +1,4 @@
 {
-  "ultrawarm": false,
-  "natural": true,
-  "piglin_safe": false,
-  "respawn_anchor_works": false,
-  "bed_works": true,
-  "has_raids": true,
   "has_skylight": true,
   "has_ceiling": false,
   "coordinate_scale": 1.0,
@@ -13,11 +7,17 @@
   "min_y": -64,
   "height": 384,
   "infiniburn": "#minecraft:infiniburn_overworld",
-  "effects": "mystcraft:age",
   "monster_spawn_block_light_limit": 0,
   "monster_spawn_light_level": {
     "type": "minecraft:uniform",
     "min_inclusive": 0,
     "max_inclusive": 7
-  }
+  },
+  "has_ender_dragon_fight": false,
+  "skybox": "overworld",
+  "default_clock": "minecraft:overworld",
+  "timelines": [
+    "minecraft:day",
+    "minecraft:moon"
+  ]
 }

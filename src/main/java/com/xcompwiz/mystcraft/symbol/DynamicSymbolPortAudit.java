@@ -5,7 +5,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.biome.Biome;
 
 import java.util.LinkedHashSet;
@@ -26,15 +26,15 @@ public final class DynamicSymbolPortAudit {
 
     public static BiomeAudit auditBiomes(RegistryAccess access) {
         LegacyBiomeSymbolRegistry.bootstrapRuntime(access);
-        Registry<Biome> registry = access.registryOrThrow(Registries.BIOME);
+        Registry<Biome> registry = access.lookupOrThrow(Registries.BIOME);
 
         LinkedHashSet<String> represented = new LinkedHashSet<>();
         for (LegacyBiomeSymbolDefinition definition : LegacyBiomeSymbolRegistry.values()) {
             represented.add(LegacyModernBiomeIdResolver.resolveModernId(definition.modernBiomeId()));
         }
 
-        LinkedHashSet<ResourceLocation> missing = new LinkedHashSet<>();
-        for (ResourceLocation key : registry.keySet()) {
+        LinkedHashSet<Identifier> missing = new LinkedHashSet<>();
+        for (Identifier key : registry.keySet()) {
             if (!represented.contains(key.toString())) missing.add(key);
         }
         return new BiomeAudit(registry.size(), LegacyBiomeSymbolRegistry.runtimeSize(), Set.copyOf(missing));
@@ -43,17 +43,17 @@ public final class DynamicSymbolPortAudit {
     public static MaterialAudit auditMaterialsAndFluids() {
         LegacyMaterialSymbolRegistry.bootstrapRuntimeFluids();
 
-        LinkedHashSet<ResourceLocation> unresolvedBlocks = new LinkedHashSet<>();
+        LinkedHashSet<Identifier> unresolvedBlocks = new LinkedHashSet<>();
         for (LegacyMaterialSymbolDefinition definition : LegacyMaterialSymbolRegistry.values()) {
-            ResourceLocation blockId = ResourceLocation.tryParse(definition.modernBlockId());
+            Identifier blockId = Identifier.tryParse(definition.modernBlockId());
             if (blockId == null || !BuiltInRegistries.BLOCK.containsKey(blockId)) {
                 if (blockId != null) unresolvedBlocks.add(blockId);
             }
         }
 
-        Set<ResourceLocation> eligibleFluidBlocks = LegacyMaterialSymbolRegistry.runtimeEligibleFluidBlockIds();
-        Set<ResourceLocation> registeredFluidBlocks = LegacyMaterialSymbolRegistry.runtimeRegisteredFluidBlockIds();
-        LinkedHashSet<ResourceLocation> missingFluidBlocks = new LinkedHashSet<>(eligibleFluidBlocks);
+        Set<Identifier> eligibleFluidBlocks = LegacyMaterialSymbolRegistry.runtimeEligibleFluidBlockIds();
+        Set<Identifier> registeredFluidBlocks = LegacyMaterialSymbolRegistry.runtimeRegisteredFluidBlockIds();
+        LinkedHashSet<Identifier> missingFluidBlocks = new LinkedHashSet<>(eligibleFluidBlocks);
         missingFluidBlocks.removeAll(registeredFluidBlocks);
 
         int builtinCount = LegacyMaterialSymbolRegistry.size() - LegacyMaterialSymbolRegistry.runtimeFluidSize();
@@ -65,13 +65,13 @@ public final class DynamicSymbolPortAudit {
     }
 
     public record BiomeAudit(int registryBiomeCount, int syntheticRuntimeBiomeCount,
-                             Set<ResourceLocation> missingBiomeIds) {
+                             Set<Identifier> missingBiomeIds) {
         public boolean complete() { return missingBiomeIds.isEmpty(); }
     }
 
     public record MaterialAudit(int builtinMaterialCount, int runtimeFluidSymbolCount,
-                                Set<ResourceLocation> unresolvedBlockIds,
-                                Set<ResourceLocation> missingEligibleFluidBlocks) {
+                                Set<Identifier> unresolvedBlockIds,
+                                Set<Identifier> missingEligibleFluidBlocks) {
         public boolean builtinCountMatchesLegacy() {
             return builtinMaterialCount == EXPECTED_BUILTIN_MATERIAL_COUNT;
         }

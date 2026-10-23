@@ -29,7 +29,7 @@ public final class AgeRuntimeStateSync {
             AgeRegistryData.get(server).changed();
             registryDirty = true;
         }
-        level.setDefaultSpawnPos(spawn, 0.0F);
+        level.setRespawnData(net.minecraft.world.level.storage.LevelData.RespawnData.of(level.dimension(), spawn, 0.0F, 0.0F));
         AgeStarFissureRuntime.Outcome fissure = AgeStarFissureRuntime.ensureProcessed(level, age);
         if (fissure.processedNow()) {
             if (fissure.generated()) {
@@ -64,10 +64,10 @@ public final class AgeRuntimeStateSync {
         Objects.requireNonNull(age, "age");
         Objects.requireNonNull(level, "level");
 
-        age.setSpawn(level.getSharedSpawnPos());
+        age.setSpawn(level.getRespawnData().pos());
         age.setWorldTime(level.getGameTime());
-        age.setDayTime(level.getDayTime());
-        ServerLevelData data = (ServerLevelData) level.getLevelData();
+        age.setDayTime(level.getDefaultClockTime());
+        var data = level.getWeatherData();
         age.setWeatherState(data.getClearWeatherTime(), data.getThunderTime(), data.getRainTime(),
                 data.isThundering(), data.isRaining());
         if (visited) age.setVisited(true);

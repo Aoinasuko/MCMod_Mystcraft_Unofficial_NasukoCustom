@@ -40,7 +40,7 @@ public final class LegacyInstabilityProfilingEvents {
         // had completed population. Queue every possible center touched by this load.
         for (int dz = -1; dz <= 1; ++dz) {
             for (int dx = -1; dx <= 1; ++dx) {
-                enqueue(level.dimension(), new ChunkPos(loaded.x + dx, loaded.z + dz));
+                enqueue(level.dimension(), new ChunkPos(loaded.x() + dx, loaded.z() + dz));
             }
         }
     }
@@ -57,8 +57,8 @@ public final class LegacyInstabilityProfilingEvents {
 
         LegacyChunkProfilerData profiler = LegacyChunkProfilerData.get(level);
         if (profiler.ready()) return;
-        ChunkPos pos = new ChunkPos(pending.chunkPos());
-        LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x, pos.z);
+        ChunkPos pos = ChunkPos.unpack(pending.chunkPos());
+        LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x(), pos.z());
         if (chunk == null || !hasCompleteResidentNeighborhood(level, pos)) return;
 
         var watched = LegacyInstabilityBlockManager.watchedBlocks();
@@ -80,14 +80,14 @@ public final class LegacyInstabilityProfilingEvents {
     }
 
     private static void enqueue(ResourceKey<Level> level, ChunkPos pos) {
-        Pending pending = new Pending(level, pos.toLong());
+        Pending pending = new Pending(level, pos.pack());
         if (STATE.queued.add(pending)) STATE.queue.addLast(pending);
     }
 
     private static boolean hasCompleteResidentNeighborhood(ServerLevel level, ChunkPos center) {
         for (int dz = -1; dz <= 1; ++dz) {
             for (int dx = -1; dx <= 1; ++dx) {
-                if (level.getChunkSource().getChunkNow(center.x + dx, center.z + dz) == null) return false;
+                if (level.getChunkSource().getChunkNow(center.x() + dx, center.z() + dz) == null) return false;
             }
         }
         return true;
@@ -96,7 +96,7 @@ public final class LegacyInstabilityProfilingEvents {
     private static boolean shouldProfile(ServerLevel level) {
         // Only Mystcraft Ages consume non-ore profiler output. The old Overworld baseline
         // is not part of release scoring, so avoid hundreds of unnecessary full-height chunk scans.
-        return Mystcraft.MOD_ID.equals(level.dimension().location().getNamespace());
+        return Mystcraft.MOD_ID.equals(level.dimension().identifier().getNamespace());
     }
 
     private record Pending(ResourceKey<Level> level, long chunkPos) {}

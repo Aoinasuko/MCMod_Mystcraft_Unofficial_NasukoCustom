@@ -48,9 +48,12 @@ public final class MystcraftZoomBiomeSource extends BiomeSource {
         return CODEC;
     }
 
-    @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         int index = layer.sample(x, z);
         return biomes.get(index);
+    }
+    @Override
+    public net.minecraft.world.level.biome.BiomeResolver createResolver(Climate.Sampler sampler) {
+        return (x, y, z) -> getNoiseBiome(x, y, z, sampler);
     }
 }

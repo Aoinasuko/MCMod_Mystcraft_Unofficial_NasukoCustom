@@ -29,27 +29,27 @@ public final class MystItems {
     // Stage 1: real Page / Linking Book data behavior.
     public static final DeferredItem<ItemPage> PAGE = ITEMS.registerItem("page", ItemPage::new);
     public static final DeferredItem<ItemAgebook> AGEBOOK = ITEMS.registerItem(
-            "agebook", ItemAgebook::new, new Item.Properties().durability(15).rarity(Rarity.EPIC));
+            "agebook", ItemAgebook::new, () -> new Item.Properties().durability(15).rarity(Rarity.EPIC));
     public static final DeferredItem<ItemLinkbook> LINKBOOK = ITEMS.registerItem(
-            "linkbook", ItemLinkbook::new, new Item.Properties().durability(15).rarity(Rarity.RARE));
+            "linkbook", ItemLinkbook::new, () -> new Item.Properties().durability(15).rarity(Rarity.RARE));
     public static final DeferredItem<ItemLinkbookUnlinked> UNLINKED_BOOK = ITEMS.registerItem(
-            "unlinkedbook", ItemLinkbookUnlinked::new, new Item.Properties().stacksTo(16));
+            "unlinkedbook", ItemLinkbookUnlinked::new, () -> new Item.Properties().stacksTo(16));
 
     // Peripheral legacy identities. Booster, Folder and Portfolio now carry their
     // gameplay behavior; glasses remain a legacy developer-only identity and are not exposed in Creative.
     public static final DeferredItem<ItemBoosterPack> BOOSTER = ITEMS.registerItem("booster", ItemBoosterPack::new);
     public static final DeferredItem<ItemFolder> FOLDER = ITEMS.registerItem(
             "folder", ItemFolder::new,
-            new Item.Properties().stacksTo(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
+            () -> new Item.Properties().stacksTo(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
     public static final DeferredItem<ItemPortfolio> PORTFOLIO = ITEMS.registerItem(
             "portfolio", ItemPortfolio::new,
-            new Item.Properties().stacksTo(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
+            () -> new Item.Properties().stacksTo(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
     public static final DeferredItem<ItemWritingDesk> WRITING_DESK_ITEM = ITEMS.registerItem(
             "writingdesk", properties -> new ItemWritingDesk(MystBlocks.WRITING_DESK.get(), properties),
-            new Item.Properties().stacksTo(1));
+            () -> new Item.Properties().stacksTo(1));
     public static final DeferredItem<ItemInkVial> INK_VIAL = ITEMS.registerItem(
-            "vial", ItemInkVial::new, new Item.Properties().stacksTo(16));
-    public static final DeferredItem<Item> GLASSES = ITEMS.registerSimpleItem("glasses", new Item.Properties().stacksTo(1));
+            "vial", ItemInkVial::new, () -> new Item.Properties().stacksTo(16));
+    public static final DeferredItem<Item> GLASSES = ITEMS.registerSimpleItem("glasses", () -> new Item.Properties().stacksTo(1));
 
     // Legacy ItemBlock identities. The Writing Desk keeps its historical item ID (mystcraft:writingdesk)
     // while using a normal 1.21.1 BlockItem implementation. Black ink still has no public BlockItem.

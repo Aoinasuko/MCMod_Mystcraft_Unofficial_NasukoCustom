@@ -18,7 +18,6 @@ import net.minecraft.world.level.material.MapColor;
 
 /** Single legacy blockdecay ID with the four active 0.13.7.06 colour states. */
 public final class BlockDecay extends Block {
-    public static final MapCodec<BlockDecay> CODEC = simpleCodec(BlockDecay::new);
     public static final EnumProperty<DecayType> DECAY = EnumProperty.create("decay", DecayType.class);
     public static final BooleanProperty MANUAL = BooleanProperty.create("manual");
 
@@ -42,7 +41,6 @@ public final class BlockDecay extends Block {
         registerDefaultState(stateDefinition.any().setValue(DECAY, DecayType.RED).setValue(MANUAL, false));
     }
 
-    @Override protected MapCodec<BlockDecay> codec() { return CODEC; }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -51,8 +49,8 @@ public final class BlockDecay extends Block {
 
 
     @Override
-    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-        super.entityInside(state, level, pos, entity);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, net.minecraft.world.entity.InsideBlockEffectApplier effectApplier, boolean precise) {
+        super.entityInside(state, level, pos, entity, effectApplier, precise);
         whiteContact(state, level, entity);
     }
 

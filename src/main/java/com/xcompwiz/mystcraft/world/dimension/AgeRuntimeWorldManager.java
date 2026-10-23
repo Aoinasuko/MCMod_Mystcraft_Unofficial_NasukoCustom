@@ -85,7 +85,7 @@ public final class AgeRuntimeWorldManager {
             Mystcraft.LOGGER.debug(
                     "Integrated Age restore mode: {}, loginDimension={}",
                     loginTarget.mode(),
-                    loginTarget.dimension() == null ? "<none>" : loginTarget.dimension().location());
+                    loginTarget.dimension() == null ? "<none>" : loginTarget.dimension().identifier());
         }
 
         int prepared = 0;
@@ -167,7 +167,9 @@ public final class AgeRuntimeWorldManager {
         if (!server.isSingleplayer()) {
             return new IntegratedLoginTarget(IntegratedLoginMode.NOT_APPLICABLE, null);
         }
-        var playerTag = server.getWorldData().getLoadedPlayerTag();
+        var profile = server.getSingleplayerProfile();
+        var playerTag = profile == null ? null : server.storageSource.createPlayerStorage()
+                .load(new net.minecraft.server.players.NameAndId(profile)).orElse(null);
         if (playerTag == null) {
             return new IntegratedLoginTarget(IntegratedLoginMode.NO_SAVED_PLAYER, null);
         }
@@ -176,8 +178,7 @@ public final class AgeRuntimeWorldManager {
             return new IntegratedLoginTarget(IntegratedLoginMode.UNREADABLE, null);
         }
         try {
-            ResourceKey<Level> dimension = DimensionType.parseLegacy(
-                            new Dynamic<>(NbtOps.INSTANCE, playerTag.get("Dimension")))
+            ResourceKey<Level> dimension = ResourceKey.codec(net.minecraft.core.registries.Registries.DIMENSION).parse(NbtOps.INSTANCE, playerTag.get("Dimension"))
                     .resultOrPartial(message -> Mystcraft.LOGGER.warn(
                             "Could not parse integrated player Dimension: {}", message))
                     .orElse(null);
@@ -227,7 +228,7 @@ public final class AgeRuntimeWorldManager {
         }
 
         AgeRecord age = AgeManager.resolveByLevel(server, levelKey).orElse(null);
-        if (age == null || !levelKey.location().getNamespace().equals(Mystcraft.MOD_ID)) {
+        if (age == null || !levelKey.identifier().getNamespace().equals(Mystcraft.MOD_ID)) {
             return new UnloadResult(UnloadStatus.NOT_MYSTCRAFT_AGE, age, level, null);
         }
         if (!level.players().isEmpty() || ForcedChunkManager.hasForcedChunks(level)) {
@@ -239,7 +240,7 @@ public final class AgeRuntimeWorldManager {
             return new UnloadResult(UnloadStatus.IN_USE, age, level, null);
         }
 
-        Map<ResourceKey<Level>, ServerLevel> levels = server.forgeGetWorldMap();
+        Map<ResourceKey<Level>, ServerLevel> levels = server.levels;
         // Validate ownership before emitting save/unload lifecycle effects. A raced replacement must
         // never receive a spurious Unload event for the still-live authoritative world.
         synchronized (server) {
@@ -262,7 +263,7 @@ public final class AgeRuntimeWorldManager {
             // prune that side map, so remove the exact key object owned by this closing
             // level. Otherwise repeatedly opening many Ages retains stale tick arrays.
             server.perWorldTickTimes.remove(level.dimension());
-            server.markWorldsDirty();
+
         }
         NeoForge.EVENT_BUS.post(new LevelEvent.Unload(level));
 
@@ -270,7 +271,7 @@ public final class AgeRuntimeWorldManager {
             level.close();
         } catch (IOException ex) {
             Mystcraft.LOGGER.error("Failed to close runtime Mystcraft Age {} ({})",
-                    age.ageUid(), levelKey.location(), ex);
+                    age.ageUid(), levelKey.identifier(), ex);
             return new UnloadResult(UnloadStatus.CLOSE_FAILED, age, level, ex);
         }
         return new UnloadResult(UnloadStatus.UNLOADED, age, level, null);
@@ -314,7 +315,7 @@ public final class AgeRuntimeWorldManager {
         if (!server.isSameThread()) {
             throw new IllegalStateException("Mystcraft portal Age hold must run on the server thread");
         }
-        if (!levelKey.location().getNamespace().equals(Mystcraft.MOD_ID)) return;
+        if (!levelKey.identifier().getNamespace().equals(Mystcraft.MOD_ID)) return;
         IdleUnloadState state = IDLE_UNLOAD_STATES.computeIfAbsent(server, ignored -> new IdleUnloadState());
         long until = state.tick + Math.max(1L, ticks);
         state.portalHoldUntil.merge(levelKey, until, Math::max);
@@ -334,11 +335,11 @@ public final class AgeRuntimeWorldManager {
         if (!state.armed) return;
         long now = ++state.tick;
 
-        List<ServerLevel> snapshot = new ArrayList<>(server.forgeGetWorldMap().values());
+        List<ServerLevel> snapshot = new ArrayList<>(server.levels.values());
         int unloadAttempts = 0;
         for (ServerLevel level : snapshot) {
             ResourceKey<Level> levelKey = level.dimension();
-            if (!levelKey.location().getNamespace().equals(Mystcraft.MOD_ID)) continue;
+            if (!levelKey.identifier().getNamespace().equals(Mystcraft.MOD_ID)) continue;
 
             AgeRecord age = AgeManager.resolveByLevel(server, levelKey).orElse(null);
             if (age == null || age.dead()) {
@@ -362,11 +363,11 @@ public final class AgeRuntimeWorldManager {
                 if (idleStart != null && hasPlayers) {
                     Mystcraft.LOGGER.debug(
                             "Age idle timer cancelled by player re-entry: {} after {} ticks",
-                            levelKey.location(), now - idleStart);
+                            levelKey.identifier(), now - idleStart);
                 } else if (idleStart != null) {
                     Mystcraft.LOGGER.debug(
                             "Age idle timer cancelled by forced chunks: {} after {} ticks",
-                            levelKey.location(), now - idleStart);
+                            levelKey.identifier(), now - idleStart);
                 }
                 continue;
             }
@@ -376,7 +377,7 @@ public final class AgeRuntimeWorldManager {
                 state.idleSince.put(levelKey, now);
                 Mystcraft.LOGGER.debug(
                         "Age idle timer started: {} ({} ticks grace)",
-                        levelKey.location(), IDLE_UNLOAD_DELAY_TICKS);
+                        levelKey.identifier(), IDLE_UNLOAD_DELAY_TICKS);
                 continue;
             }
 
@@ -392,11 +393,11 @@ public final class AgeRuntimeWorldManager {
             if (result.unloaded()) {
                 Mystcraft.LOGGER.debug(
                         "Age idle unload: {} after {} ticks, liveAges={}",
-                        levelKey.location(), idleTicks, countLiveAges(server));
+                        levelKey.identifier(), idleTicks, countLiveAges(server));
             } else if (result.status() != UnloadStatus.NOT_LOADED) {
                 Mystcraft.LOGGER.debug(
                         "Age idle unload deferred: {} status={}, liveAges={}",
-                        levelKey.location(), result.status(), countLiveAges(server));
+                        levelKey.identifier(), result.status(), countLiveAges(server));
             }
         }
 
@@ -413,8 +414,8 @@ public final class AgeRuntimeWorldManager {
     public static int countLiveAges(MinecraftServer server) {
         Objects.requireNonNull(server, "server");
         int count = 0;
-        for (ResourceKey<Level> key : server.forgeGetWorldMap().keySet()) {
-            if (key.location().getNamespace().equals(Mystcraft.MOD_ID)
+        for (ResourceKey<Level> key : server.levels.keySet()) {
+            if (key.identifier().getNamespace().equals(Mystcraft.MOD_ID)
                     && AgeManager.resolveByLevel(server, key).isPresent()) {
                 count++;
             }
@@ -429,9 +430,9 @@ public final class AgeRuntimeWorldManager {
             throw new IllegalStateException("Runtime Age capture must run on the server thread");
         }
         int captured = 0;
-        List<ServerLevel> snapshot = new ArrayList<>(server.forgeGetWorldMap().values());
+        List<ServerLevel> snapshot = new ArrayList<>(server.levels.values());
         for (ServerLevel level : snapshot) {
-            if (!level.dimension().location().getNamespace().equals(Mystcraft.MOD_ID)) continue;
+            if (!level.dimension().identifier().getNamespace().equals(Mystcraft.MOD_ID)) continue;
             AgeRecord age = AgeManager.resolveByLevel(server, level.dimension()).orElse(null);
             if (age == null) continue;
             AgeRuntimeStateSync.capture(server, age, level, age.visited());

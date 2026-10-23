@@ -10,7 +10,7 @@ import com.xcompwiz.mystcraft.symbol.LegacySymbolId;
 import com.xcompwiz.mystcraft.world.worldgen.LegacyModernBiomeIdResolver;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -36,9 +36,9 @@ public final class LegacySymbolName {
 
         var material = LegacyMaterialSymbolRegistry.resolveLegacy(id);
         if (material.isPresent()) {
-            ResourceLocation blockId = ResourceLocation.tryParse(material.get().modernBlockId());
+            Identifier blockId = Identifier.tryParse(material.get().modernBlockId());
             if (blockId != null && BuiltInRegistries.BLOCK.containsKey(blockId)) {
-                var block = BuiltInRegistries.BLOCK.get(blockId);
+                var block = BuiltInRegistries.BLOCK.getValue(blockId);
                 return Component.translatableWithFallback(block.getDescriptionId(), humanize(blockId.getPath()));
             }
             if (blockId != null) return Component.literal(humanize(blockId.getPath()));
@@ -64,7 +64,7 @@ public final class LegacySymbolName {
         }
 
         String resolvedModernId = LegacyModernBiomeIdResolver.resolveModernId(definition.modernBiomeId());
-        ResourceLocation modernId = ResourceLocation.tryParse(resolvedModernId);
+        Identifier modernId = Identifier.tryParse(resolvedModernId);
         return modernId == null
                 ? Component.literal(humanize(resolvedModernId))
                 : Component.translatableWithFallback(
@@ -125,7 +125,7 @@ public final class LegacySymbolName {
             String legacyName = LegacyBiomeSymbolRegistry.legacyDisplayName(definition).orElse(null);
             if (legacyName != null) return legacyName;
             String modern = LegacyModernBiomeIdResolver.resolveModernId(definition.modernBiomeId());
-            ResourceLocation modernId = ResourceLocation.tryParse(modern);
+            Identifier modernId = Identifier.tryParse(modern);
             return humanize(modernId == null ? modern : modernId.getPath());
         }
         String rawPath = path(id);

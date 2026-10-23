@@ -18,7 +18,7 @@ public final class LegacyInstabilityDecayRuntimeEvents {
     @SubscribeEvent
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!Mystcraft.MOD_ID.equals(level.dimension().location().getNamespace())) return;
+        if (!Mystcraft.MOD_ID.equals(level.dimension().identifier().getNamespace())) return;
         if (!InstabilityPolicy.PENALTIES_ENABLED || !InstabilityPolicy.DECAY_ENABLED) return;
 
         var runtimeOptional = LegacyInstabilityRuntimeSnapshot.resolve(level);

@@ -28,10 +28,11 @@ final class AgeNoiseBasedChunkGenerator extends NoiseBasedChunkGenerator {
             ChunkGeneratorStructureState structureState,
             StructureManager structureManager,
             ChunkAccess chunk,
-            StructureTemplateManager structureTemplateManager) {
-        super.createStructures(registryAccess, structureState, structureManager, chunk, structureTemplateManager);
+            StructureTemplateManager structureTemplateManager,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
+        super.createStructures(registryAccess, structureState, structureManager, chunk, structureTemplateManager, dimension);
         AgeLegacyStructureGenerationBridge.ensureNetherFortress(
-                this, registryAccess, structureState, structureManager, chunk, structureTemplateManager);
+                this, registryAccess, structureState, structureManager, chunk, structureTemplateManager, dimension);
     }
     @Override
     public Pair<BlockPos, Holder<Structure>> findNearestMapStructure(

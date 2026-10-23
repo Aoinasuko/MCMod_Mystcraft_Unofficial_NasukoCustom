@@ -18,7 +18,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -109,24 +109,24 @@ public abstract class ItemLinking extends Item implements IItemPortalActivator {
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int inventorySlot, boolean isCurrentItem) {
-        if (!level.isClientSide) {
+    public void inventoryTick(ItemStack stack, net.minecraft.server.level.ServerLevel level, Entity entity, net.minecraft.world.entity.EquipmentSlot equipmentSlot) {
+        if (!level.isClientSide()) {
             validate(level, stack, entity);
         }
-        super.inventoryTick(stack, level, entity, inventorySlot, isCurrentItem);
+        super.inventoryTick(stack, level, entity, equipmentSlot);
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!com.xcompwiz.mystcraft.util.MystMenuOpenPolicy.canOpen(player)) {
-            return InteractionResultHolder.pass(stack);
+            return InteractionResult.PASS;
         }
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
             validate(level, stack, player);
             openBookMenu(serverPlayer, hand, null, -1, stack);
         }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     /** Open the normal two-page Mystcraft GUI for a Book Stand/Lectern book. */
@@ -184,23 +184,15 @@ public abstract class ItemLinking extends Item implements IItemPortalActivator {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltipComponents, TooltipFlag tooltipFlag) {
         if (LegacyItemData.hasData(stack)) {
             String name = LinkOptions.getDisplayName(stack);
             if (!name.isEmpty()) {
-                tooltipComponents.add(Component.literal(name).withStyle(ChatFormatting.GRAY));
+                tooltipComponents.accept(Component.literal(name).withStyle(ChatFormatting.GRAY));
             }
         }
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        super.appendHoverText(stack, context, display, tooltipComponents, tooltipFlag);
     }
 
-    @Override
-    public boolean isEnchantable(ItemStack stack) {
-        return false;
-    }
 
-    @Override
-    public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
-        return false;
-    }
 }

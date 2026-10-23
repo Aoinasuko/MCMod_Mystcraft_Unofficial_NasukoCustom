@@ -3,7 +3,7 @@ package com.xcompwiz.mystcraft.data;
 import com.xcompwiz.mystcraft.linking.LinkProperties;
 import com.xcompwiz.mystcraft.api.impl.runtime.ApiLinkPropertyRegistry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -69,8 +69,8 @@ public final class InkEffects {
     }
 
     private static TagBinding tag(String path, Map<String, Float> effects) {
-        TagKey<Item> common = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", path));
-        TagKey<Item> forge = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", path));
+        TagKey<Item> common = TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", path));
+        TagKey<Item> forge = TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("forge", path));
         return new TagBinding(List.of(common, forge), effects);
     }
 

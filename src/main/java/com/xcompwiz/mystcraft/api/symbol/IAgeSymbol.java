@@ -1,9 +1,9 @@
 package com.xcompwiz.mystcraft.api.symbol;
 import com.xcompwiz.mystcraft.api.world.AgeDirector;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 /** Modern source-compatible equivalent of the 0.13.7.06 Age Symbol contract. */
 public interface IAgeSymbol {
-    ResourceLocation getRegistryName();
+    Identifier getRegistryName();
     void registerLogic(AgeDirector controller,long seed);
     int instabilityModifier(int count);
     boolean generatesConfigOption();

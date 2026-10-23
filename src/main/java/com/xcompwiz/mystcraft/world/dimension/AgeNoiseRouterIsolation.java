@@ -3,9 +3,9 @@ package com.xcompwiz.mystcraft.world.dimension;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.DensityFunctions;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseRouter;
 
@@ -28,49 +28,41 @@ final class AgeNoiseRouterIsolation {
             RegistryAccess registries,
             NoiseGeneratorSettings base,
             boolean amplified) {
-        var densityRegistry = registries.registryOrThrow(Registries.DENSITY_FUNCTION);
+        var densityRegistry = registries.lookupOrThrow(Registries.DENSITY_FUNCTION);
         ResourceKey<DensityFunction> slopedCheeseKey = ResourceKey.create(
                 Registries.DENSITY_FUNCTION,
-                ResourceLocation.withDefaultNamespace(
+                Identifier.withDefaultNamespace(
                         amplified ? "overworld_amplified/sloped_cheese" : "overworld/sloped_cheese"));
 
         DensityFunction slopedCheese = new DensityFunctions.HolderHolder(
-                densityRegistry.getHolderOrThrow(slopedCheeseKey));
+                densityRegistry.getOrThrow(slopedCheeseKey));
         DensityFunction slid = slideOverworld(amplified, slopedCheese);
         DensityFunction finalDensity = DensityFunctions.mul(
-                DensityFunctions.interpolated(DensityFunctions.blendDensity(slid)),
-                DensityFunctions.constant(0.64D)).squeeze();
+                DensityFunctions.interpolated(DensityFunctions.blendDensity(slid), 4, 8),
+                DensityFunctions.constant(0.64F)).squeeze();
 
         NoiseRouter old = base.noiseRouter();
         NoiseRouter isolated = new NoiseRouter(
-                old.barrierNoise(),
-                old.fluidLevelFloodednessNoise(),
-                old.fluidLevelSpreadNoise(),
-                old.lavaNoise(),
                 old.temperature(),
                 old.vegetation(),
                 old.continents(),
                 old.erosion(),
                 old.depth(),
                 old.ridges(),
-                old.initialDensityWithoutJaggedness(),
-                finalDensity,
-                old.veinToggle(),
-                old.veinRidged(),
-                old.veinGap());
+                old.chunkSurfaceLevel(),
+                finalDensity);
 
         return new NoiseGeneratorSettings(
                 base.noiseSettings(),
                 base.defaultBlock(),
                 base.defaultFluid(),
                 isolated,
-                base.surfaceRule(),
+                base.materialRule(),
                 base.spawnTarget(),
                 base.seaLevel(),
                 base.disableMobGeneration(),
-                base.aquifersEnabled(),
-                base.oreVeinsEnabled(),
-                base.useLegacyRandomSource());
+                base.aquifers(),
+                base.useLegacyRandomSource(), base.debugFunctions());
     }
 
     /** Exact 1.21.1 NoiseRouterData.slideOverworld contract. */
@@ -81,10 +73,10 @@ final class AgeNoiseRouterIsolation {
                 384,
                 amplified ? 16 : 80,
                 amplified ? 0 : 64,
-                -0.078125D,
+                -0.078125F,
                 0,
                 24,
-                amplified ? 0.4D : 0.1171875D);
+                amplified ? 0.4F : 0.1171875F);
     }
 
     /** Exact 1.21.1 NoiseRouterData.slide expression, copied structurally not by registry mutation. */
@@ -94,21 +86,21 @@ final class AgeNoiseRouterIsolation {
             int height,
             int topSize,
             int topOffset,
-            double topTarget,
+            float topTarget,
             int bottomOffset,
             int bottomSize,
-            double bottomTarget) {
+            float bottomTarget) {
         DensityFunction topGradient = DensityFunctions.yClampedGradient(
                 minY + height - topSize,
                 minY + height - topOffset,
-                1.0D,
-                0.0D);
+                1.0F,
+                0.0F);
         DensityFunction top = DensityFunctions.lerp(topGradient, topTarget, input);
         DensityFunction bottomGradient = DensityFunctions.yClampedGradient(
                 minY + bottomOffset,
                 minY + bottomSize,
-                0.0D,
-                1.0D);
+                0.0F,
+                1.0F);
         return DensityFunctions.lerp(bottomGradient, bottomTarget, top);
     }
 }

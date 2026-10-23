@@ -2,7 +2,7 @@ package com.xcompwiz.mystcraft.registry;
 
 import com.xcompwiz.mystcraft.Mystcraft;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -26,7 +26,7 @@ public final class MystSounds {
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String id) {
         return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(
-                ResourceLocation.fromNamespaceAndPath(Mystcraft.MOD_ID, id)));
+                Identifier.fromNamespaceAndPath(Mystcraft.MOD_ID, id)));
     }
 
     public static void register(IEventBus bus) {

@@ -6,10 +6,10 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
+import net.minecraft.world.level.levelgen.carver.WorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 import java.util.List;
@@ -43,16 +43,21 @@ public final class AgeBiomeGenerationSettingsOverlay {
             long ageSeed,
             AgeTerrainMode terrainMode,
             List<Holder<PlacedFeature>> legacyPopulationFeatures,
-            Holder<PlacedFeature> legacyFlatSurfaceFeature) {
+            Holder<PlacedFeature> legacyFlatSurfaceFeature,
+            Holder<PlacedFeature> terrainAlterationFeature) {
 
         BiomeGenerationSettings.PlainBuilder builder =
                 new BiomeGenerationSettings.PlainBuilder();
 
         // Mystcraft 1.12 did not inherit arbitrary vanilla biome carvers. Carving is
         // Symbol-controlled, so the modern base carvers are intentionally NOT copied.
-        for (Holder<ConfiguredWorldCarver<?>> carver :
+        for (Holder<WorldCarver> carver :
                 AgeLegacyConfiguredCarvers.create(registries, featurePlan, ageSeed)) {
-            builder.addCarver(GenerationStep.Carving.AIR, carver);
+            builder.addCarver(carver);
+        }
+
+        if (terrainAlterationFeature != null) {
+            builder.addFeature(GenerationStep.Decoration.RAW_GENERATION, terrainAlterationFeature);
         }
 
         if (legacyFlatSurfaceFeature != null) {
@@ -104,11 +109,11 @@ public final class AgeBiomeGenerationSettingsOverlay {
             builder.addFeature(LEGACY_POPULATION_STEP, feature);
         }
 
-        var featureRegistry = registries.registryOrThrow(Registries.PLACED_FEATURE);
+        var featureRegistry = registries.lookupOrThrow(Registries.PLACED_FEATURE);
         for (var injection : plan.placedFeatureInjections()) {
-            ResourceLocation id = ResourceLocation.parse(injection.placedFeatureId());
+            Identifier id = Identifier.parse(injection.placedFeatureId());
             ResourceKey<PlacedFeature> key = ResourceKey.create(Registries.PLACED_FEATURE, id);
-            Holder.Reference<PlacedFeature> holder = featureRegistry.getHolderOrThrow(key);
+            Holder.Reference<PlacedFeature> holder = featureRegistry.getOrThrow(key);
             builder.addFeature(injection.decorationStepOrdinal(), holder);
         }
 
@@ -127,7 +132,7 @@ public final class AgeBiomeGenerationSettingsOverlay {
     private static boolean isImpossibleShortNoiseHeightFeature(
             Holder<PlacedFeature> feature, AgeTerrainMode terrainMode) {
         if (terrainMode != AgeTerrainMode.NETHER && terrainMode != AgeTerrainMode.END) return false;
-        return feature.unwrapKey().map(key -> key.location()).map(id ->
+        return feature.unwrapKey().map(key -> key.identifier()).map(id ->
                 "minecraft".equals(id.getNamespace())
                         && ("ore_coal_upper".equals(id.getPath())
                         || "fossil_lower".equals(id.getPath())))
@@ -135,14 +140,14 @@ public final class AgeBiomeGenerationSettingsOverlay {
     }
 
     private static boolean isVanillaDungeonFeature(Holder<PlacedFeature> feature) {
-        return feature.unwrapKey().map(key -> key.location()).map(id ->
+        return feature.unwrapKey().map(key -> key.identifier()).map(id ->
                 "minecraft".equals(id.getNamespace())
                         && ("monster_room".equals(id.getPath()) || "monster_room_deep".equals(id.getPath())))
                 .orElse(false);
     }
 
     private static boolean isVanillaEndFightFeature(Holder<PlacedFeature> feature) {
-        return feature.unwrapKey().map(key -> key.location()).map(id ->
+        return feature.unwrapKey().map(key -> key.identifier()).map(id ->
                 "minecraft".equals(id.getNamespace())
                         && ("end_spike".equals(id.getPath()) || "end_platform".equals(id.getPath())))
                 .orElse(false);

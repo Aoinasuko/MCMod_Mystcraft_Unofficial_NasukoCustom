@@ -8,7 +8,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -55,14 +55,14 @@ public abstract class ItemPageContainer extends Item {
         List<ItemStack> pages = new ArrayList<>();
         ItemContainerContents contents = container.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
         if (preserveSparseSlots()) {
-            contents.stream().limit(pageCapacity).forEach(stack ->
+            contents.itemCopies().limit(pageCapacity).forEach(stack ->
                     pages.add(stack.isEmpty() || !isPageInput(stack) ? ItemStack.EMPTY : normalizePage(stack)));
             List<ItemStack> remapped = remapSparsePages(pages);
             if (!samePages(pages, remapped)) setPagesRaw(container, remapped);
             return remapped;
         }
 
-        contents.nonEmptyStream()
+        contents.itemCopies().filter(page -> !page.isEmpty())
                 .filter(ItemPageContainer::isPageInput)
                 .limit(pageCapacity)
                 .forEach(stack -> pages.add(stack.copyWithCount(1)));
@@ -109,7 +109,7 @@ public abstract class ItemPageContainer extends Item {
     /** Legacy Folder/Portfolio display name stored under the original "Name" key. */
     public final String getLegacyName(ItemStack container) {
         if (container.isEmpty()) return "";
-        return LegacyItemData.copy(container).getString("Name");
+        return LegacyItemData.copy(container).getString("Name").orElse("");
     }
 
     /** Restores IItemRenameable semantics used by the Writing Desk. */
@@ -306,53 +306,53 @@ public abstract class ItemPageContainer extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack container = player.getItemInHand(hand);
         InteractionHand otherHand = hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
         ItemStack other = player.getItemInHand(otherHand);
 
         if (isPageInput(other)) {
-            if (!level.isClientSide) {
+            if (!level.isClientSide()) {
                 int moved = insert(container, other);
                 if (other.isEmpty()) player.setItemInHand(otherHand, ItemStack.EMPTY);
                 if (moved > 0) {
-                    player.displayClientMessage(Component.translatable(
+                    com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                             "message.mystcraft.page_container_inserted", moved, getPageCount(container), pageCapacity), true);
                 } else {
-                    player.displayClientMessage(Component.translatable("message.mystcraft.page_container_full"), true);
+                    com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.page_container_full"), true);
                 }
             }
-            return InteractionResultHolder.sidedSuccess(container, level.isClientSide);
+            return InteractionResult.SUCCESS;
         }
 
         if (player.isShiftKeyDown()) {
-            if (!level.isClientSide) {
+            if (!level.isClientSide()) {
                 ItemStack extracted = removeLast(container);
                 if (!extracted.isEmpty()) {
-                    player.getInventory().placeItemBackInInventory(extracted);
+                    player.getInventory().placeItemBackInInventory(extracted, net.minecraft.util.Prediction.SERVER_ONLY);
                 } else {
-                    player.displayClientMessage(Component.translatable("message.mystcraft.page_container_empty"), true);
+                    com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable("message.mystcraft.page_container_empty"), true);
                 }
             }
-            return InteractionResultHolder.sidedSuccess(container, level.isClientSide);
+            return InteractionResult.SUCCESS;
         }
 
-        if (!level.isClientSide) {
-            player.displayClientMessage(Component.translatable(
+        if (!level.isClientSide()) {
+            com.xcompwiz.mystcraft.util.MystPlayerMessages.send(player, Component.translatable(
                     "message.mystcraft.page_container_count", getPageCount(container), pageCapacity), true);
         }
-        return InteractionResultHolder.sidedSuccess(container, level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltipComponents, TooltipFlag tooltipFlag) {
         String legacyName = getLegacyName(stack);
         if (!legacyName.isEmpty()) {
-            tooltipComponents.add(Component.literal(legacyName).withStyle(ChatFormatting.GRAY));
+            tooltipComponents.accept(Component.literal(legacyName).withStyle(ChatFormatting.GRAY));
         }
-        tooltipComponents.add(Component.translatable(
+        tooltipComponents.accept(Component.translatable(
                 "tooltip.mystcraft.page_container_count", getPageCount(stack), pageCapacity).withStyle(ChatFormatting.GRAY));
-        tooltipComponents.add(Component.translatable("tooltip.mystcraft.page_container_controls").withStyle(ChatFormatting.DARK_GRAY));
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        tooltipComponents.accept(Component.translatable("tooltip.mystcraft.page_container_controls").withStyle(ChatFormatting.DARK_GRAY));
+        super.appendHoverText(stack, context, display, tooltipComponents, tooltipFlag);
     }
 }

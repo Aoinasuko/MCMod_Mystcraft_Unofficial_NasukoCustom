@@ -6,7 +6,7 @@ public final class AgeClientVisualBridge {
     private AgeClientVisualBridge() {}
     public static float[] brightnessTable(AgeLightingPlan plan){float[] t=new float[16];for(int i=0;i<t.length;i++)t[i]=plan.brightnessTableValue(i);return t;}
     public static int scalePackedBlockLight(AgeLightingPlan plan,int packedLight){
-        // Minecraft 1.21 LightTexture.pack(block, sky): block occupies bits 4..19, sky bits 20..31.
+        // Minecraft 1.21 Lightmap.pack(block, sky): block occupies bits 4..19, sky bits 20..31.
         // The previous low-nibble extraction always read zero for normal packed light values.
         int block=(packedLight>>>4)&0xFFFF;
         int scaled=plan.scaleBlockLight(block);

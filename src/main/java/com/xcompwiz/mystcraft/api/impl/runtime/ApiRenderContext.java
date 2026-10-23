@@ -1,13 +1,13 @@
 package com.xcompwiz.mystcraft.api.impl.runtime;
 
 import com.xcompwiz.mystcraft.api.util.Color;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /** Thread-local bridge replacing the old immediate-mode OpenGL RenderAPI. */
 public final class ApiRenderContext {
     public interface Renderer {
         void drawWord(float x,float y,float z,float scale,String word);
-        void drawSymbol(float x,float y,float z,float scale,ResourceLocation symbol);
+        void drawSymbol(float x,float y,float z,float scale,Identifier symbol);
         void drawColorEye(float x,float y,float z,float radius,Color color);
     }
     private static final ThreadLocal<Renderer> CURRENT = new ThreadLocal<>();
