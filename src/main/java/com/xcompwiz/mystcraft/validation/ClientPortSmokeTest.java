@@ -8,6 +8,8 @@ import com.xcompwiz.mystcraft.linking.*;
 import com.xcompwiz.mystcraft.network.AgeClientVisualState;
 import com.xcompwiz.mystcraft.page.Page;
 import com.xcompwiz.mystcraft.registry.*;
+import com.xcompwiz.mystcraft.entity.monster.*;
+import net.minecraft.world.entity.EntitySpawnReason;
 import com.xcompwiz.mystcraft.world.agedata.AgeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -38,6 +40,10 @@ public final class ClientPortSmokeTest {
     private static ItemStack sceneBook;
     private static volatile int droppedEntityId = -1;
     private static volatile int pterosaurId = -1, serpentId = -1;
+    private static volatile int fairyId = -1, wormId = -1, calamityId = -1, orbId = -1;
+    private static volatile BlockPos reinforcementCenter;
+    private static int laserSeenAt = -1;
+    private static boolean circleSeen;
     private static int ticks, ageTicks;
     private static volatile boolean menuReady;
     private static boolean previousHideGui;
@@ -70,7 +76,7 @@ public final class ClientPortSmokeTest {
                 var linkPage = Page.createLinkPage(); Page.addLinkProperty(linkPage, LinkProperties.GENERATE_PLATFORM);
                 var monsters = new ItemStack(MystItems.PAGE.get()); Page.setSymbolId(monsters, "mystcraft:DimensionalMonsters");
                 var light = new ItemStack(MystItems.PAGE.get()); Page.setSymbolId(light, "mystcraft:LightingBright");
-                ItemAgebook.create(book, player, List.of(linkPage, terrain, monsters, light), "Nasuko Smoke Age");
+                ItemAgebook.create(book, player, List.of(linkPage, terrain, monsters, monsters.copy(), monsters.copy(), light), "Nasuko Smoke Age");
                 sceneBook = book;
                 player.setItemInHand(InteractionHand.MAIN_HAND, book);
                 book.getItem().use(player.level(), player, InteractionHand.MAIN_HAND);
@@ -177,8 +183,60 @@ public final class ClientPortSmokeTest {
             Mystcraft.LOGGER.info("CLIENT SMOKE: both Blender models survived client rendering; pterosaur ticks={}, serpent ticks={}", p.tickCount, s.tickCount);
         }
         if (ageTicks == 450 && mc.gui.hud.isHidden() != previousHideGui) mc.gui.hud.toggle();
-        if (ageTicks == 460) {
-            Mystcraft.LOGGER.info("CLIENT SMOKE PASS: real Link Panel left click, network Age travel, dropped-book client ticking, station screens and Blender monster rendering");
+        if (ageTicks == 480) server.execute(() -> {
+            var player = server.getPlayerList().getPlayer(uuid); var level = player.level();
+            var center = deskPos.south(44).above(3); reinforcementCenter = center;
+            for (int x=-13; x<=13; x++) for (int z=-11; z<=13; z++) {
+                level.setBlock(center.offset(x,-1,z), Blocks.STONE.defaultBlockState(), 2);
+                for (int y=0; y<=10; y++) level.setBlock(center.offset(x,y,z), Blocks.AIR.defaultBlockState(), 2);
+            }
+            var f = MystEntities.DIMENSIONAL_FAIRY.get().create(level, EntitySpawnReason.TRIGGERED);
+            f.setPos(center.getX()-5, center.getY()+2, center.getZ()); f.setNoAi(true); f.setYRot(150); f.setPersistenceRequired(); level.addFreshEntity(f); fairyId = f.getId();
+            var w = MystEntities.DIMENSIONAL_WORM.get().create(level, EntitySpawnReason.TRIGGERED);
+            w.setPos(center.getX(), center.getY(), center.getZ()); w.setNoAi(true); w.setYRot(150); w.setPersistenceRequired(); level.addFreshEntity(w); wormId = w.getId();
+            var c = MystEntities.DIMENSIONAL_CALAMITY.get().create(level, EntitySpawnReason.TRIGGERED);
+            c.setPos(center.getX()+5, center.getY()+.5, center.getZ()); c.setNoAi(true); c.setYRot(150); c.setPersistenceRequired(); level.addFreshEntity(c); calamityId = c.getId();
+            var orb = MystEntities.CALAMITY_ORB.get().create(level, EntitySpawnReason.MOB_SUMMONED);
+            orb.setOwner(c); orb.setPos(center.getX()+5, center.getY()+4.5, center.getZ()); level.addFreshEntity(orb); orbId = orb.getId();
+            player.teleportTo(level, center.getX()+.5, center.getY()+2, center.getZ()-12, java.util.Set.of(), 0, 10, true);
+            player.getInventory().setItem(6,new ItemStack(MystItems.FAIRY_EGG.get()));
+            player.getInventory().setItem(7,new ItemStack(MystItems.WORM_EGG.get()));
+            player.getInventory().setItem(8,new ItemStack(MystItems.CALAMITY_EGG.get()));
+        });
+        if (ageTicks == 580) server.execute(() -> {
+            var player = server.getPlayerList().getPlayer(uuid); var level = player.level(); var center = reinforcementCenter;
+            var circle = MystEntities.SUMMONING_CIRCLE.get().create(level, EntitySpawnReason.MOB_SUMMONED);
+            circle.setPos(center.getX()-2, center.getY()+.03, center.getZ()-2);
+            circle.configure((DimensionalCalamity)level.getEntity(calamityId), 2); level.addFreshEntity(circle);
+        });
+        if (ageTicks == 590) { previousHideGui = mc.gui.hud.isHidden(); if (!previousHideGui) mc.gui.hud.toggle(); }
+        if (ageTicks >= 590 && ageTicks <= 610 && ageTicks % 10 == 0) server.execute(() -> {
+            var level = server.getPlayerList().getPlayer(uuid).level(); var center = reinforcementCenter;
+            var laser = MystEntities.DIMENSIONAL_LASER.get().create(level, EntitySpawnReason.MOB_SUMMONED);
+            laser.setPos(center.getX()-5, center.getY()+2.65, center.getZ());
+            laser.setEnd(laser.position().add(11,-1.8,-4)); level.addFreshEntity(laser);
+        });
+        if (ageTicks >= 580 && ageTicks <= 620) for (var entity : mc.level.entitiesForRendering()) {
+            if (entity instanceof DimensionalSummoningCircle) circleSeen = true;
+            if (entity instanceof DimensionalLaser beam && laserSeenAt < 0 && entity.tickCount > 0) {
+                if (beam.endOffset().length() < 10 || !beam.shouldRenderAtSqrDistance(mc.player.distanceToSqr(beam)))
+                    throw new IllegalStateException("Laser endpoint or draw distance did not synchronize");
+                laserSeenAt = ageTicks;
+            }
+        }
+        if (laserSeenAt >= 0 && ageTicks == laserSeenAt + 4) capture(mc, "nasuko-dimensional-reinforcements-spells.png");
+        if (ageTicks == 620) {
+            if (!(mc.level.getEntity(fairyId) instanceof DimensionalFairy f) || f.tickCount < 60
+                    || !(mc.level.getEntity(wormId) instanceof DimensionalWorm w) || w.tickCount < 60
+                    || !(mc.level.getEntity(calamityId) instanceof DimensionalCalamity c) || c.tickCount < 60
+                    || !(mc.level.getEntity(orbId) instanceof CalamityOrb) || !circleSeen || laserSeenAt < 0)
+                throw new IllegalStateException("Reinforcement models/projectile/spells failed client synchronization");
+            capture(mc, "nasuko-dimensional-reinforcements.png");
+            Mystcraft.LOGGER.info("CLIENT SMOKE: fairy, worm, calamity, orb, laser and circle rendered successfully");
+        }
+        if (ageTicks == 630 && mc.gui.hud.isHidden() != previousHideGui) mc.gui.hud.toggle();
+        if (ageTicks == 650) {
+            Mystcraft.LOGGER.info("CLIENT SMOKE PASS: book network travel/drop, station screens, five Blender monsters, explosive projectile, laser and summoning circle");
             mc.stop();
         }
     }

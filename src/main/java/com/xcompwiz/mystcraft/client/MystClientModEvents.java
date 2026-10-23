@@ -45,6 +45,12 @@ public final class MystClientModEvents {
         e.registerEntityRenderer(MystEntities.METEOR.get(), MeteorEntityRenderer::new);
         e.registerEntityRenderer(MystEntities.DIMENSIONAL_PTEROSAUR.get(), c -> new DimensionalMonsterRenderer<>(c, true));
         e.registerEntityRenderer(MystEntities.DIMENSIONAL_SERPENT.get(), c -> new DimensionalMonsterRenderer<>(c, false));
+        e.registerEntityRenderer(MystEntities.DIMENSIONAL_FAIRY.get(), c -> new DimensionalMonsterRenderer<>(c, "dimensional_fairy"));
+        e.registerEntityRenderer(MystEntities.DIMENSIONAL_WORM.get(), c -> new DimensionalMonsterRenderer<>(c, "dimensional_worm"));
+        e.registerEntityRenderer(MystEntities.DIMENSIONAL_CALAMITY.get(), c -> new DimensionalMonsterRenderer<>(c, "dimensional_calamity"));
+        e.registerEntityRenderer(MystEntities.CALAMITY_ORB.get(), c -> new DimensionalMonsterRenderer<>(c, "calamity_orb"));
+        e.registerEntityRenderer(MystEntities.DIMENSIONAL_LASER.get(), c -> new DimensionalSpellRenderer<>(c, true));
+        e.registerEntityRenderer(MystEntities.SUMMONING_CIRCLE.get(), c -> new DimensionalSpellRenderer<>(c, false));
         e.registerBlockEntityRenderer(MystBlockEntities.BOOK_DISPLAY.get(), BookDisplayRenderer::new);
         e.registerBlockEntityRenderer(MystBlockEntities.BOOK_RECEPTACLE.get(), BookReceptacleRenderer::new);
         e.registerBlockEntityRenderer(MystBlockEntities.WRITING_DESK.get(), WritingDeskRenderer::new);

@@ -68,6 +68,13 @@ public final class MystItems {
     public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> SERPENT_EGG = ITEMS.registerItem("dimensional_serpent_spawn_egg",
             properties -> new net.minecraft.world.item.SpawnEggItem(properties.spawnEgg(MystEntities.DIMENSIONAL_SERPENT.get())));
 
+    public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> FAIRY_EGG = ITEMS.registerItem("dimensional_fairy_spawn_egg",
+            p -> new net.minecraft.world.item.SpawnEggItem(p.spawnEgg(MystEntities.DIMENSIONAL_FAIRY.get())));
+    public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> WORM_EGG = ITEMS.registerItem("dimensional_worm_spawn_egg",
+            p -> new net.minecraft.world.item.SpawnEggItem(p.spawnEgg(MystEntities.DIMENSIONAL_WORM.get())));
+    public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> CALAMITY_EGG = ITEMS.registerItem("dimensional_calamity_spawn_egg",
+            p -> new net.minecraft.world.item.SpawnEggItem(p.spawnEgg(MystEntities.DIMENSIONAL_CALAMITY.get())));
+
     private MystItems() {}
 
     public static void register(IEventBus bus) {

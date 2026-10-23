@@ -72,8 +72,11 @@ textures/entity/bookbinder/bookbinder.png	832970d14df328952303b39910d8a2c0c51920
 textures/entity/bookbinder/press_part.png	6d8d5572087efe55190aa4fb16334be8903737835fa20ddeb036c00dabb86916	upstream-identical	src/main/resources/assets/mystcraft/textures/entity/bookbinder/press_part.png
 textures/entity/bookstand.png	dfc7be73f151a01387a22e694f7fffb16c71f6bc69e38f7086272b49466720e4	upstream-identical	src/main/resources/assets/mystcraft/textures/entity/bookstand.png
 textures/entity/desk.png	b74fc833e76015b77455550a234d5ced469c40dc318b963d1cfe5e0bd94b4523	upstream-identical	src/main/resources/assets/mystcraft/textures/entity/desk.png
+textures/entity/dimensional_calamity.png	8a3c30188842ad1337cfeaa756cdcdc53d6d1f727eff90b5457c99be148415af	port-added	- (original NasukoCustom Blender atlas; tools/blender_dimensional_reinforcements.py)
+textures/entity/dimensional_fairy.png	761d79cd755a686793e635c8bf2c62d5c30e89387cc2f7039395890319106c4a	port-added	- (original NasukoCustom Blender atlas; tools/blender_dimensional_reinforcements.py)
 textures/entity/dimensional_pterosaur.png	9f36430be73da726d0da7237e9294c73dca9f76f11b8823924cc08fcce80edb8	port-added	- (original NasukoCustom Blender atlas; tools/blender_dimensional_monsters.py)
 textures/entity/dimensional_serpent.png	5c9d4f35cbafe5f494186b932d302f38898b42b05bd7427f62dc3334b6eb7f28	port-added	- (original NasukoCustom Blender atlas; tools/blender_dimensional_monsters.py)
+textures/entity/dimensional_worm.png	af94b1ff8c0ca3c68dc64491b527ec756bfdf34fe3ffae4e3ffe8ed421b261ad	port-added	- (original NasukoCustom Blender atlas; tools/blender_dimensional_reinforcements.py)
 textures/entity/inkwell/ink.png	14566847a87dc5858a2bd230d8a374c14a38980479c7fcd892321d8fd0a64abd	upstream-identical	src/main/resources/assets/mystcraft/textures/entity/inkwell/ink.png
 textures/entity/inkwell/ink_glass.png	df42618a6183ef2ff7a5380b98a8ceec0b40b5d7b44bb41465aed119ab01dbc8	upstream-identical	src/main/resources/assets/mystcraft/textures/entity/inkwell/ink_glass.png
 textures/entity/inkwell/inkwell_base.png	3d660d66737b8a7a0f00c85ca7bb0f6cceced3a4634a630a763cb35da6f92cd5	upstream-identical	src/main/resources/assets/mystcraft/textures/entity/inkwell/inkwell_base.png

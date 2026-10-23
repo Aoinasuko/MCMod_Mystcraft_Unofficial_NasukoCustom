@@ -16,7 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /** Aligns with the player's altitude, visibly winds up, then commits to a straight charge. */
-public final class DimensionalPterosaur extends Monster {
+public final class DimensionalPterosaur extends Monster implements DimensionalMonster {
     public static final int TRACK = 0, WINDUP = 1, CHARGE = 2, RECOVER = 3;
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(DimensionalPterosaur.class, EntityDataSerializers.INT);
     private int phaseTicks;

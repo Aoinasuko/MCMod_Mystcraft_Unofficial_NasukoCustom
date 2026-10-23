@@ -4,6 +4,8 @@
 
 The Dimensional Monsters page, its diminishing instability reward, two hostile mob implementations, original Blender mesh/texture sources and animations are NasukoCustom additions made on 2026-10-24. Original upstream PNG/OGG files remain unchanged. Runtime validation also found and corrected generated Archivist profession holders that could not be serialized by Minecraft 26.3.
 
+The two-/three-page reinforcement extension adds original fairies, worms and a three-metre calamity, original Blender assets, wall-piercing levitation lasers, supported-ground-only burrowing movement, creeper-radius explosive projectiles and telegraphed nonrecursive summoning. These are NasukoCustom modifications.
+
 The first NasukoCustom release combines the Minecraft 26.3 / NeoForge / Java 25 migration and subsequent book interaction, entity simulation and structure persistence fixes. Local migration and validation notes are kept separately in ignored `Docs/`; public attribution and license/provenance notices remain in the repository and binary. Earlier identifiers below are retained as development history.
 
 ---

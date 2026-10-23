@@ -107,6 +107,7 @@ public final class ItemPage extends Item implements IItemRenameable, IItemWritab
         }
         if (com.xcompwiz.mystcraft.world.DimensionalMonsterPolicy.SYMBOL.equalsIgnoreCase(symbol)) {
             tooltipComponents.accept(Component.translatable("tooltip.mystcraft.dimensional_monsters.spawning").withStyle(ChatFormatting.DARK_PURPLE));
+            tooltipComponents.accept(Component.translatable("tooltip.mystcraft.dimensional_monsters.tiers").withStyle(ChatFormatting.LIGHT_PURPLE));
             tooltipComponents.accept(Component.translatable("tooltip.mystcraft.dimensional_monsters.stability").withStyle(ChatFormatting.GRAY));
         }
         super.appendHoverText(stack, context, display, tooltipComponents, tooltipFlag);

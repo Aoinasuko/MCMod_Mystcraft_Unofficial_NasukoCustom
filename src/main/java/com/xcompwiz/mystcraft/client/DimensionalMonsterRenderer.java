@@ -4,7 +4,7 @@ import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.xcompwiz.mystcraft.entity.monster.DimensionalPterosaur;
-import com.xcompwiz.mystcraft.entity.monster.DimensionalSerpent;
+import com.xcompwiz.mystcraft.entity.monster.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +17,10 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.*;
 
 /** Renders the actual Blender-exported meshes; animations use synchronized attack state. */
-public final class DimensionalMonsterRenderer<T extends Monster> extends EntityRenderer<T, DimensionalMonsterRenderer.State> {
+public final class DimensionalMonsterRenderer<T extends Entity> extends EntityRenderer<T, DimensionalMonsterRenderer.State> {
     public static final class State extends EntityRenderState {
         float yaw, pitch, time, speed;
         int phase;
@@ -28,15 +28,19 @@ public final class DimensionalMonsterRenderer<T extends Monster> extends EntityR
     }
     private record Part(String bone, float x, float y, float z, boolean emissive, float[][] vertices) {}
     private final boolean flying;
+    private final String species;
     private final Identifier texture;
     private final List<Part> parts;
 
     public DimensionalMonsterRenderer(EntityRendererProvider.Context context, boolean flying) {
+        this(context, flying ? "dimensional_pterosaur" : "dimensional_serpent");
+    }
+    public DimensionalMonsterRenderer(EntityRendererProvider.Context context, String name) {
         super(context);
-        this.flying = flying;
-        this.shadowRadius = flying ? .7F : .4F;
-        String name = flying ? "dimensional_pterosaur" : "dimensional_serpent";
-        texture = Identifier.fromNamespaceAndPath("mystcraft", "textures/entity/" + name + ".png");
+        species = name;
+        flying = name.equals("dimensional_pterosaur") || name.equals("dimensional_fairy") || name.equals("dimensional_calamity");
+        this.shadowRadius = name.equals("dimensional_calamity") ? 1F : flying ? .5F : .7F;
+        texture = Identifier.fromNamespaceAndPath("mystcraft", "textures/entity/" + (name.equals("calamity_orb") ? "dimensional_calamity" : name) + ".png");
         parts = load(context, name);
     }
     private static List<Part> load(EntityRendererProvider.Context context, String name) {
@@ -76,22 +80,26 @@ public final class DimensionalMonsterRenderer<T extends Monster> extends EntityR
         state.time = entity.tickCount + partial;
         state.speed = (float)entity.getDeltaMovement().horizontalDistance();
         state.phase = entity instanceof DimensionalPterosaur p ? p.attackPhase()
-                : entity instanceof DimensionalSerpent s && s.isPouncing() ? 1 : 0;
-        state.hurt = entity.hurtTime > 0;
-        state.dead = entity.deathTime > 0;
+                : entity instanceof DimensionalSerpent s && s.isPouncing() ? 1
+                : entity instanceof DimensionalFairy f ? f.attackPhase()
+                : entity instanceof DimensionalWorm w ? w.attackPhase()
+                : entity instanceof DimensionalCalamity c ? c.attackPhase() : 0;
+        state.hurt = entity instanceof LivingEntity living && living.hurtTime > 0;
+        state.dead = entity instanceof LivingEntity living && living.deathTime > 0;
     }
     @Override public void submit(State state, PoseStack poses, SubmitNodeCollector collector,
             net.minecraft.client.renderer.state.level.CameraRenderState camera) {
         poses.pushPose();
         poses.rotate(Axis.YP.rotationDegrees(180 - state.yaw));
         if (state.dead) poses.rotate(Axis.ZP.rotationDegrees(90));
-        if (flying) poses.rotate(Axis.XP.rotationDegrees(Mth.clamp(-state.pitch, -35, 35)));
+        if (species.equals("dimensional_pterosaur")) poses.rotate(Axis.XP.rotationDegrees(Mth.clamp(-state.pitch, -35, 35)));
+        if (species.equals("calamity_orb")) poses.rotate(Axis.YP.rotationDegrees(state.time * 7));
         for (Part part : parts) {
             poses.pushPose();
             poses.translate(part.x, part.y, part.z);
             animate(part.bone, state, poses);
             // The collector defers execution: capture immutable geometry and light, never the reused state.
-            int light = part.emissive ? LightCoordsUtil.FULL_BRIGHT : state.lightCoords;
+            int light = part.emissive || species.equals("calamity_orb") ? LightCoordsUtil.FULL_BRIGHT : state.lightCoords;
             int green = state.hurt ? 100 : 255;
             collector.submitCustomGeometry(poses, RenderTypes.entityCutout(texture), (pose, out) -> {
                 for (float[] v : part.vertices) {
@@ -106,7 +114,15 @@ public final class DimensionalMonsterRenderer<T extends Monster> extends EntityR
         super.submit(state, poses, collector, camera);
     }
     private void animate(String bone, State s, PoseStack poses) {
-        if (flying) {
+        if (species.equals("dimensional_fairy") || species.equals("dimensional_calamity")) {
+            boolean fairy = species.equals("dimensional_fairy");
+            float flap = (float)Math.sin(s.time * (fairy ? .95F : .22F)) * (fairy ? .95F : .45F);
+            if (bone.equals("wing_left")) poses.rotate(Axis.YP.rotation(flap));
+            if (bone.equals("wing_right")) poses.rotate(Axis.YP.rotation(-flap));
+            if (bone.startsWith("arm_") && s.phase == 1) poses.rotate(Axis.XP.rotation(-.9F));
+            if (bone.startsWith("leg_")) poses.rotate(Axis.XP.rotation((float)Math.sin(s.time * .13F) * .12F));
+            if (bone.equals("tail")) poses.rotate(Axis.YP.rotation((float)Math.sin(s.time * .12F) * .18F));
+        } else if (species.equals("dimensional_pterosaur")) {
             float flap = (float)Math.sin(s.time * .42F) * .55F;
             if (s.phase == DimensionalPterosaur.WINDUP) flap = .85F + (float)Math.sin(s.time * .7F) * .15F;
             if (s.phase == DimensionalPterosaur.CHARGE) flap = -.2F + flap * .15F;

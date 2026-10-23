@@ -33,10 +33,11 @@ public final class DimensionalMonsterGameTests {
     private static final List<String> NAMES = List.of("monster_pages_and_spawns", "monster_attributes_and_poison", "pterosaur_charge", "serpent_pounce");
     private static Identifier id(String name) { return Identifier.fromNamespaceAndPath("mystcraft", name); }
     public static void register(IEventBus bus) {
-        FUNCTIONS.register(NAMES.get(0), () -> DimensionalMonsterGameTests::pages);
-        FUNCTIONS.register(NAMES.get(1), () -> DimensionalMonsterGameTests::combat);
-        FUNCTIONS.register(NAMES.get(2), () -> DimensionalMonsterGameTests::pterosaur);
-        FUNCTIONS.register(NAMES.get(3), () -> DimensionalMonsterGameTests::serpent);
+        DimensionalReinforcementGameTests.register(bus);
+        FUNCTIONS.register(NAMES.get(0), () -> h -> { DimensionalReinforcementGameTests.retainArena(h); pages(h); });
+        FUNCTIONS.register(NAMES.get(1), () -> h -> { DimensionalReinforcementGameTests.retainArena(h); combat(h); });
+        FUNCTIONS.register(NAMES.get(2), () -> h -> { DimensionalReinforcementGameTests.retainArena(h); pterosaur(h); });
+        FUNCTIONS.register(NAMES.get(3), () -> h -> { DimensionalReinforcementGameTests.retainArena(h); serpent(h); });
         FUNCTIONS.register(bus); bus.addListener(DimensionalMonsterGameTests::tests);
     }
     private static void tests(RegisterGameTestsEvent event) {
@@ -70,9 +71,22 @@ public final class DimensionalMonsterGameTests {
         var list = WeightedList.of(zombie);
         var event = new LevelEvent.PotentialSpawns(level, MobCategory.MONSTER, new BlockPos(8, 64, 8), list);
         NeoForge.EVENT_BUS.post(event);
-        h.assertValueEqual(event.getSpawnerDataList().size(), 3, "native event appends two species and preserves vanilla");
+        h.assertValueEqual(event.getSpawnerDataList().size(), 5, "two-page Age adds four species and preserves vanilla");
         DimensionalMonsterSpawns.potentialSpawns(event);
-        h.assertValueEqual(event.getSpawnerDataList().size(), 3, "no duplicate weights");
+        h.assertValueEqual(event.getSpawnerDataList().size(), 5, "no duplicate weights");
+        h.assertTrue(event.getSpawnerDataList().stream().noneMatch(e -> e.value().type() == MystEntities.DIMENSIONAL_CALAMITY.get()), "no calamity below three pages");
+        record.setSymbols(List.of("mystcraft:TerrainVoid", symbol, symbol, symbol));
+        var third = new LevelEvent.PotentialSpawns(level, MobCategory.MONSTER, BlockPos.ZERO, list);
+        NeoForge.EVENT_BUS.post(third);
+        h.assertValueEqual(third.getSpawnerDataList().size(), 6, "three pages unlock all five species");
+        h.assertValueEqual(third.getSpawnerDataList().stream().filter(e -> e.value().type() == MystEntities.DIMENSIONAL_CALAMITY.get()).findFirst().orElseThrow().weight(), 1, "rare calamity weight");
+        record.setSymbols(List.of("mystcraft:TerrainVoid", symbol));
+        var first = new LevelEvent.PotentialSpawns(level, MobCategory.MONSTER, BlockPos.ZERO, list);
+        NeoForge.EVENT_BUS.post(first);
+        h.assertValueEqual(first.getSpawnerDataList().size(), 3, "one page only permits the original two species");
+        h.assertTrue(!SpawnPlacements.checkSpawnRules(MystEntities.DIMENSIONAL_FAIRY.get(), level, EntitySpawnReason.NATURAL, new BlockPos(8,64,8), level.getRandom()), "fairy predicate enforces two pages");
+        record.setSymbols(List.of("mystcraft:TerrainVoid", symbol, symbol));
+        h.assertTrue(!SpawnPlacements.checkSpawnRules(MystEntities.DIMENSIONAL_CALAMITY.get(), level, EntitySpawnReason.NATURAL, new BlockPos(8,64,8), level.getRandom()), "calamity predicate enforces three pages");
         var passive = new LevelEvent.PotentialSpawns(level, MobCategory.CREATURE, BlockPos.ZERO, WeightedList.of());
         NeoForge.EVENT_BUS.post(passive);
         h.assertTrue(passive.getSpawnerDataList().isEmpty(), "passive spawn list unchanged");

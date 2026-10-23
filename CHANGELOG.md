@@ -1,5 +1,8 @@
 # 0.1.0 — 2026-10-24
 
+- Add two-page Dimensional Fairies (teleport / 5-second windup / wall-piercing laser with levitation III / 2-second recovery) and terrain-bound, suffocation-immune charging Dimensional Worms.
+- Add rare three-page Dimensional Calamities: 3-metre flying demons, five explosive projectiles per volley, and three telegraphed summoning circles when nearby non-calamity allies number five or fewer.
+- Include original Blender reinforcement/projectile models and atlases, spell rendering, additional spawn eggs and native integration tests for timing, terrain restrictions, explosions and summons.
 - Add the Dimensional Monsters page, granting diminishing instability reduction (500, 250, 125...; maximum 994) in exchange for two hostile species in that authored Age.
 - Add the Dimensional Pterosaur (40 HP, 6 attack, 4 armor; altitude alignment, windup and charge) and Dimensional Serpent (30 HP, 6 attack, 10-second poison I; ground pursuit and pounce).
 - Include original Blender models/atlases, synchronized wing/slither animations, spawn eggs, Japanese/English names and native combat/spawning integration tests.

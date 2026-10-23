@@ -16,7 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /** A fast ground hunter whose leap can deal damage once, followed by a real cooldown. */
-public final class DimensionalSerpent extends Monster {
+public final class DimensionalSerpent extends Monster implements DimensionalMonster {
     private static final EntityDataAccessor<Boolean> POUNCING = SynchedEntityData.defineId(DimensionalSerpent.class, EntityDataSerializers.BOOLEAN);
     private int nextPounce;
     public DimensionalSerpent(EntityType<? extends DimensionalSerpent> type, Level level) { super(type,level); xpReward = 8; }

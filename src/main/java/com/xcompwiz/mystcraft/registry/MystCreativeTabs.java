@@ -55,6 +55,9 @@ public final class MystCreativeTabs {
                         output.accept(MystItems.CRYSTAL_BLOCK.get());
                         output.accept(MystItems.PTEROSAUR_EGG.get());
                         output.accept(MystItems.SERPENT_EGG.get());
+                        output.accept(MystItems.FAIRY_EGG.get());
+                        output.accept(MystItems.WORM_EGG.get());
+                        output.accept(MystItems.CALAMITY_EGG.get());
 
                         // Legacy common tab appended an "All Symbols" Portfolio after normal items.
                         output.accept(createAllSymbolsPortfolio());

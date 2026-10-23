@@ -308,5 +308,15 @@
   "item.mystcraft.dimensional_pterosaur_spawn_egg": "Dimensional Pterosaur Spawn Egg",
   "item.mystcraft.dimensional_serpent_spawn_egg": "Dimensional Serpent Spawn Egg",
   "tooltip.mystcraft.dimensional_monsters.spawning": "Allows dimensional monsters to spawn in this Age.",
-  "tooltip.mystcraft.dimensional_monsters.stability": "Instability reduction: 500, 250, 125... per page (diminishing returns)."
+  "tooltip.mystcraft.dimensional_monsters.stability": "Instability reduction: 500, 250, 125... per page (diminishing returns).",
+  "entity.mystcraft.dimensional_fairy": "Dimensional Fairy",
+  "item.mystcraft.dimensional_fairy_spawn_egg": "Dimensional Fairy Spawn Egg",
+  "entity.mystcraft.dimensional_worm": "Dimensional Worm",
+  "item.mystcraft.dimensional_worm_spawn_egg": "Dimensional Worm Spawn Egg",
+  "entity.mystcraft.dimensional_calamity": "Dimensional Calamity",
+  "item.mystcraft.dimensional_calamity_spawn_egg": "Dimensional Calamity Spawn Egg",
+  "entity.mystcraft.calamity_orb": "Calamity Orb",
+  "entity.mystcraft.dimensional_laser": "Dimensional Laser",
+  "entity.mystcraft.dimensional_summoning_circle": "Dimensional Summoning Circle",
+  "tooltip.mystcraft.dimensional_monsters.tiers": "2+ pages: fairies and worms. 3+ pages: rare calamities."
 }
