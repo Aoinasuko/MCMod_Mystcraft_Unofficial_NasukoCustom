@@ -1,6 +1,6 @@
 package com.xcompwiz.mystcraft.symbol;
 
-/** Exact static symbol IDs registered by Mystcraft Legacy 0.13.7.06 ModSymbols.initialize(). */
+/** Legacy static symbol IDs plus explicitly named NasukoCustom additions. */
 final class BuiltinLegacySymbols {
     private BuiltinLegacySymbols() {}
 
@@ -83,6 +83,7 @@ final class BuiltinLegacySymbols {
         register("mystcraft:CryForm", SymbolCategory.FEATURE, 3, "SymbolCrystalFormation");
         register("mystcraft:Skylands", SymbolCategory.FEATURE, 3, "SymbolSkylands");
         register("mystcraft:StarFissure", SymbolCategory.FEATURE, 3, "SymbolStarFissure");
+        register("mystcraft:DimensionalMonsters", SymbolCategory.ENVIRONMENT, 3, "NasukoDimensionalMonsters");
         register("mystcraft:DenseOres", SymbolCategory.ENVIRONMENT, 5, "SymbolDenseOres");
         register("mystcraft:WeatherOn", SymbolCategory.WEATHER, 3, "SymbolWeatherAlways");
         register("mystcraft:WeatherCloudy", SymbolCategory.WEATHER, 3, "SymbolWeatherCloudy");

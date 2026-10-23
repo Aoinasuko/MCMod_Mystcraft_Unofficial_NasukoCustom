@@ -190,6 +190,7 @@ final class BuiltinLegacyGrammar {
         GrammarRuleRegistry.register(new GrammarRule("mystcraft:Visual", List.of("mystcraft:ColorWaterNat"), 2));
         GrammarRuleRegistry.register(new GrammarRule("mystcraft:Visual", List.of("mystcraft:NoHorizon"), 2));
         GrammarRuleRegistry.register(new GrammarRule("mystcraft:Visual", List.of("mystcraft:Angle", "mystcraft:Rainbow"), 4));
+        GrammarRuleRegistry.register(new GrammarRule("mystcraft:Effect", List.of("mystcraft:DimensionalMonsters"), null));
         GrammarRuleRegistry.register(new GrammarRule("mystcraft:Effect", List.of("mystcraft:EnvScorch"), null));
         GrammarRuleRegistry.register(new GrammarRule("mystcraft:Effect", List.of("mystcraft:EnvMeteor"), null));
         GrammarRuleRegistry.register(new GrammarRule("mystcraft:Effect", List.of("mystcraft:Gradient", "mystcraft:EnvLightning"), null));

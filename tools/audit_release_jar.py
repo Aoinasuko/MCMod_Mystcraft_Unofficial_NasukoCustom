@@ -52,7 +52,7 @@ def main():
         prefix="assets/mystcraft/"
         assets=sorted(n for n in names if n.startswith(prefix) and n.lower().endswith((".png",".ogg")))
         rels=[n[len(prefix):] for n in assets]
-        if len(assets)!=120: problems.append(f"expected 120 PNG/OGG assets, found {len(assets)}")
+        if len(assets)!=122: problems.append(f"expected 122 PNG/OGG assets, found {len(assets)}")
         if set(by)!=set(rels):
             missingp=sorted(set(rels)-set(by)); extrap=sorted(set(by)-set(rels))
             if missingp: problems.append("provenance missing: "+", ".join(missingp[:10]))
@@ -61,8 +61,8 @@ def main():
             rel=n[len(prefix):]; row=by.get(rel)
             if row and hashlib.sha256(z.read(n)).hexdigest()!=row.get("sha256"):
                 problems.append(f"asset hash mismatch: {rel}")
-        if sum(1 for r in rows if r.get("origin")=="port-added")!=1 or by.get("textures/item/white.png",{}).get("origin")!="port-added":
-            problems.append("expected exactly one port-added PNG/OGG: textures/item/white.png")
+        if {r.get("current_path") for r in rows if r.get("origin")=="port-added"} != {"textures/item/white.png", "textures/entity/dimensional_pterosaur.png", "textures/entity/dimensional_serpent.png"}:
+            problems.append("expected the white compatibility texture and two original dimensional-monster atlases")
     if problems: fail(problems)
-    print(f"PASS release JAR audit: {p.name}; {len(names)} entries; 120 PNG/OGG assets")
+    print(f"PASS release JAR audit: {p.name}; {len(names)} entries; 122 PNG/OGG assets")
 if __name__=="__main__": main()

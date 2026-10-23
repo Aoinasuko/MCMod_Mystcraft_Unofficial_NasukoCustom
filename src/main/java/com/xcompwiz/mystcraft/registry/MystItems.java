@@ -63,6 +63,11 @@ public final class MystItems {
     public static final DeferredItem<BlockItem> LINK_PORTAL_BLOCK = ITEMS.registerSimpleBlockItem("linkportal", MystBlocks.LINK_PORTAL);
     public static final DeferredItem<BlockItem> STAR_FISSURE_BLOCK = ITEMS.registerSimpleBlockItem("blockstarfissure", MystBlocks.STAR_FISSURE);
 
+    public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> PTEROSAUR_EGG = ITEMS.registerItem("dimensional_pterosaur_spawn_egg",
+            properties -> new net.minecraft.world.item.SpawnEggItem(properties.spawnEgg(MystEntities.DIMENSIONAL_PTEROSAUR.get())));
+    public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> SERPENT_EGG = ITEMS.registerItem("dimensional_serpent_spawn_egg",
+            properties -> new net.minecraft.world.item.SpawnEggItem(properties.spawnEgg(MystEntities.DIMENSIONAL_SERPENT.get())));
+
     private MystItems() {}
 
     public static void register(IEventBus bus) {

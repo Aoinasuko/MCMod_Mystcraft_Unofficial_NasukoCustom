@@ -43,6 +43,8 @@ public final class MystClientModEvents {
     @SubscribeEvent public static void registerRenderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerEntityRenderer(MystEntities.LINKBOOK.get(), LinkBookEntityRenderer::new);
         e.registerEntityRenderer(MystEntities.METEOR.get(), MeteorEntityRenderer::new);
+        e.registerEntityRenderer(MystEntities.DIMENSIONAL_PTEROSAUR.get(), c -> new DimensionalMonsterRenderer<>(c, true));
+        e.registerEntityRenderer(MystEntities.DIMENSIONAL_SERPENT.get(), c -> new DimensionalMonsterRenderer<>(c, false));
         e.registerBlockEntityRenderer(MystBlockEntities.BOOK_DISPLAY.get(), BookDisplayRenderer::new);
         e.registerBlockEntityRenderer(MystBlockEntities.BOOK_RECEPTACLE.get(), BookReceptacleRenderer::new);
         e.registerBlockEntityRenderer(MystBlockEntities.WRITING_DESK.get(), WritingDeskRenderer::new);

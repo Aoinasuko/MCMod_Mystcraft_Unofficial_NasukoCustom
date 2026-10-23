@@ -105,6 +105,10 @@ public final class ItemPage extends Item implements IItemRenameable, IItemWritab
         if (symbol != null && Thread.currentThread().getName().startsWith("Worker-Main")) {
             tooltipComponents.accept(Component.literal(LegacySymbolName.englishName(symbol)));
         }
+        if (com.xcompwiz.mystcraft.world.DimensionalMonsterPolicy.SYMBOL.equalsIgnoreCase(symbol)) {
+            tooltipComponents.accept(Component.translatable("tooltip.mystcraft.dimensional_monsters.spawning").withStyle(ChatFormatting.DARK_PURPLE));
+            tooltipComponents.accept(Component.translatable("tooltip.mystcraft.dimensional_monsters.stability").withStyle(ChatFormatting.GRAY));
+        }
         super.appendHoverText(stack, context, display, tooltipComponents, tooltipFlag);
     }
 }

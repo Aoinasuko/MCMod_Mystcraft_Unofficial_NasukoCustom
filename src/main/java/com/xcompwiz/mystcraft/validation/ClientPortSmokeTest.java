@@ -37,8 +37,10 @@ public final class ClientPortSmokeTest {
     private static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> sourceDimension;
     private static ItemStack sceneBook;
     private static volatile int droppedEntityId = -1;
+    private static volatile int pterosaurId = -1, serpentId = -1;
     private static int ticks, ageTicks;
     private static volatile boolean menuReady;
+    private static boolean previousHideGui;
     private static BlockPos deskPos;
     private static final String WORLD = "NasukoPortValidation";
 
@@ -66,7 +68,9 @@ public final class ClientPortSmokeTest {
                 var book = new ItemStack(MystItems.AGEBOOK.get());
                 var terrain = new ItemStack(MystItems.PAGE.get()); Page.setSymbolId(terrain, "mystcraft:TerrainNormal");
                 var linkPage = Page.createLinkPage(); Page.addLinkProperty(linkPage, LinkProperties.GENERATE_PLATFORM);
-                ItemAgebook.create(book, player, List.of(linkPage, terrain), "Nasuko Smoke Age");
+                var monsters = new ItemStack(MystItems.PAGE.get()); Page.setSymbolId(monsters, "mystcraft:DimensionalMonsters");
+                var light = new ItemStack(MystItems.PAGE.get()); Page.setSymbolId(light, "mystcraft:LightingBright");
+                ItemAgebook.create(book, player, List.of(linkPage, terrain, monsters, light), "Nasuko Smoke Age");
                 sceneBook = book;
                 player.setItemInHand(InteractionHand.MAIN_HAND, book);
                 book.getItem().use(player.level(), player, InteractionHand.MAIN_HAND);
@@ -143,8 +147,38 @@ public final class ClientPortSmokeTest {
             binder.setItem(0, new ItemStack(Items.LEATHER)); binder.insertPage(Page.createLinkPage(),0,true); binder.setPendingTitle("Nasuko Test"); open(player, pos);
         });
         if (ageTicks == 300) capture(mc, "nasuko-book-binder.png");
-        if (ageTicks == 340) {
-            Mystcraft.LOGGER.info("CLIENT SMOKE PASS: real Link Panel left click, network Age travel, dropped-book client ticking, rendering and station screens");
+        if (ageTicks == 340) server.execute(() -> {
+            var player = server.getPlayerList().getPlayer(uuid); player.closeContainer();
+            server.setDifficulty(Difficulty.NORMAL, true);
+            var level = player.level(); var center = deskPos.south(16).above(2);
+            for (int x = -8; x <= 8; x++) for (int z = -10; z <= 8; z++) {
+                level.setBlock(center.offset(x, -1, z), Blocks.STONE.defaultBlockState(), 2);
+                for (int y = 0; y <= 8; y++) level.setBlock(center.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+            }
+            var p = MystEntities.DIMENSIONAL_PTEROSAUR.get().create(level, net.minecraft.world.entity.EntitySpawnReason.TRIGGERED);
+            p.setPos(center.getX() - 2, center.getY() + 2.5, center.getZ());
+            p.setNoAi(true); p.setYRot(135); p.yBodyRot = 135; p.setPersistenceRequired(); level.addFreshEntity(p); pterosaurId = p.getId();
+            var s = MystEntities.DIMENSIONAL_SERPENT.get().create(level, net.minecraft.world.entity.EntitySpawnReason.TRIGGERED);
+            s.setPos(center.getX() + 2, center.getY(), center.getZ());
+            s.setNoAi(true); s.setYRot(135); s.yBodyRot = 135; s.setPersistenceRequired(); level.addFreshEntity(s); serpentId = s.getId();
+            player.teleportTo(level, center.getX() + .5, center.getY() + 1.5, center.getZ() - 7,
+                    java.util.Set.of(), 0, 10, true);
+            var page = new ItemStack(MystItems.PAGE.get()); Page.setSymbolId(page, "mystcraft:DimensionalMonsters");
+            player.setItemInHand(InteractionHand.MAIN_HAND, page);
+            player.getInventory().setItem(7, new ItemStack(MystItems.PTEROSAUR_EGG.get()));
+            player.getInventory().setItem(8, new ItemStack(MystItems.SERPENT_EGG.get()));
+        });
+        if (ageTicks == 420) { previousHideGui = mc.gui.hud.isHidden(); if (!previousHideGui) mc.gui.hud.toggle(); }
+        if (ageTicks == 440) {
+            if (!(mc.level.getEntity(pterosaurId) instanceof com.xcompwiz.mystcraft.entity.monster.DimensionalPterosaur p)
+                    || !(mc.level.getEntity(serpentId) instanceof com.xcompwiz.mystcraft.entity.monster.DimensionalSerpent s)
+                    || p.tickCount < 30 || s.tickCount < 30) throw new IllegalStateException("Monster client synchronization failed");
+            capture(mc, "nasuko-dimensional-monsters.png");
+            Mystcraft.LOGGER.info("CLIENT SMOKE: both Blender models survived client rendering; pterosaur ticks={}, serpent ticks={}", p.tickCount, s.tickCount);
+        }
+        if (ageTicks == 450 && mc.gui.hud.isHidden() != previousHideGui) mc.gui.hud.toggle();
+        if (ageTicks == 460) {
+            Mystcraft.LOGGER.info("CLIENT SMOKE PASS: real Link Panel left click, network Age travel, dropped-book client ticking, station screens and Blender monster rendering");
             mc.stop();
         }
     }

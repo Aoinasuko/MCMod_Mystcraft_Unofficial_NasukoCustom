@@ -301,5 +301,12 @@
   "myst.symbol.biome.legacy.166": "Mesa Plateau F M",
   "myst.symbol.biome.legacy.167": "Mesa Plateau M",
   "block.mystcraft.blockdecay": "Decay",
-  "message.mystcraft.link_age_description_contradiction": "This Age has already collapsed. It must be created another way."
+  "message.mystcraft.link_age_description_contradiction": "This Age has already collapsed. It must be created another way.",
+  "myst.symbol.dimensionalmonsters.name": "Dimensional Monsters",
+  "entity.mystcraft.dimensional_pterosaur": "Dimensional Pterosaur",
+  "entity.mystcraft.dimensional_serpent": "Dimensional Serpent",
+  "item.mystcraft.dimensional_pterosaur_spawn_egg": "Dimensional Pterosaur Spawn Egg",
+  "item.mystcraft.dimensional_serpent_spawn_egg": "Dimensional Serpent Spawn Egg",
+  "tooltip.mystcraft.dimensional_monsters.spawning": "Allows dimensional monsters to spawn in this Age.",
+  "tooltip.mystcraft.dimensional_monsters.stability": "Instability reduction: 500, 250, 125... per page (diminishing returns)."
 }

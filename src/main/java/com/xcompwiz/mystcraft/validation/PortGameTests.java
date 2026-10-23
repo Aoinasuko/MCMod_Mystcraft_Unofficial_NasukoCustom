@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 public final class PortGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, "mystcraft");
     public static void register(IEventBus bus) {
+        DimensionalMonsterGameTests.register(bus);
         FUNCTIONS.register("ink_transactions", () -> PortGameTests::ink);
         FUNCTIONS.register("binder_persistence", () -> PortGameTests::binder);
         FUNCTIONS.register("archivist_processor_persistence", () -> PortGameTests::processor);
@@ -53,6 +54,25 @@ public final class PortGameTests {
         var processor = com.xcompwiz.mystcraft.world.worldgen.WritingDeskStructureProcessor.INSTANCE;
         var encoded = codec.encodeStart(ops, processor).getOrThrow();
         h.assertTrue(codec.parse(ops, encoded).getOrThrow() == processor, "Archivist processor codec roundtrip");
+        // Exercise the actual house-binding path: direct profession holders cannot be saved in 26.3.
+        var pos = h.absolutePos(new BlockPos(1, 1, 1)); var level = h.getLevel();
+        var state = MystBlocks.WRITING_DESK.get().defaultBlockState()
+                .setValue(com.xcompwiz.mystcraft.block.BlockWritingDesk.FACING, net.minecraft.core.Direction.NORTH);
+        level.setBlock(pos, state, 2);
+        level.setBlock(pos.north(), state.setValue(com.xcompwiz.mystcraft.block.BlockWritingDesk.IS_FOOT, true), 2);
+        for (var lectern : List.of(pos.east(3).above(), pos.east(3).above().north()))
+            level.setBlock(lectern, MystBlocks.LECTERN.get().defaultBlockState(), 2);
+        var desk = (WritingDeskBlockEntity)level.getBlockEntity(pos);
+        for (int i = 0; i < 100; i++) WritingDeskBlockEntity.serverTick(level, pos, state, desk);
+        var villagers = level.getEntitiesOfClass(net.minecraft.world.entity.npc.villager.Villager.class,
+                new net.minecraft.world.phys.AABB(pos).inflate(6),
+                v -> v.getVillagerData().profession().is(MystVillagers.ARCHIVIST.getKey()));
+        h.assertTrue(!villagers.isEmpty(), "Desk binds its generated Archivist");
+        var data = villagers.getFirst().getVillagerData();
+        var villagerCodec = net.minecraft.world.entity.npc.villager.VillagerData.CODEC;
+        var saved = villagerCodec.encodeStart(ops, data).getOrThrow();
+        h.assertTrue(villagerCodec.parse(ops, saved).getOrThrow().profession().is(MystVillagers.ARCHIVIST.getKey()),
+                "Generated Archivist profession survives serialization");
         h.succeed();
     }
     private static void ink(GameTestHelper h) {

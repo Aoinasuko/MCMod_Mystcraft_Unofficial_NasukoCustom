@@ -390,7 +390,7 @@ public final class WritingDeskBlockEntity extends BlockEntity implements Contain
             }
         }
 
-        villager.setVillagerData(villager.getVillagerData().withProfession(net.minecraft.core.Holder.direct(MystVillagers.ARCHIVIST.get())));
+        villager.setVillagerData(villager.getVillagerData().withProfession(MystVillagers.ARCHIVIST));
         // Profession-specific work activities are installed when the Brain is refreshed. Do this
         // before writing the claimed JOB_SITE back so the final memory survives the refresh.
         villager.refreshBrain(level);

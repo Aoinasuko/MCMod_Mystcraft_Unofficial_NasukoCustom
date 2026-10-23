@@ -11,6 +11,7 @@ import java.util.Map;
 public final class LegacySymbolVisuals {
     private static final Map<String, String[]> FIXED = new LinkedHashMap<>();
     static {
+        FIXED.put("mystcraft:DimensionalMonsters", new String[]{"Nature", "Power", "Entropy", "Harmony"});
         FIXED.put("mystcraft:ColorCloud", new String[]{"Image", "Entropy", "Believe", "Weave"});
         FIXED.put("mystcraft:ColorCloudNat", new String[]{"Image", "Entropy", "Believe", "Nature"});
         FIXED.put("mystcraft:ColorFog", new String[]{"Image", "Entropy", "Explore", "Weave"});

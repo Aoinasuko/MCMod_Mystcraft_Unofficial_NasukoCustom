@@ -1,3 +1,9 @@
+# NasukoCustom dimensional-monster asset update — 2026-10-24
+
+The current package contains **122 PNG/OGG assets**: the unchanged 120 baseline assets plus two original NasukoCustom Blender atlases. The provenance table and binary/source auditors cover all 122. The historical audit below describes its original 2026-09-26 baseline.
+
+---
+
 # Final Distribution Compliance and Hygiene Audit
 
 **Audit date:** 2026-09-26  

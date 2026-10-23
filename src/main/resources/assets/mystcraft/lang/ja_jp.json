@@ -301,5 +301,12 @@
   "myst.symbol.biome.legacy.166": "変異した森のメサ台地",
   "myst.symbol.biome.legacy.167": "変異したメサ台地",
   "block.mystcraft.blockdecay": "崩壊",
-  "message.mystcraft.link_age_description_contradiction": "すでに崩壊してて入れない。別の方法で作らなければ。"
+  "message.mystcraft.link_age_description_contradiction": "すでに崩壊してて入れない。別の方法で作らなければ。",
+  "myst.symbol.dimensionalmonsters.name": "次元の怪物",
+  "entity.mystcraft.dimensional_pterosaur": "次元の翼竜",
+  "entity.mystcraft.dimensional_serpent": "次元の蛇",
+  "item.mystcraft.dimensional_pterosaur_spawn_egg": "次元の翼竜のスポーンエッグ",
+  "item.mystcraft.dimensional_serpent_spawn_egg": "次元の蛇のスポーンエッグ",
+  "tooltip.mystcraft.dimensional_monsters.spawning": "このAgeに次元の怪物が自然出現するようになります。",
+  "tooltip.mystcraft.dimensional_monsters.stability": "不安定度を1枚ごとに500、250、125…軽減（効果逓減）。"
 }

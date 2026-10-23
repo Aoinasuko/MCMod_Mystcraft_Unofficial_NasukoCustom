@@ -53,6 +53,8 @@ public final class MystCreativeTabs {
                         output.accept(MystItems.LECTERN_BLOCK.get());
                         output.accept(MystItems.LINK_MODIFIER_BLOCK.get());
                         output.accept(MystItems.CRYSTAL_BLOCK.get());
+                        output.accept(MystItems.PTEROSAUR_EGG.get());
+                        output.accept(MystItems.SERPENT_EGG.get());
 
                         // Legacy common tab appended an "All Symbols" Portfolio after normal items.
                         output.accept(createAllSymbolsPortfolio());

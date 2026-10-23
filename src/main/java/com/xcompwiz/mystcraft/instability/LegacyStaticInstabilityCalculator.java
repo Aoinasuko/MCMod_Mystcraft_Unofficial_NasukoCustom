@@ -19,6 +19,8 @@ public final class LegacyStaticInstabilityCalculator {
             int count = counts.merge(id, 1, Integer::sum);
             direct += LegacySymbolInstability.instabilityModifier(id, count);
         }
+        // Only authored monster pages earn the reward; grammar completion cannot add a free discount.
+        direct -= com.xcompwiz.mystcraft.world.DimensionalMonsterPolicy.reduction(age.symbols());
         int extraControllers = extraControllerCost(effective);
         int dangling = LegacyModifierInstabilityReplay.calculate(effective);
         return new StaticBreakdown(age.baseInstability(), direct, extraControllers, dangling, List.copyOf(effective));

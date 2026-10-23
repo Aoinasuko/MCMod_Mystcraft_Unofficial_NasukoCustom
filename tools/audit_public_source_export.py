@@ -88,12 +88,12 @@ with zipfile.ZipFile(p) as z:
     try: rows=list(csv.DictReader(io.StringIO(text("ASSET_PROVENANCE_SHA256.tsv")),delimiter="\t"))
     except Exception as e: rows=[]; problems.append(f"asset provenance parse failure: {e}")
     by={r.get("current_path",""):r for r in rows}; rels=[n[len(prefix):] for n in assets]
-    if len(assets)!=120: problems.append(f"expected 120 PNG/OGG assets, found {len(assets)}")
+    if len(assets)!=122: problems.append(f"expected 122 PNG/OGG assets, found {len(assets)}")
     if set(by)!=set(rels): problems.append("asset provenance paths do not exactly match public assets")
     for n in assets:
         rel=n[len(prefix):]; r=by.get(rel)
         if r and hashlib.sha256(z.read(n)).hexdigest()!=r.get("sha256"): problems.append(f"asset hash mismatch: {rel}")
-    if sum(1 for r in rows if r.get("origin")=="port-added")!=1 or by.get("textures/item/white.png",{}).get("origin")!="port-added": problems.append("port-added asset classification mismatch")
+    if {r.get("current_path") for r in rows if r.get("origin")=="port-added"} != {"textures/item/white.png", "textures/entity/dimensional_pterosaur.png", "textures/entity/dimensional_serpent.png"}: problems.append("port-added asset classification mismatch")
 if problems:
     for m in problems[:250]: print("FAIL:",m)
     raise SystemExit(1)

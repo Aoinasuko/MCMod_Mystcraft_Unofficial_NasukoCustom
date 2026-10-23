@@ -1,5 +1,9 @@
 # 0.1.0 — 2026-10-24
 
+- Add the Dimensional Monsters page, granting diminishing instability reduction (500, 250, 125...; maximum 994) in exchange for two hostile species in that authored Age.
+- Add the Dimensional Pterosaur (40 HP, 6 attack, 4 armor; altitude alignment, windup and charge) and Dimensional Serpent (30 HP, 6 attack, 10-second poison I; ground pursuit and pounce).
+- Include original Blender models/atlases, synchronized wing/slither animations, spawn eggs, Japanese/English names and native combat/spawning integration tests.
+- Fix generated Archivist villagers using a direct profession holder that Minecraft 26.3 could not save; cover actual Writing Desk binding and profession serialization.
 - Publish the first Mystcraft Unofficial NasukoCustom release for Minecraft 26.3 / NeoForge 26.3.0.95 / Java 25.
 - Include the completed 26.3 port and fixes for Link Panel clicks, physical book movement and Archivist structure persistence.
 - Keep local migration/validation notes in ignored `Docs/`; retain public attribution, license and provenance notices in the repository and binary.
