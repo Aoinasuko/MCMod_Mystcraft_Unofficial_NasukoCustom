@@ -16,8 +16,11 @@ public final class MystRecipes {
     public static final DeferredRegister<RecipeSerializer<?>> SERIALIZERS =
             DeferredRegister.create(Registries.RECIPE_SERIALIZER, Mystcraft.MOD_ID);
 
+    // Unit stream codecs require the same instance that the JSON codec returns.
+    private static final LinkingBookRecipe LINKING_BOOK_RECIPE = new LinkingBookRecipe();
+
     public static final Supplier<RecipeSerializer<LinkingBookRecipe>> LINKING_BOOK = SERIALIZERS.register(
-            "internal/linkingbook", () -> new RecipeSerializer<>(MapCodec.unit(LinkingBookRecipe::new), StreamCodec.unit(new LinkingBookRecipe())));
+            "internal/linkingbook", () -> new RecipeSerializer<>(MapCodec.unit(LINKING_BOOK_RECIPE), StreamCodec.unit(LINKING_BOOK_RECIPE)));
 
     private MystRecipes() {}
 

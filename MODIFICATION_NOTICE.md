@@ -6,6 +6,14 @@ Update release metadata, package filenames, audit expectations and current relea
 
 ---
 
+# NasukoCustom 0.1.0 Dedicated Server Fix
+
+**2026-10-25 — Linking Book recipe synchronization**
+
+Use one Linking Book recipe instance for both JSON and network unit codecs. This fixes the dedicated-server login disconnect while sending NeoForge recipe content. Add runtime regressions for synchronizing the loaded recipe and a freshly decoded recipe after reload. The recipe data and network payload format are unchanged.
+
+---
+
 # NasukoCustom 0.1.0 Release Notice
 
 **2026-10-25 — Writing Desk drops and native Archivist trading**

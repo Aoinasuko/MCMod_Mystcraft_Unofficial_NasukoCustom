@@ -35,6 +35,7 @@ public final class PortGameTests {
         FUNCTIONS.register("ink_transactions", () -> PortGameTests::ink);
         FUNCTIONS.register("binder_persistence", () -> PortGameTests::binder);
         FUNCTIONS.register("archivist_processor_persistence", () -> PortGameTests::processor);
+        FUNCTIONS.register("linking_book_network_sync", () -> PortGameTests::linkingBookNetworkSync);
         for (String terrain : List.of("Normal", "Amplified", "Flat", "Nether", "End", "Void")) {
             FUNCTIONS.register("age_" + terrain.toLowerCase(java.util.Locale.ROOT), () -> h -> age(h, terrain));
         }
@@ -44,10 +45,36 @@ public final class PortGameTests {
     private static Identifier id(String name) { return Identifier.fromNamespaceAndPath("mystcraft", name); }
     private static void tests(RegisterGameTestsEvent event) {
         var environment = event.registerEnvironment(id("port_validation"));
-        for (String name : List.of("ink_transactions", "binder_persistence", "archivist_processor_persistence", "age_normal", "age_amplified", "age_flat", "age_nether", "age_end", "age_void")) {
+        for (String name : List.of("ink_transactions", "binder_persistence", "archivist_processor_persistence", "linking_book_network_sync", "age_normal", "age_amplified", "age_flat", "age_nether", "age_end", "age_void")) {
             event.registerTest(id(name), new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, id(name)),
                     new TestData<>(environment, id("port_empty"), 1200, 0, true)));
         }
+    }
+    private static void linkingBookNetworkSync(GameTestHelper h) {
+        var loaded = h.getLevel().getServer().getRecipeManager()
+                .byKey(ResourceKey.create(Registries.RECIPE, id("internal/linkingbook")))
+                .orElseThrow().value();
+        var buffer = new net.minecraft.network.RegistryFriendlyByteBuf(
+                io.netty.buffer.Unpooled.buffer(), h.getLevel().registryAccess(),
+                net.neoforged.neoforge.network.connection.ConnectionType.NEOFORGE);
+        try {
+            // Joining players receive this recipe through NeoForge's recipe-content sync.
+            net.minecraft.world.item.crafting.Recipe.STREAM_CODEC.encode(buffer, loaded);
+            var received = net.minecraft.world.item.crafting.Recipe.STREAM_CODEC.decode(buffer);
+            h.assertTrue(received == loaded, "Loaded linking recipe survives network synchronization");
+            var reloaded = net.minecraft.world.item.crafting.Recipe.DIRECT_CODEC.parse(
+                    com.mojang.serialization.JsonOps.INSTANCE,
+                    com.google.gson.JsonParser.parseString("{\"type\":\"mystcraft:internal/linkingbook\"}"))
+                    .getOrThrow();
+            buffer.clear();
+            net.minecraft.world.item.crafting.Recipe.STREAM_CODEC.encode(buffer, reloaded);
+            h.assertTrue(net.minecraft.world.item.crafting.Recipe.STREAM_CODEC.decode(buffer) == reloaded,
+                    "Reloaded linking recipe survives network synchronization");
+            h.assertTrue(!buffer.isReadable(), "Recipe roundtrip consumes the complete payload");
+        } finally {
+            buffer.release();
+        }
+        h.succeed();
     }
     private static void processor(GameTestHelper h) {
         var ops = h.getLevel().registryAccess().createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE);
