@@ -4,7 +4,7 @@ from pathlib import Path
 import re, sys, zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT.parent / "Mystcraft_NasukoCustom_0.1.0_source.zip"
+OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT.parent / "Mystcraft_NasukoCustom_0.1.1_source.zip"
 EXCLUDE_DIRS = {".git", ".jt", ".gradle", "build", "run", "runs", "logs", "crash-reports", ".idea", ".vscode", "__pycache__"}
 EXCLUDE_PATH_PREFIXES = {("Docs",), ("docs",), ("tools", "harness")}
 EXCLUDE_ROOT_DOC_PREFIXES = (

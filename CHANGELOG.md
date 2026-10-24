@@ -1,3 +1,10 @@
+# 0.1.1 — 2026-10-25
+
+- Update the release version, binary/source filenames, package audit expectations and current release documentation to 0.1.1.
+- Include the Writing Desk duplicate-drop fix and standard Archivist workstation/trading behavior from the preceding fixes.
+
+---
+
 # 0.1.0 — 2026-10-25
 
 - Fix duplicated Writing Desk drops when either half breaks; preserve inventory drops and handle upper extensions and creative destruction correctly.

@@ -1,3 +1,11 @@
+# NasukoCustom 0.1.1 Release Notice
+
+**2026-10-25 — Version update**
+
+Update release metadata, package filenames, audit expectations and current release documentation to 0.1.1. Include the preceding Writing Desk drop and native Archivist trading fixes.
+
+---
+
 # NasukoCustom 0.1.0 Release Notice
 
 **2026-10-25 — Writing Desk drops and native Archivist trading**

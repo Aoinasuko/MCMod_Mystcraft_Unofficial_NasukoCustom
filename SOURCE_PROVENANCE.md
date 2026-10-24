@@ -3,7 +3,7 @@
 - Immediate source: https://github.com/ueno96941-Clown/Mystcraft-Legacy-Unofficial-NeoForge-Port
 - Pinned commit: `7e83df32feb5c68e1faee558daab2338ccadbb5d`
 - Adapted on 2026-10-23 for Minecraft 26.3 / NeoForge 26.3.0.95 / Java 25.
-- Display name: Mystcraft Unofficial NasukoCustom; version: 0.1.0.
+- Display name: Mystcraft Unofficial NasukoCustom; version: 0.1.1.
 - NasukoCustom repository: https://github.com/Aoinasuko/MCMod_Mystcraft_Unofficial_NasukoCustom
 - All 120 existing PNG/OGG files are unchanged and remain covered by ASSET_PROVENANCE_SHA256.tsv.
 - Add two original NasukoCustom monster atlases made through Blender MCP: `textures/entity/dimensional_pterosaur.png` and `textures/entity/dimensional_serpent.png`. Initial two-creature extension total: **122 PNG/OGG**, comprising **119 upstream-identical** and **3 port-added** files.

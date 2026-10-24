@@ -3,7 +3,7 @@
 from pathlib import Path
 import csv, hashlib, io, json, sys, zipfile
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 EXPECTED_NAME = f"mystcraft-unofficial-nasukocustom-{VERSION}.jar"
 MC = "NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT."
 CYAN = "This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan."

@@ -6,7 +6,7 @@ Mystcraft Legacy の非公式 Minecraft **26.3 / NeoForge** 移植版です。
 現在のソースコード: [Aoinasuko/MCMod_Mystcraft_Unofficial_NasukoCustom](https://github.com/Aoinasuko/MCMod_Mystcraft_Unofficial_NasukoCustom)。
 
 - MOD名: **Mystcraft Unofficial NasukoCustom**
-- バージョン: `0.1.0`
+- バージョン: `0.1.1`
 - Minecraft: **26.3**（26.1 / 26.2 / 1.21.1 用ではありません）
 - NeoForge: **26.3.0.95** 以上の 26.3 系
 - Java: **25**、64 bit
@@ -15,9 +15,9 @@ Mystcraft Legacy の非公式 Minecraft **26.3 / NeoForge** 移植版です。
 
 ## 導入
 
-`0.1.0` は、これまでの26.3移植と本のクリック・投棄の不具合修正を含むNasukoCustom版の最初のリリースです。旧バージョンのJARは外して差し替えてください。
+`0.1.1` は、デスクの重複ドロップ修正とアーキビストの標準取引への切り替えを含む更新版です。旧バージョンのJARは外して差し替えてください。
 
-Minecraft 26.3 に NeoForge 26.3 を導入し、`build/libs/mystcraft-unofficial-nasukocustom-0.1.0.jar` をインスタンスの `mods` フォルダーに入れてください。
+Minecraft 26.3 に NeoForge 26.3 を導入し、`build/libs/mystcraft-unofficial-nasukocustom-0.1.1.jar` をインスタンスの `mods` フォルダーに入れてください。
 同じ内部IDを使うため、旧MystcraftのJARは一緒に入れないでください。
 26.3用の新しいワールドで使用してください。1.21.1版セーブの直接変換は検証対象に含めていません。
 

@@ -6,7 +6,7 @@ import csv, hashlib, io, json, re, sys, zipfile
 p=Path(sys.argv[1]) if len(sys.argv)>1 else None
 if not p or not p.is_file(): raise SystemExit("usage: audit_public_source_export.py <zip>")
 ROOT="Mystcraft-NasukoCustom-26.3/"
-VERSION="0.1.0"
+VERSION="0.1.1"
 MC="NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT."
 CYAN="This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan."
 GRADLE_SHA="72f44c9f8ebcb1af43838f45ee5c4aa9c5444898b3468ab3f4af7b6076c5bc3f"

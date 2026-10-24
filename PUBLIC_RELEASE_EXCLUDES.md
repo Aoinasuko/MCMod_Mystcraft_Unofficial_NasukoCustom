@@ -25,7 +25,7 @@ python tools/audit_public_source_export.py <output.zip>
 After building the release JAR, audit the exact binary with:
 
 ```text
-python tools/audit_release_jar.py build/libs/mystcraft-unofficial-nasukocustom-0.1.0.jar
+python tools/audit_release_jar.py build/libs/mystcraft-unofficial-nasukocustom-0.1.1.jar
 ```
 
 A passing package audit is a release gate, not a substitute for re-reading current third-party policies or running the final release-candidate tests.
