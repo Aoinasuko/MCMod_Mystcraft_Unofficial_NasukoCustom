@@ -318,5 +318,6 @@
   "entity.mystcraft.calamity_orb": "Calamity Orb",
   "entity.mystcraft.dimensional_laser": "Dimensional Laser",
   "entity.mystcraft.dimensional_summoning_circle": "Dimensional Summoning Circle",
-  "tooltip.mystcraft.dimensional_monsters.tiers": "2+ pages: fairies and worms. 3+ pages: rare calamities."
+  "tooltip.mystcraft.dimensional_monsters.tiers": "2+ pages: fairies and worms. 3+ pages: rare calamities.",
+  "entity.minecraft.villager.mystcraft.archivist": "Archivist"
 }

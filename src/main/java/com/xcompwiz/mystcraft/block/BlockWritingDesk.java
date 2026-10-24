@@ -246,11 +246,17 @@ public final class BlockWritingDesk extends BaseEntityBlock {
                 }
             }
         }
+        if (!level.isClientSide() && state.getValue(IS_FOOT) && player.getAbilities().instabuild) {
+            BlockPos main = pos.relative(state.getValue(FACING).getOpposite());
+            if (isMatchingPair(state, level.getBlockState(main))) level.removeBlock(main, false);
+        }
         return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
     protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        // Only the main half drops: native neighbour removal handles breaking either half.
+        if (state.getValue(IS_FOOT)) return List.of();
         return List.of(state.getValue(IS_TOP) ? ItemWritingDesk.topStack() : ItemWritingDesk.baseStack());
     }
 }

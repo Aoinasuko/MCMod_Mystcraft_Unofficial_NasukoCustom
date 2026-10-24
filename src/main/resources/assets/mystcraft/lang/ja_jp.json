@@ -318,5 +318,6 @@
   "entity.mystcraft.calamity_orb": "災禍の爆発弾",
   "entity.mystcraft.dimensional_laser": "次元レーザー",
   "entity.mystcraft.dimensional_summoning_circle": "次元召喚の魔法陣",
-  "tooltip.mystcraft.dimensional_monsters.tiers": "2枚以上：妖精・ワーム。3枚以上：低確率で災禍。"
+  "tooltip.mystcraft.dimensional_monsters.tiers": "2枚以上：妖精・ワーム。3枚以上：低確率で災禍。",
+  "entity.minecraft.villager.mystcraft.archivist": "アーキビスト"
 }

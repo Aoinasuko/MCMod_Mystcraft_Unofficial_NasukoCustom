@@ -1,4 +1,8 @@
-# 0.1.0 — 2026-10-24
+# 0.1.0 — 2026-10-25
+
+- Fix duplicated Writing Desk drops when either half breaks; preserve inventory drops and handle upper extensions and creative destruction correctly.
+- Make Writing Desks discoverable job sites for unemployed villagers and use the standard villager trading screen for Archivists, with three symbol-page offers and booster packs. Migrate existing custom shop stock once; use native purchase, restock and persistence behavior.
+- Add dedicated-server regressions for desk destruction, native trades and workstation acquisition, plus a client check for the standard merchant screen.
 
 - Add two-page Dimensional Fairies (teleport / 5-second windup / wall-piercing laser with levitation III / 2-second recovery) and terrain-bound, suffocation-immune charging Dimensional Worms.
 - Add rare three-page Dimensional Calamities: 3-metre flying demons, five explosive projectiles per volley, and three telegraphed summoning circles when nearby non-calamity allies number five or fewer.

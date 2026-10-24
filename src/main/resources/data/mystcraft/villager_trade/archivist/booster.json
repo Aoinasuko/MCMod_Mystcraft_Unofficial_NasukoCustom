@@ -1,13 +1,13 @@
 {
   "wants": {
     "id": "minecraft:emerald",
-    "count": 25
+    "count": 20
   },
   "gives": {
     "id": "mystcraft:booster",
     "count": 1
   },
-  "max_uses": 7,
+  "max_uses": 5,
   "xp": 1,
   "reputation_discount": 0.05
 }

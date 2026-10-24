@@ -1,6 +1,9 @@
 {
   "trades": [
-    "mystcraft:archivist/booster"
+    "mystcraft:archivist/booster",
+    "mystcraft:archivist/page_rank_1",
+    "mystcraft:archivist/page_rank_2",
+    "mystcraft:archivist/page_rank_3"
   ],
-  "amount": 1
+  "amount": 4
 }

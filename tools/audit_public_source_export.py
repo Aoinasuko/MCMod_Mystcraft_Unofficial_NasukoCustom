@@ -49,7 +49,9 @@ with zipfile.ZipFile(p) as z:
         if low.endswith((".class",".log",".zip",".patch")): problems.append(f"forbidden artifact: {rel}")
         if low.endswith(".jar") and rel!="gradle/wrapper/gradle-wrapper.jar": problems.append(f"unexpected JAR: {rel}")
         if rel.startswith("src/main/java/net/minecraft/") or rel.startswith("src/main/java/com/mojang/"): problems.append(f"Minecraft/Mojang source namespace: {rel}")
-        if rel.startswith("src/main/resources/assets/minecraft/") or rel.startswith("src/main/resources/data/minecraft/"): problems.append(f"minecraft resource namespace: {rel}")
+        workstation_tag = rel == "src/main/resources/data/minecraft/tags/point_of_interest_type/acquirable_job_site.json"
+        if workstation_tag and json.loads(z.read(n)) != {"replace": False, "values": ["mystcraft:archivist"]}: problems.append("unexpected workstation tag contents")
+        if rel.startswith("src/main/resources/assets/minecraft/") or (rel.startswith("src/main/resources/data/minecraft/") and not workstation_tag): problems.append(f"minecraft resource namespace: {rel}")
         if low.endswith((".json",".mcmeta")):
             try: json.loads(z.read(n).decode("utf-8-sig"))
             except Exception as e: problems.append(f"invalid JSON/mcmeta {rel}: {e}")

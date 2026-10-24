@@ -45,6 +45,7 @@ public final class Mystcraft {
         MystSounds.register(modEventBus);
         MystCriteriaTriggers.register(modEventBus);
         MystVillagers.register(modEventBus);
+        com.xcompwiz.mystcraft.villager.ArchivistPageFunction.register(modEventBus);
         MystCreativeTabs.register(modEventBus);
         SymbolRegistry.bootstrapLegacyBuiltins();
         InternalAPI.initAPI();

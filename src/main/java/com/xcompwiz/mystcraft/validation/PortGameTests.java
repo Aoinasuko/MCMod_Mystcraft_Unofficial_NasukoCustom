@@ -31,6 +31,7 @@ public final class PortGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, "mystcraft");
     public static void register(IEventBus bus) {
         DimensionalMonsterGameTests.register(bus);
+        DeskArchivistGameTests.register(bus);
         FUNCTIONS.register("ink_transactions", () -> PortGameTests::ink);
         FUNCTIONS.register("binder_persistence", () -> PortGameTests::binder);
         FUNCTIONS.register("archivist_processor_persistence", () -> PortGameTests::processor);

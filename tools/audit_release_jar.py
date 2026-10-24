@@ -34,7 +34,12 @@ def main():
                 problems.append(f"development/source artifact in JAR: {n}")
             if n.startswith("net/minecraft/") or n.startswith("com/mojang/"):
                 problems.append(f"Minecraft/Mojang project class namespace in JAR: {n}")
-            if n.startswith("assets/minecraft/") or n.startswith("data/minecraft/"):
+            # Original additive workstation integration; no copied vanilla resources.
+            workstation_tag = n == "data/minecraft/tags/point_of_interest_type/acquirable_job_site.json"
+            workstation_directory = n in {"data/minecraft/", "data/minecraft/tags/", "data/minecraft/tags/point_of_interest_type/"}
+            if workstation_tag and json.loads(z.read(n)) != {"replace": False, "values": ["mystcraft:archivist"]}:
+                problems.append("unexpected workstation tag contents")
+            if n.startswith("assets/minecraft/") or (n.startswith("data/minecraft/") and not (workstation_tag or workstation_directory)):
                 problems.append(f"project resource in minecraft namespace: {n}")
             if low.endswith((".json",".mcmeta")):
                 try: json.loads(z.read(n).decode("utf-8-sig"))

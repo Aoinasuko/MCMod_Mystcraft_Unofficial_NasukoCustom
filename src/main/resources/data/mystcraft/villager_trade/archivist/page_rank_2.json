@@ -1,0 +1,17 @@
+{
+  "wants": {
+    "id": "minecraft:emerald",
+    "count": 4
+  },
+  "gives": {
+    "id": "mystcraft:page",
+    "count": 1
+  },
+  "max_uses": 3,
+  "xp": 1,
+  "reputation_discount": 0.05,
+  "given_item_modifier": {
+    "type": "mystcraft:archivist_page",
+    "min_rank": 2
+  }
+}

@@ -236,7 +236,25 @@ public final class ClientPortSmokeTest {
         }
         if (ageTicks == 630 && mc.gui.hud.isHidden() != previousHideGui) mc.gui.hud.toggle();
         if (ageTicks == 650) {
-            Mystcraft.LOGGER.info("CLIENT SMOKE PASS: book network travel/drop, station screens, five Blender monsters, explosive projectile, laser and summoning circle");
+            server.execute(() -> {
+                var player = server.getPlayerList().getPlayer(uuid); var level = player.level();
+                var pos = player.blockPosition().south(3);
+                var desk = MystBlocks.WRITING_DESK.get().defaultBlockState().setValue(BlockWritingDesk.FACING,Direction.NORTH);
+                level.setBlock(pos,desk,2); level.setBlock(pos.north(),desk.setValue(BlockWritingDesk.IS_FOOT,true),2);
+                var villager = net.minecraft.world.entity.EntityTypes.VILLAGER.create(level,EntitySpawnReason.TRIGGERED);
+                villager.setVillagerData(villager.getVillagerData().withProfession(MystVillagers.ARCHIVIST));
+                villager.setPos(pos.getX()+1.5,pos.getY(),pos.getZ()+.5); villager.setNoAi(true); level.addFreshEntity(villager);
+                player.interactOn(villager,InteractionHand.MAIN_HAND,villager.position());
+            });
+        }
+        if (ageTicks == 710) {
+            if (!(mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.MerchantScreen screen)
+                    || screen.getMenu().getOffers().size()!=4) throw new IllegalStateException("Archivist did not open vanilla merchant screen with four offers");
+            capture(mc,"nasuko-archivist-vanilla-trading.png");
+            Mystcraft.LOGGER.info("CLIENT SMOKE: native Archivist MerchantScreen and four offers synchronized");
+        }
+        if (ageTicks == 730) {
+            Mystcraft.LOGGER.info("CLIENT SMOKE PASS: book travel/drop, station screens, five Blender monsters/spells, native Archivist trading screen");
             mc.stop();
         }
     }

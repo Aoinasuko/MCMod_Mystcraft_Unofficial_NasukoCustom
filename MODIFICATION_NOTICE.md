@@ -1,5 +1,9 @@
 # NasukoCustom 0.1.0 Release Notice
 
+**2026-10-25 — Writing Desk drops and native Archivist trading**
+
+Fix duplicate multiblock furniture drops, including extension and creative-mode destruction. Add an original, additive `minecraft:acquirable_job_site` POI tag entry referencing `mystcraft:archivist` so ordinary villagers can acquire the desk workstation. Route interactions through the native villager merchant menu, provide data-driven page/booster offers, and migrate existing custom shop stock once. Include server and client regressions for these behaviors.
+
 **2026-10-24 — Mystcraft Unofficial NasukoCustom 0.1.0**
 
 The Dimensional Monsters page, its diminishing instability reward, two hostile mob implementations, original Blender mesh/texture sources and animations are NasukoCustom additions made on 2026-10-24. Original upstream PNG/OGG files remain unchanged. Runtime validation also found and corrected generated Archivist profession holders that could not be serialized by Minecraft 26.3.
